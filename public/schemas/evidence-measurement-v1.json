@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "evidence/measurement@1",
+  "title": "evidence/measurement@1: what a measuring step recorded",
+  "type": "object",
+  "required": [
+    "label",
+    "revision",
+    "exit_code",
+    "tests"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "x-fact-class": "derived"
+    },
+    "revision": {
+      "type": "string",
+      "minLength": 1,
+      "x-fact-class": "claimed"
+    },
+    "criterion": {
+      "type": "string",
+      "minLength": 1,
+      "x-fact-class": "derived"
+    },
+    "exit_code": {
+      "type": "integer",
+      "x-fact-class": "derived"
+    },
+    "tests": {
+      "x-fact-class": "derived",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "outcome"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "outcome": {
+            "enum": [
+              "passed",
+              "failed",
+              "ignored"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

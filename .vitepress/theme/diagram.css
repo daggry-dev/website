@@ -1,0 +1,61 @@
+/* Shared look for the hand-drawn diagrams (inline SVG + HTML cards).
+   Colours come from the tokens in style.css, so the diagrams follow dark mode. */
+
+/* Panel ------------------------------------------------------------------ */
+.dgm {
+  container: dgm / inline-size;
+  margin: 40px 0; padding: 28px 0; border-radius: 24px;
+  border: 1px solid var(--vp-c-divider);
+  background: linear-gradient(135deg, var(--dg-panel-from), var(--dg-panel-to));
+  --dgm-pad: 28px;
+}
+.dgm .sf-scroll { padding: 0 var(--dgm-pad); }
+.dgm .cap, .dgm .sf-hint { margin-inline: var(--dgm-pad); }
+/* Narrow panels (docs column, tablets, phones) get a 16px gutter. A 640px SVG
+   then fits any panel at least 674px wide: the docs column at about 1080-1279px
+   and from about 1330px up. Between 960-1080px and 1280-1330px the column is
+   narrower (560-624px) and the SVG scrolls inside its frame, with fades and hint. */
+@container dgm (max-width: 760px) {
+  .dgm > * { --dgm-pad: 16px; }
+}
+/* Phones: bleed to the screen edges, as VitePress does for code blocks. Only
+   where the parent's 24px gutter is known (top level of a doc, the landing
+   sections), so a diagram nested in a container never overshoots. */
+@media (max-width: 639px) {
+  .vp-doc > div > .dgm, .dg .wide > .dgm { margin-inline: -24px; border-radius: 0; border-inline: 0; padding: 22px 0; }
+}
+
+/* SVGs scale with the viewBox down to 640px wide, where 11px labels render at
+   about 7.3px. Below that the frame scrolls instead of shrinking further. */
+.dgm svg { width: 100%; height: auto; display: block; min-width: 820px; }
+
+/* Scroll frame (ScrollFrame.vue) ----------------------------------------- */
+.sf { position: relative; }
+.sf-scroll { overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.sf-scroll:focus-visible { outline: 2px solid var(--vp-c-brand-1); outline-offset: 2px; border-radius: 12px; }
+.sf::before, .sf::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 36px; z-index: 1;
+  pointer-events: none; opacity: 0; transition: opacity .2s;
+}
+.sf::before { left: 0; background: linear-gradient(to right, var(--dg-panel-solid), transparent); }
+.sf::after { right: 0; background: linear-gradient(to left, var(--dg-panel-solid), transparent); }
+.sf.more-start::before, .sf.more-end::after { opacity: 1; }
+.sf-hint { margin-top: 12px; margin-bottom: 0; font-size: .78rem; line-height: 1.5; color: var(--dg-muted); }
+@media (prefers-reduced-motion: reduce) { .sf::before, .sf::after { transition: none; } }
+
+/* SVG vocabulary ---------------------------------------------------------- */
+.dgm .cap { overflow-wrap: anywhere; margin-top: 18px; margin-bottom: 0; font-size: .85rem; color: var(--dg-muted); line-height: 1.6; }
+.dgm text { font-family: var(--vp-font-family-base); fill: var(--dg-ink); }
+.dgm .mono { font-family: var(--vp-font-family-mono); }
+.dgm .sm { font-size: 11px; fill: var(--dg-muted); }
+.dgm .md { font-size: 13px; font-weight: 600; }
+.dgm .lbl { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; fill: var(--dg-muted); }
+.dgm .box { fill: var(--dg-surface); stroke: var(--dg-surface-stroke); stroke-width: 1.2; }
+.dgm .warm { fill: var(--dg-warm-fill); stroke: var(--dg-warm-stroke); }
+.dgm .cool { fill: var(--dg-cool-fill); stroke: var(--dg-cool-stroke); }
+.dgm .rose { fill: var(--dg-rose-fill); stroke: var(--dg-rose-stroke); }
+.dgm .edge { fill: none; stroke: var(--dg-edge); stroke-width: 1.4; }
+.dgm .edge.hot { stroke: var(--dg-edge-hot); stroke-width: 1.8; }
+.dgm .dash { stroke-dasharray: 4 4; }
+.dgm .arrow { fill: var(--dg-edge); }
+.dgm .arrow.hot { fill: var(--dg-edge-hot); }

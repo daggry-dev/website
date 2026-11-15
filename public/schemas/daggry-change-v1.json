@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "daggry/change@1",
+  "title": "daggry/change@1: a commit, its paths and the frozen test set",
+  "type": "object",
+  "required": [
+    "revision",
+    "paths",
+    "frozen"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "revision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$",
+      "x-fact-class": "claimed"
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "x-fact-class": "claimed"
+    },
+    "frozen": {
+      "x-fact-class": "derived",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "digest"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "digest": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}
