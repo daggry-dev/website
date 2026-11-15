@@ -43,6 +43,13 @@
   --dg-bubble: #f4f1ee;
   --dg-step-bg: rgba(255, 255, 255, .7);
 
+  /* states in the explainer diagrams: passed / blocked */
+  --dg-ok: #2c6e48;               /* 6.1:1 on surface, 5.6:1 on ok-fill */
+  --dg-ok-fill: #edf7f0;
+  --dg-ok-stroke: #b6dcc3;
+  --dg-no: #a8324c;               /* 6.5:1 on surface, 5.9:1 on rose-fill */
+  --dg-code-bg: #f7f4f1;
+
   /* page atmosphere */
   --dg-dawn-a: rgba(255, 217, 176, .45);
   --dg-dawn-b: rgba(217, 228, 255, .5);
@@ -114,6 +121,12 @@ html.dark {
   --dg-scroll-shadow: rgba(0, 0, 0, .55);
   --dg-bubble: #26212c;
   --dg-step-bg: rgba(255, 255, 255, .03);
+
+  --dg-ok: #86d3a3;
+  --dg-ok-fill: #15241b;
+  --dg-ok-stroke: #2f5a40;
+  --dg-no: #f291a8;
+  --dg-code-bg: #121016;
 
   --dg-dawn-a: rgba(246, 165, 60, .07);
   --dg-dawn-b: rgba(96, 104, 200, .12);
@@ -244,3 +257,12 @@ html .Layout .VPLocalNav {
   .vp-doc ol.steps li { padding: 14px 16px 14px 52px; border-radius: 14px; }
   .vp-doc ol.steps li::before { left: 12px; top: 13px; width: 28px; height: 28px; }
 }
+
+/* Footer: sponsor logo swaps with the theme */
+.VPFooter .message { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; }
+.VPFooter .sponsor { display: inline-flex; align-items: center; line-height: 0; }
+.VPFooter .sponsor-logo { height: 28px; width: auto; display: block; }
+.VPFooter .sponsor-dark { display: none; }
+html.dark .VPFooter .sponsor-light { display: none; }
+html.dark .VPFooter .sponsor-dark { display: block; }
+.VPFooter .copyright a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }

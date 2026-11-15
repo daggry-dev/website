@@ -1,6 +1,10 @@
 # Workflow schema
 
-A workflow is one YAML file that lists steps and bounded loops. This page defines every key, every value a key accepts, and every case the loader refuses. It is for people who write or review workflow files. To write one, follow [Write a workflow](/guide/how-to/write-a-workflow). For the idea, read [Work graphs](/guide/concepts/workflows).
+*Reference*
+
+For the idea, read [Work graphs](/guide/concepts/workflows).
+
+A workflow is one YAML file that lists steps and bounded loops. This page defines every key, every value a key accepts, and every case the loader refuses. It is for people who write or review workflow files. To write one, follow [Write a workflow](/guide/how-to/write-a-workflow).
 
 The example on this page is illustrative. It is valid under the schema and the loader checks.
 
@@ -76,7 +80,7 @@ A session of a coding-agent engine.
 
 ### verify
 
-Measures a fresh worktree of the last sealed commit.
+Measures a clean copy of the last sealed commit.
 
 | Key | Type | Required | Constraints |
 |---|---|---|---|
@@ -116,7 +120,7 @@ Runs in the control plane, never in the pod.
 | Value | Meaning |
 |---|---|
 | `nothing` | The step may write no path. |
-| `anywhere` | Any path except protected paths and forge folders such as `.github/**`. |
+| `anywhere` | Any path except protected paths and CI configuration folders such as `.github/**`. |
 | a list of glob strings | Only paths that match a glob. Each glob is non-empty. `[]` is valid and matches no path. |
 
 Any other word, such as `everywhere`, is refused. A glob that does not compile is refused at run time. Scope is judged on the step's own change against the last sealed commit. Protected paths are judged against the base commit. See [Protected paths](/guide/concepts/protection).
@@ -154,7 +158,7 @@ A loop entry has an `id` and a `loop` object. A loop is not a sixth step kind.
 
 ### Red then green
 
-A red-then-green loop has three steps in an iteration: a test step (an `agent` step with `tests`) writes a test whose title carries the criterion id, an implementer (an `agent` step) makes it pass, and a `verify` step measures a fresh worktree. The runner overlays the test step's new test paths on a worktree of the base commit and runs the profile's test command there. A test step in a loop that does not prove red is rejected. Frozen tests and unfreeze are described in [Protected paths](/guide/concepts/protection).
+A red-then-green loop has three steps in an iteration: a test step (an `agent` step with `tests`) writes a test whose title carries the criterion id, an implementer (an `agent` step) makes it pass, and a `verify` step measures a clean copy of the code. The runner overlays the test step's new test paths on a clean copy of the base commit and runs the profile's test command there. A test step in a loop that does not prove red is rejected. Frozen tests and unfreeze are described in [Protected paths](/guide/concepts/protection).
 
 ## A full valid example
 

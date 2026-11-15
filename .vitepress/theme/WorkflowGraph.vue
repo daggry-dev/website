@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import ScrollFrame from './ScrollFrame.vue'
 const before = [
-  { k: 'agent', t: 'Plan', d: 'criteria with ids', c: 'cool' },
-  { k: 'human', t: 'Approve', d: 'waiting_for: approval', c: 'rose' },
+  { k: 'agent', t: 'Plan', d: 'a list of items', c: 'cool' },
+  { k: 'you', t: 'You approve', d: 'the exact plan', c: 'rose' },
 ]
 const loop = [
-  { k: 'agent', t: 'Write test', d: 'next criterion', c: 'cool' },
-  { k: 'runner', t: 'Red proof', d: 'fails on base', c: 'box' },
-  { k: 'agent', t: 'Implement', d: 'make it green', c: 'cool' },
-  { k: 'verify', t: 'Measure', d: 'fresh worktree', c: 'warm' },
+  { k: 'agent', t: 'Write a test', d: 'for the next item', c: 'cool' },
+  { k: 'code', t: 'Test shown to fail', d: 'on the code as it was', c: 'box' },
+  { k: 'agent', t: 'Make it pass', d: 'change the code', c: 'cool' },
+  { k: 'code', t: 'Re-run on a clean copy', d: 'every test', c: 'warm' },
 ]
 const after = [
-  { k: 'effect', t: 'Open PR', d: 'daggry/<run-id>', c: 'warm' },
+  { k: 'code', t: 'Open pull request', d: 'for your review', c: 'warm' },
 ]
 </script>
 
@@ -21,16 +21,16 @@ const after = [
       <div class="row">
         <template v-for="s in before" :key="s.t"><div :class="['n', s.c]"><small>{{ s.k }}</small><b>{{ s.t }}</b><em>{{ s.d }}</em></div><span class="a" aria-hidden="true">→</span></template>
         <div class="loop">
-          <small class="lt">loop · until all criteria covered · bounded</small>
+          <small class="lt">repeat for each item · a fixed number of tries</small>
           <div class="lrow">
             <template v-for="(s, i) in loop" :key="s.t"><div :class="['n', s.c]"><small>{{ s.k }}</small><b>{{ s.t }}</b><em>{{ s.d }}</em></div><span v-if="i < loop.length - 1" class="a" aria-hidden="true">→</span></template>
           </div>
-          <small class="back">↺ red? repeat the item · exhausted → fail or ask a human</small>
+          <small class="back">↺ test still fails? try the item again · out of tries: the run fails or waits for you</small>
         </div>
         <template v-for="s in after" :key="s.t"><span class="a" aria-hidden="true">→</span><div :class="['n', s.c]"><small>{{ s.k }}</small><b>{{ s.t }}</b><em>{{ s.d }}</em></div></template>
       </div>
     </ScrollFrame>
-    <figcaption class="cap">The shape of a delivery workflow: a plan, a human approval, a bounded red-then-green loop that hands to a person when it runs out, and a pull request.</figcaption>
+    <figcaption class="cap">The shape of a delivery workflow: a plan, your approval, a loop that proves each item with a test that first fails and then passes, and a pull request. The loop has a fixed number of tries; when they run out, the run fails or waits for you.</figcaption>
   </figure>
 </template>
 

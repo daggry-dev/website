@@ -1,8 +1,26 @@
 # Write a workflow
 
-This page shows you how to write a workflow file, starting with one step and ending with a verification, a human approval and a bounded loop. It is for anyone who starts runs with `daggry run`. The snippets are illustrative. Each one is valid against the [workflow schema](/reference/workflow-schema).
+An agent follows the workflow file and cannot change it, so the file is where you decide what gets checked. Start with one step and add a check, an approval and a loop.
 
-A workflow is one YAML file with one key, `steps`: an ordered list of steps and loops. For the ideas behind it, see [Work graphs](/guide/concepts/workflows). To decide what the graph should contain before you write it, see [Design a workflow](/guide/how-to/design-a-workflow). To start from a complete file for a kind of work, see [Workflow patterns](/guide/how-to/workflow-patterns).
+This page is for anyone who starts runs with `daggry run`. The snippets are illustrative. Each one is valid against the [workflow schema](/reference/workflow-schema).
+
+<WorkflowGraph />
+
+The diagram shows the delivery workflow that the section [Add a bounded loop](#add-a-bounded-loop) builds: a plan, your approval, a bounded loop of test, fix and check, and a pull request. Other kinds of work use the same parts in a different order.
+
+A workflow is one YAML file with one key, `steps`: an ordered list of steps and loops. Workflows use strict-subset YAML, with no anchors, tags or merge keys. For the ideas behind it, see [Work graphs](/guide/concepts/workflows). To decide what the graph should contain before you write it, see [Design a workflow](/guide/how-to/design-a-workflow). To start from a complete file for a kind of work, see [Workflow patterns](/guide/how-to/workflow-patterns).
+
+## Step kinds at a glance
+
+The set of kinds is closed. A step does one thing, and you combine steps to describe the work. Nothing in the kinds is specific to code: an `agent` step can draft a report or a triage note, and a `command` step can run any script.
+
+| Kind | Runs in | What it does |
+|---|---|---|
+| `agent` | the pod | A coding-agent session that must deliver named artifact kinds. |
+| `command` | the pod | A shell line, limited by a `scope` of paths it may write. |
+| `verify` | the pod | Runs your check on the sealed commit, in a clean copy of the code. |
+| `human` | nowhere | Releases the pod and waits. `daggry approve` completes it. |
+| `effect` | the control plane | An idempotent side effect, such as opening a pull request. |
 
 ## Write a one-step workflow
 
@@ -23,7 +41,7 @@ A workflow is one YAML file with one key, `steps`: an ordered list of steps and 
    | Value | The step may write |
    |---|---|
    | `nothing` | no path |
-   | `anywhere` | every path except protected paths and forge folders such as `.github/**` |
+   | `anywhere` | every path except protected paths and CI configuration folders such as `.github/**` |
    | a list of globs, such as `["src/**"]` | paths that match one glob |
 
    No scope can include a [protected path](/guide/concepts/protection).
@@ -54,7 +72,7 @@ An `agent` step runs a coding-agent session. It must deliver the artifact kinds 
 
 ## Add a verify step
 
-A `verify` step measures the last sealed commit in a fresh worktree. It has no command of its own. It runs the command named in the base commit's `.daggry/profile.yaml`, so a step cannot weaken its own check.
+A `verify` step measures the last sealed commit in a clean copy of the code. It has no command of its own. It runs the command named in the base commit's `.daggry/profile.yaml`, so a step cannot weaken its own check.
 
 1. Add the step after the work it checks.
 
@@ -133,7 +151,7 @@ A loop repeats steps for each criterion of an approved plan, and it always ends.
          over: plan
          as: criterion
          until: verdict.all_covered
-         max: 3
+         max: 10
          on_exhausted: ask
          steps:
            - id: tests
@@ -159,6 +177,8 @@ A loop repeats steps for each criterion of an approved plan, and it always ends.
        do: open-pr
    ```
 
+   The `max` of 10 assumes a plan of fewer than 10 criteria.
+
 2. Read the loop keys. Every key is required.
 
    | Key | Meaning |
@@ -166,7 +186,7 @@ A loop repeats steps for each criterion of an approved plan, and it always ends.
    | `over` | The list to loop over. Use `plan`, the criteria of the sealed plan. |
    | `as` | The name of the current item. |
    | `until` | A gate expression read at the end of each iteration. The loop ends when it holds. |
-   | `max` | The bound on iterations, as an integer of 1 or more. |
+   | `max` | The bound on iterations, as an integer of 1 or more. It counts the whole loop, not each item, so set it above the number of items in the plan, or the loop cannot finish. |
    | `on_exhausted` | `fail`, or the `id` of a top-level `human` step. |
    | `steps` | The steps of one iteration. |
 
@@ -180,6 +200,18 @@ A loop repeats steps for each criterion of an approved plan, and it always ends.
 5. Plan for exhaustion. When `max` iterations are spent, `on_exhausted` applies. With `fail`, the run fails. With a `human` step, the run waits there. Run `daggry approve <run-id>` to give up the unfinished item, or `daggry approve <run-id> --unfreeze <path>` to retry it with one frozen test path open to change.
 
 The `on_exhausted` step is skipped in normal flow and runs only when the loop is exhausted. For the `until` syntax, see [Gate expressions](/reference/gates).
+
+### Red, then green
+
+In a delivery loop, each iteration follows this order. A loop that does not write tests, such as a batch migration, leaves the `tests` step out and keeps the rest.
+
+1. An agent writes a test for the next criterion.
+2. Daggry shows that the test fails on the commit the run started from. A test that already passes says nothing about the change.
+3. The control plane seals the test commit and freezes the tests. The agent cannot change them.
+4. The agent makes the test green.
+5. A clean copy of the code measures the result.
+
+A criterion counts as covered only when a test that carries its id passed on the head commit. For how frozen tests and unfreeze grants work, see [What an agent cannot change](/guide/concepts/protection).
 
 ## Check that the workflow loads
 
@@ -218,6 +250,10 @@ The loader checks the file in stages and reports the first refusal.
 | gate field | An `until` reads a field it cannot read. |
 
 Loops cannot nest.
+
+## Read the state of a run
+
+A run is one execution of a workflow for a work item. A job is a group of steps that share one pod, and a run is one job by default. An attempt is one try at a job: a killed pod is replaced by a new attempt. A run is `queued`, `running`, `waiting`, `parked`, `succeeded`, `failed` or `stopped`. While it is `waiting`, `daggry status` shows why.
 
 ## Next steps
 

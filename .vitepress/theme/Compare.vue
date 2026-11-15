@@ -1,14 +1,14 @@
 <template>
   <div class="cmp">
     <div class="side bad">
-      <span class="tag">Without evidence</span>
+      <span class="tag">Without Daggry</span>
       <div class="bub">“Done, all tests pass.”</div>
       <p>The agent’s own words are the only record. A reviewer must trust them or redo the work.</p>
     </div>
     <div class="side good">
       <span class="tag">With Daggry</span>
-      <div class="bub mono">measurement · exit_code 0 · sealed ✓</div>
-      <p>Code reran the tests in a clean worktree, reduced the output to a record, and signed it into the chain.</p>
+      <div class="bub mono">tests re-run by code: 0 failures, sealed</div>
+      <p>Code re-ran the tests on a clean copy of the code, wrote down the result, and sealed it into the trail. <dfn>Sealed</dfn> means checked by code, then signed so it cannot be quietly changed.</p>
     </div>
   </div>
 </template>
@@ -19,7 +19,8 @@
 .tag { font: 500 11px var(--vp-font-family-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--dg-muted); }
 .bub { margin: 18px 0; padding: 14px 18px; border-radius: 16px; background: var(--dg-bubble); color: var(--dg-ink); font-size: 15px; overflow-wrap: anywhere; }
 .good .bub { background: var(--dg-surface); border: 1px solid var(--dg-warm-stroke); font-size: 13px; }
-p { margin: 0; color: var(--dg-muted); line-height: 1.7; font-size: .95rem; }
+.side p { margin: 0; color: var(--dg-muted); line-height: 1.7; font-size: .95rem; }
 @media (max-width: 720px) { .cmp { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 480px) { .side { padding: 20px; border-radius: 18px; } }
+.side p dfn { font-style: normal; font-weight: 600; color: var(--dg-ink); }
 </style>

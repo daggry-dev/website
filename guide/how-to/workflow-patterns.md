@@ -1,28 +1,30 @@
 # Workflow patterns
 
-This page gives seven workflows for different kinds of work, each as a graph sketch and a complete file you can copy and adapt. It is for readers who have read [Work graphs](/guide/concepts/workflows) and want a starting point. To build a graph for a kind of work not listed here, read [Design a workflow](/guide/how-to/design-a-workflow).
+You rarely need to design a workflow from nothing. Pick the pattern below that matches your goal, copy its file and change the paths and scripts. Each pattern shows when to use it, what code checks, a sketch of the steps and the complete file.
 
-The workflows are illustrative. Each one is valid against the [workflow schema](/reference/workflow-schema) and uses only the built-in step kinds. In every `agent` step, `engine: <engine>` names the coding-agent engine the step uses. Paths such as `reports/**` and scripts such as `scripts/check-sources.sh` are examples. Replace them with yours.
+To build a workflow for a kind of work not listed here, read [Design a workflow](/guide/how-to/design-a-workflow).
 
-## How to read the sketches
+## Choose a pattern
 
-A sketch shows steps in order. These marks carry the meaning.
+This table maps a goal to a pattern.
 
-| Mark | Meaning |
+| Goal | Pattern |
 |---|---|
-| `[agent]`, `[command]`, `[verify]`, `[effect]` | A step of that kind. |
-| `(human)` | A wait for a person. |
-| `{ ... }` | A loop. It repeats once for each criterion of the sealed plan. |
+| Write code that a test proves | Ship a change from an issue |
+| Produce a document with sources | Research a question |
+| Apply the same judgment to many items | Process a batch of items |
+| Change many files safely | Migrate files in bounded batches |
+| Edit content that a person must read | Update documentation |
+| Prepare a release | Run a gated release check |
+| Collect findings and report them | Audit and report |
 
-Every workflow that uses `verify` needs a check in the repository's base commit. The check lives in `.daggry/profile.yaml` as `verify.test`. See [Project profile](/reference/profile). A `verify` step is green when that command exits with 0.
-
-A loop ends when its `until` gate holds. The gate `verdict.all_covered` holds when every plan criterion has a passing test that carries its id. In a workflow that does not deliver code, your check command reports one passing test for each criterion it accepts, and names the test with the criterion id. The exact lines the command prints, with a shell example, are in the [output contract](/reference/profile#output-contract).
-
-Each loop's `max` bounds the iterations of the whole loop. Set it above the number of items you expect.
+Patterns combine. For example, add the `inventory` command from the migration pattern to the front of the batch pattern.
 
 ## Ship a change from an issue
 
-Use this pattern to turn an issue into a pull request with tests written first. It is the delivery workflow.
+**Use when** you want to turn an issue into a pull request with tests written first. It is the delivery workflow.
+
+**Code checks:** that each new test fails before the agent implements it, then that it passes on a clean copy of the code.
 
 ```text
 [agent plan] -> (human approves plan)
@@ -30,6 +32,9 @@ Use this pattern to turn an issue into a pull request with tests written first. 
   -> (human, only if the loop runs out) -> [effect open-pr]
 ```
 
+The tests freeze once proven. See [Red, then green](/guide/how-to/write-a-workflow#red-then-green).
+
+::: details Complete file
 ```yaml
 steps:
   - id: plan
@@ -75,18 +80,34 @@ steps:
     kind: effect
     do: open-pr
 ```
+:::
 
-The `test` step proves each test red before the implementer starts, and the tests freeze. See [Red, then green](/guide/concepts/workflows#red-then-green).
+## How to read the sketches
+
+A sketch shows steps in order. `[agent]`, `[command]`, `[verify]` and `[effect]` are steps of that kind. `(human)` is a wait for a person. `{ ... }` is a loop that repeats once for each criterion of the sealed plan.
+
+Every pattern that uses `verify` needs a check in the repository's base commit, set in `.daggry/profile.yaml` as `verify.test`. See [Project profile](/reference/profile). A `verify` step is green when that command exits with 0.
+
+A loop ends when its `until` gate holds. The gate `verdict.all_covered` holds when every plan criterion has a passing test that carries its id. In a workflow that does not deliver code, your check command reports one passing test for each criterion it accepts, named with the criterion id. The exact lines it prints are in the [output contract](/reference/profile#output-contract).
+
+Each loop's `max` limits the iterations of the whole loop. Set it above the number of items you expect.
+
+The files are illustrative. Each one is valid against the [workflow schema](/reference/workflow-schema). In every `agent` step, `engine: <engine>` names the coding-agent engine the step uses. Paths such as `reports/**` and scripts such as `scripts/audit.sh` are examples. Replace them with yours.
 
 ## Research a question and commit a sourced report
 
-Use this pattern when the product of the work is a document and every claim needs a source. Code checks that the sources exist. A person judges whether the report answers the question.
+**Use when** the product of the work is a document and every claim needs a source. Code checks that the sources exist. A person judges whether the report answers the question.
+
+**Code checks:** Your `verify.test` command, for example that every paragraph cites a source and every link resolves.
 
 ```text
 [agent plan] -> (human approves plan) -> [agent write report]
   -> [verify sources] -> (human reviews report) -> [effect open-pr]
 ```
 
+Your `verify.test` command can fail a report that has an uncited paragraph or a dead link. Approval at `review-report` binds to the sealed report.
+
+::: details Complete file
 ```yaml
 steps:
   - id: plan
@@ -118,12 +139,13 @@ steps:
     kind: effect
     do: open-pr
 ```
-
-Your `verify.test` command can fail a report that has an uncited paragraph or a dead link. Approval at `review-report` binds to the sealed report.
+:::
 
 ## Process a batch of items
 
-Use this pattern to work through a list one item at a time, such as triaging a backlog. The plan turns the list into criteria, and the loop handles one per iteration. This workflow writes a triage note for each item and opens a pull request with the notes.
+**Use when** you want to work through a list one item at a time, such as triaging a backlog. The plan turns the list into criteria, and the loop handles one per iteration. This workflow writes a triage note for each item and opens a pull request with the notes.
+
+**Code checks:** Your check command, for example that each note has a label, a priority and a reason.
 
 ```text
 [agent plan] -> (human approves plan)
@@ -131,6 +153,9 @@ Use this pattern to work through a list one item at a time, such as triaging a b
   -> (human, only if the loop runs out) -> [effect open-pr]
 ```
 
+Your check command accepts a note only when it has all three parts. A note that fails the check repeats the same item, up to the bound in `max`. The pull request is how the labels reach a person for review.
+
+::: details Complete file
 ```yaml
 steps:
   - id: plan
@@ -169,12 +194,13 @@ steps:
     kind: effect
     do: open-pr
 ```
-
-Your check command accepts a note only when it has all three parts. A note that fails the check repeats the same item, up to the bound in `max`. The pull request is how the labels reach a person for review.
+:::
 
 ## Migrate files in bounded batches
 
-Use this pattern for a large mechanical change that you want to land in small, checked pieces. A command lists the files, the plan groups them into batches, and the loop migrates one batch per iteration.
+**Use when** you have a large mechanical change that you want to land in small, checked pieces. A command lists the files, the plan groups them into batches, and the loop migrates one batch per iteration.
+
+**Code checks:** Your check command on each batch, for example that the build and tests pass.
 
 ```text
 [command inventory] -> [agent plan batches] -> (human approves plan)
@@ -182,6 +208,9 @@ Use this pattern for a large mechanical change that you want to land in small, c
   -> (human, only if the loop runs out) -> [effect open-pr]
 ```
 
+The bound is the safety here. If a batch does not pass after the iterations in `max` are spent, the run waits at `stuck` and a person decides. Plain `daggry approve <run-id>` gives up the unfinished batch.
+
+::: details Complete file
 ```yaml
 steps:
   - id: inventory
@@ -225,17 +254,21 @@ steps:
     kind: effect
     do: open-pr
 ```
-
-The bound is the safety here. If a batch does not pass after the iterations in `max` are spent, the run waits at `stuck` and a person decides. Plain `daggry approve <run-id>` gives up the unfinished batch.
+:::
 
 ## Update documentation with a human review
 
-Use this pattern for content where wording matters more than structure. Code checks what it can, such as links and required headings. A person reads the draft before a pull request exists.
+**Use when** you edit content where wording matters more than structure. Code checks what it can, such as links and required headings. A person reads the draft before a pull request exists.
+
+**Code checks:** Links and required headings, before a person reads the draft.
 
 ```text
 [agent draft] -> [verify] -> (human reviews draft) -> [effect open-pr]
 ```
 
+A failed `check-docs` outside a loop fails the run, so the person only reviews drafts that passed the check. Add a plan and an approval before `draft` when the scope of the update needs agreement first.
+
+::: details Complete file
 ```yaml
 steps:
   - id: draft
@@ -256,18 +289,22 @@ steps:
     kind: effect
     do: open-pr
 ```
-
-A failed `check-docs` outside a loop fails the run, so the person only reviews drafts that passed the check. Add a plan and an approval before `draft` when the scope of the update needs agreement first.
+:::
 
 ## Run a gated release check
 
-Use this pattern to prepare a release. Code builds and verifies. An agent drafts the notes. A person signs off before the release pull request opens.
+**Use when** you prepare a release. Code builds and verifies. An agent drafts the notes. A person signs off before the release pull request opens.
+
+**Code checks:** The build output and the changelog format, before the sign-off.
 
 ```text
 [command build] -> [verify] -> [agent release notes]
   -> [verify] -> (human signs off) -> [effect open-pr]
 ```
 
+Each `verify` step runs the same `verify.test` command from the base commit. Make that command cover both the build output and the changelog format. A failed check stops the run before the sign-off.
+
+::: details Complete file
 ```yaml
 steps:
   - id: build
@@ -296,17 +333,19 @@ steps:
     kind: effect
     do: open-pr
 ```
-
-Each `verify` step runs the same `verify.test` command from the base commit. Make that command cover both the build output and the changelog format. A failed check stops the run before the sign-off.
+:::
 
 ## Audit and report
 
-Use this pattern for a read-mostly audit, such as a dependency or configuration scan. A command collects the findings, an agent summarizes them, and the pull request carries the report. There is no wait in the graph, because the review happens on the pull request.
+**Use when** you run a read-mostly audit, such as a dependency or configuration scan. A command collects the findings, an agent summarizes them, and the pull request carries the report. There is no wait in the graph, because the review happens on the pull request.
+
+**Code checks:** The format of the summary. A person reviews the report on the pull request.
 
 ```text
 [command scan] -> [agent summarize] -> [verify] -> [effect open-pr]
 ```
 
+::: details Complete file
 ```yaml
 steps:
   - id: scan
@@ -328,25 +367,10 @@ steps:
     kind: effect
     do: open-pr
 ```
-
-## Choose a pattern
-
-This table maps a goal to a pattern.
-
-| Goal | Pattern |
-|---|---|
-| Write code that a test proves | Ship a change from an issue |
-| Produce a document with sources | Research a question |
-| Apply the same judgment to many items | Process a batch of items |
-| Change many files safely | Migrate files in bounded batches |
-| Edit content that a person must read | Update documentation |
-| Prepare a release | Run a gated release check |
-| Collect findings and report them | Audit and report |
-
-Patterns combine. For example, add the `inventory` command from the migration pattern to the front of the batch pattern.
+:::
 
 ## Next steps
 
-- To design a graph for another kind of work, read [Design a workflow](/guide/how-to/design-a-workflow).
+- To design a workflow for another kind of work, read [Design a workflow](/guide/how-to/design-a-workflow).
 - To learn each field, read [Write a workflow](/guide/how-to/write-a-workflow).
 - For the exact syntax of `until`, read [Gate expressions](/reference/gates).

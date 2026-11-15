@@ -1,58 +1,50 @@
 # Deploy Daggry
 
-This page shows you how to deploy the Daggry control plane on a Kubernetes cluster, reach its API, and upgrade it. It is for an operator, the person who owns the cluster, the GitHub App and the keys. For a faster first install, see [Getting started](/guide/getting-started).
+For the person who runs the cluster. This page lists what Daggry needs, what runs on your cluster, how the pieces connect, and the steps to install it. Everyone else can skip to [Getting started](/guide/getting-started).
 
-Daggry runs on Kubernetes only. It defines no custom resources and no operator of its own. Job pods are plain pods in the same namespace as the release. Every connection is outbound from the pod or the launcher, and nothing dials into a pod. For how the parts fit, see [Architecture](/guide/concepts/architecture).
+Daggry runs on Kubernetes as ordinary pods. Job pods run in the same namespace as the release. Every connection is outbound from the pod or the launcher, and nothing dials into a pod. For how the parts fit, see [Where it runs](/guide/concepts/architecture). For availability, see the [Roadmap](/roadmap).
 
-## Prerequisites
+The commands and outputs on this page are illustrative. Placeholders in angle brackets, such as `<namespace>`, stand for values you choose.
 
-- A Kubernetes cluster with a default storage class. A single k3s node works.
-- `kubectl`, `helm` 4 and `podman`.
-- A container registry the cluster can pull from. On a single host, the `registry` chart installs one that is bound to the host's loopback address.
-- The Daggry source checkout, for the charts and scripts.
+## Requirements
+
+- A Kubernetes cluster with a default storage class.
+- `kubectl` and `helm` on the machine you work from.
+- A container registry your cluster can pull from.
 - A GitHub account or organization where you can create a GitHub App.
+- A credential for the coding-agent engine, if your workflows have agent steps.
+- A scratch repository with one open issue, to try a first run.
 
-## Deploy the control plane
+## What runs on your cluster
 
-1. Create the namespace.
+Four pieces run on your cluster. Each has one job and a narrow set of rights.
+
+- **Control plane.** Takes in work, schedules steps, seals results and serves the API. It holds the signing key, the GitHub App key and the record.
+- **Launcher.** Turns each job attempt into a pod, watches it and deletes it when it ends. It can manage pods and their Secrets in the release namespace only. It cannot read Secrets and never reads the workflow.
+- **Runner.** Runs inside the pod. It runs the steps, the engine, the checks and git, with a token for one job attempt, a GitHub token for one repository and your model credential.
+- **Engine.** The coding-agent CLI that does an agent step's work. Each agent step names it with `engine: <engine>`. It reaches Daggry only through a small tool server inside the pod, which offers the step's inputs and takes the agent's claims.
+
+A pod holds a lease that its runner keeps alive. If the lease lapses, for example because the pod was killed, the launcher deletes the pod and a new attempt starts from the last sealed commit.
+
+## How the pieces connect
+
+The CLI on your machine talks to the control plane's API. The control plane talks to GitHub as your GitHub App. The launcher creates a job pod, and the runner in that pod connects out to the control plane with a token for that one attempt. The control plane holds the data volume, which stores the log and the blobs it references.
+
+## Install Daggry
+
+The steps are the same whichever way you obtain the images.
+
+1. Build or obtain the three images: the control plane, the runner and the default job image. Push them to your registry. Reference each one by digest.
+2. Create a namespace for the release.
 
    ```sh
    kubectl create namespace <namespace>
    ```
 
-2. Build and push the images. This builds the control-plane, runner and default job images, pushes all three and writes their digests.
-
-   ```sh
-   scripts/build-images
-   ```
-
-   To build without pushing, add `--build-only`.
-
-   The script writes a values file of this form:
-
-   ```yaml
-   images:
-     controlPlane: "<registry>/<control-plane-image>@sha256:<digest>"
-     runnerInstall: "<registry>/<runner-image>@sha256:<digest>"
-     job: "<registry>/<job-image>@sha256:<digest>"
-   ```
-
-3. Create the GitHub App Secret. See [Connect the GitHub App](#connect-the-github-app).
-
-4. Install the chart.
-
-   ```sh
-   scripts/deploy <namespace> deploy/daggry/values.yaml deploy/images/values.generated.yaml
-   ```
-
-   The script runs `helm upgrade --install daggry deploy/daggry` with each values file. To set a value, add `--` and Helm arguments:
-
-   ```sh
-   scripts/deploy <namespace> deploy/daggry/values.yaml deploy/images/values.generated.yaml -- \
-     --set concurrencyCap=2
-   ```
-
-5. Wait for the control plane.
+3. Create the GitHub App and give the chart its credentials. See [Connect the GitHub App](#connect-the-github-app).
+4. Create the model credential Secret. See [Provide the model credential](#provide-the-model-credential).
+5. Install the Daggry chart with your values.
+6. Wait for the control plane.
 
    ```sh
    kubectl --namespace <namespace> rollout status deployment/<fullname>
@@ -64,11 +56,14 @@ Daggry runs on Kubernetes only. It defines no custom resources and no operator o
    deployment "<fullname>" successfully rolled out
    ```
 
-The chart creates one control-plane Deployment with a single replica, a Service, a data volume and two token Secrets. The data volume holds the log, the stored blobs and the seal key.
+7. Reach the API. See [Reach the API](#reach-the-api).
+8. Install the CLI and set `DAGGRY_URL` and `DAGGRY_TOKEN`. See [Install the CLI](#install-the-cli).
+
+The chart creates one control-plane Deployment with a single replica, a Service, a data volume and two token Secrets.
 
 ### Set chart values
 
-The chart takes these values. Set only the ones you need to change.
+The Daggry chart takes these values. Set only the ones you need to change.
 
 | Key | Default | Meaning |
 |---|---|---|
@@ -82,7 +77,7 @@ The chart takes these values. Set only the ones you need to change.
 | `storage.className` | `local-path` | Storage class of the data volume |
 | `storage.size` | `1Gi` | Size of the data volume |
 | `launcher.separatePod` | `false` | `true` runs the launcher as its own pod |
-| `tokens.tenantToken` | `""` | Tenant token. Empty means generate one on first install |
+| `tokens.tenantToken` | `""` | Token for your team. Empty means generate one on first install |
 | `tokens.launcherToken` | `""` | Launcher token. Empty means generate one on first install |
 | `modelSecret` | a Secret name | Secret that holds the model credential |
 | `github.secret` | a Secret name | Secret that holds the GitHub App ID and key |
@@ -116,7 +111,7 @@ Without the Secret, the control plane starts but cannot fetch issues or mint tok
 
 ## Provide the model credential
 
-Agent steps need a credential for the coding-agent engine. You store it in a Kubernetes Secret under the key `key`, in the release namespace. The name must match the chart value `modelSecret`. Each job pod references the Secret and passes the value to the engine container only. A job with no agent step starts without it.
+Agent steps need a credential for the coding-agent engine. You store it in a Kubernetes Secret under the key `key`, in the release namespace. The name must match the chart value `modelSecret`. Each job pod references the Secret and passes the value to the engine process only. A job with no agent step starts without it.
 
 ```sh
 kubectl --namespace <namespace> create secret generic <model-secret> \
@@ -127,9 +122,7 @@ A pod never renews a credential. Replace the Secret before the credential expire
 
 ## Reach the API
 
-The control plane listens on plain HTTP on the API port and is not exposed outside the cluster. Choose one of two ways to reach it.
-
-### Use a port-forward
+The control plane listens on plain HTTP on the API port and is not exposed outside the cluster. To reach it from your machine, use a port-forward.
 
 1. Open the forward and leave it running.
 
@@ -143,53 +136,33 @@ The control plane listens on plain HTTP on the API port and is not exposed outsi
    Forwarding from 127.0.0.1:<port> -> 8080
    ```
 
-2. Set the CLI variables. Read the tenant token from the Secret the chart created.
+2. Set the CLI variables. Read the team token from the token Secret the chart created. Its name ends in `tenant-token`.
 
    ```sh
    export DAGGRY_URL=http://127.0.0.1:<port>
-   export DAGGRY_TOKEN=$(kubectl --namespace <namespace> get secret <fullname>-tenant-token \
+   export DAGGRY_TOKEN=$(kubectl --namespace <namespace> get secret <token-secret> \
      --output jsonpath='{.data.token}' | base64 --decode)
    ```
 
-### Expose the API on a private tailnet
+## Install the CLI
 
-The `tailscale` chart publishes the API on your tailnet and nowhere else. It installs the Tailscale Kubernetes operator and one Ingress that terminates TLS for one tailnet host name. It does not enable Funnel, so the API is never on the public internet. Runners and the launcher still reach the control plane at its in-cluster address, not through the tailnet.
+The `daggry` CLI is a thin client for the control plane's API. Install it on the machine you work from, then set `DAGGRY_URL` and `DAGGRY_TOKEN` as described in [Reach the API](#reach-the-api).
 
-1. In your tailnet, turn on MagicDNS and HTTPS certificates. HTTPS publishes machine names in the public Certificate Transparency log.
-2. Create an OAuth client for the operator, and store its ID and secret in a Secret in the operator's namespace.
-3. Fetch the operator chart that the `tailscale` chart depends on.
-
-   ```sh
-   helm dependency build deploy/tailscale
-   ```
-
-4. Install the chart. Set the control plane's namespace and Service, and choose a host label.
+1. Put the `daggry` binary on your path.
+2. Check that the binary runs. Help works before you configure anything.
 
    ```sh
-   helm upgrade --install tailscale deploy/tailscale --namespace <operator-namespace> \
-     --set controlPlane.namespace=<namespace> \
-     --set controlPlane.serviceName=<fullname> \
-     --set ingress.tailnetHostname=<host-label>
+   daggry --help
    ```
 
-5. Set `DAGGRY_URL` to the HTTPS name the Ingress publishes, `https://<host-label>.<tailnet>.ts.net`, and `DAGGRY_TOKEN` as above.
+For every command, see the [CLI reference](/reference/cli).
 
 ## Upgrade
 
-To upgrade, build new images and run the same deploy command.
+To upgrade, push new images and install the chart again with the same values.
 
-1. Build and push the images.
-
-   ```sh
-   scripts/build-images
-   ```
-
-2. Run the deploy script again with the same values files.
-
-   ```sh
-   scripts/deploy <namespace> deploy/daggry/values.yaml deploy/images/values.generated.yaml
-   ```
-
+1. Build or obtain the new images and push them to your registry.
+2. Install the chart again with your values, using the new digests.
 3. Wait for the rollout, as in the first install.
 
 The generated tokens are kept across upgrades, so the CLI variables stay valid. Jobs pin their image digests, so an upgrade changes new runs only.
@@ -199,4 +172,5 @@ The control plane keeps one replica and recreates it on upgrade, because the dat
 ## Next steps
 
 - To start your first run, read [Getting started](/guide/getting-started).
+- For how the parts fit together, read [Where it runs](/guide/concepts/architecture).
 - For the commands you use against the control plane, read the [CLI reference](/reference/cli).

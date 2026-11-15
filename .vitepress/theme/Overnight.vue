@@ -1,7 +1,7 @@
 <template>
   <figure class="dgm overnight">
     <ScrollFrame label="Overnight timeline">
-      <svg viewBox="0 0 960 300" role="img" aria-label="Overnight timeline: approve an issue in the evening, agents work through the night, review a pull request at dawn">
+      <svg viewBox="0 0 960 300" role="img" aria-label="Overnight timeline: you approve a plan at 22:00, agents work unattended while code checks each step, and at 06:30 a pull request and its trail are ready">
         <defs>
           <linearGradient id="sky" x1="0" x2="1">
             <stop offset="0" class="s-lilac"/><stop offset=".45" class="s-sky"/>
@@ -26,18 +26,18 @@
         <!-- the night's work -->
         <rect x="250" y="120" width="440" height="52" rx="14" class="night"/>
         <text x="470" y="142" text-anchor="middle" class="lbl">Unattended</text>
-        <text x="470" y="160" text-anchor="middle" class="md">plan · red test · green code · measure · seal</text>
+        <text x="470" y="160" text-anchor="middle" class="md">test fails first, make it pass, re-check, seal</text>
       </svg>
     </ScrollFrame>
-    <figcaption class="cap">You approve a plan before bed. Daggry works through the night, and every handover is checked by code. At dawn there is a pull request and a trail of sealed evidence to read over coffee.</figcaption>
+    <figcaption class="cap">In the morning there is a pull request, and beside it a record of every check that passed on the way. If the run needed you, it stopped and says why.</figcaption>
   </figure>
 </template>
 <script setup lang="ts">
 import ScrollFrame from './ScrollFrame.vue'
 const stops = [
-  { x: 110, t: '22:00', h: 'Approve the plan', d: 'a human, once' },
-  { x: 470, t: '03:00', h: 'Pods at work', d: 'agent · verify · seal' },
-  { x: 858, t: '06:30', h: 'Dawn', d: 'PR is open, evidence sealed' },
+  { x: 110, t: '22:00', h: 'Approve the plan', d: 'you, before bed' },
+  { x: 470, t: '03:00', h: 'Pods at work', d: 'agents work, code checks' },
+  { x: 858, t: '06:30', h: 'Dawn', d: 'pull request and trail' },
 ]
 </script>
 <style scoped>

@@ -1,5 +1,9 @@
 # CLI reference
 
+*Reference*
+
+For the idea, read [How Daggry works](/guide/).
+
 The `daggry` command is the tenant CLI: a client for the control plane's [HTTP API](/reference/api). This page lists every command, flag, output format, exit code and environment variable. For a guided first use, see [Getting started](/guide/getting-started).
 
 ## Synopsis

@@ -27,15 +27,16 @@
       <rect x="710" y="100" width="230" height="130" rx="18" class="warm"/>
       <text x="825" y="130" text-anchor="middle" class="lbl">head</text>
       <text x="825" y="158" text-anchor="middle" class="sm mono">3a77b48c…bd3e</text>
-      <text x="825" y="184" text-anchor="middle" class="sm">signed, published off-host</text>
-      <text x="825" y="202" text-anchor="middle" class="sm">exposes dropped tail entries</text>
+      <text x="825" y="184" text-anchor="middle" class="sm">signed, kept outside the cluster</text>
+      <text x="825" y="202" text-anchor="middle" class="sm">catches dropped newest entries</text>
       <text x="480" y="308" text-anchor="middle" class="sm">Change any byte in entry 0 and every later link and signature stops matching.</text>
     </svg>
     </ScrollFrame>
-    <figcaption class="cap">Two entries from the published test vector, shortened.</figcaption>
+    <figcaption class="cap">Two entries from the published test vector, shortened. For the status of the signed head kept outside the cluster, see the <a :href="withBase('/roadmap')">roadmap</a>.</figcaption>
   </figure>
 </template>
 <script setup lang="ts">
+import { withBase } from 'vitepress'
 import ScrollFrame from './ScrollFrame.vue'
 const entries = [
   { x: 150, d: '8f1ffe80a26e8b0c', l: '7fc34ebfe846fffe' },

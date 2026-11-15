@@ -1,38 +1,41 @@
-# What is Daggry
+# How Daggry works
 
-Daggry runs any agentic work unattended and proves what it did. Work is a graph of steps, each step runs in a sandboxed Kubernetes pod, and code checks every handover and seals it as signed, immutable evidence. This page is for engineers who want agents to deliver work they can trust without watching. Software delivery is the first workflow.
+An agent can do a night's work, but its own report is the only proof. Daggry runs the work as fixed steps, has code re-check each step, and keeps a signed record you can verify yourself.
 
-In the delivery workflow, one run takes a GitHub issue to a pull request, then to a retro on that pull request. You make two decisions: you approve the plan that an agent drafts from the issue, and you review the pull request.
+Daggry is Danish for dawn. You start the work, go to sleep, and at first light it is done and checked.
 
-## The core ideas
+## One night
 
-- **An agent's output is a claim.** Only code turns a claim into evidence, by checking it and sealing it. Code judges the work. The one exception is a marked, person-approved verdict by a language model on one named criterion. See [Sealed evidence](/guide/concepts/evidence).
-- **Work is a graph.** A workflow is a short YAML file of steps, gates and bounded loops. The agent never changes the graph. See [Work graphs](/guide/concepts/workflows).
-- **An agent never changes what instructs, constrains or judges it.** Tests, configuration and instruction files are protected by code, not by a prompt. See [Protected paths](/guide/concepts/protection).
-- **Everything runs in plain pods.** Daggry needs Kubernetes and nothing else: no custom resources and no operator. See [Architecture](/guide/concepts/architecture).
+**22:00.** You write an issue. An agent drafts a plan from it, and you approve the plan before bed.
+
+**Overnight.** Each job runs in its own throwaway pod (a container that exists for one job). It holds a token for one repository and never the signing key. The agent takes the plan one item at a time. It writes a test, Daggry shows that the test fails, the agent makes it pass, and Daggry runs it again on a clean copy of the code. If a machine dies at 3 a.m., a new pod starts from the last commit Daggry sealed and repeats the interrupted step.
+
+**06:30.** The pull request is open, with the record of each check that passed beside it. A run that needed you stopped and says why. Reviewing the pull request is normally your second decision.
+
+<MorningTrail />
+
+The trail shows one night in four entries: the plan you approved, the test that failed first, the same test passing, and the pull request opening. Each entry is checked by code and signed.
+
+## Four ideas, and why each exists
+
+**Fixed steps.** An agent left to choose its own process can skip testing or loop all night. You describe the work as a short file of steps. The agent follows it and cannot change it. See [Work graphs](/guide/concepts/workflows).
+
+**Checked by code.** Code, not the agent, runs each check and writes the record. The same work always gets the same verdict, so an agent cannot talk its way to a pass. See [Why you can trust a run](/guide/concepts/trust).
+
+**Off limits.** The easiest way to pass a test is to change the test, so tests, instructions and check settings are off limits to the agent. See [What an agent cannot change](/guide/concepts/protection).
+
+**Stops and asks.** Some decisions are yours. The run stops where you chose, says why, and records your approval against the exact plan you saw. There are normally two decisions: approve the plan, then review the result. If a loop runs out of attempts, it can hand over to a person at a step you name.
 
 ## Who it is for
 
-You run coding-agent CLIs on your own repositories and want the work to finish while you are away. You want a record that a reviewer can check without trusting the agent, and a run that stops and asks when it needs a person.
+You run coding-agent CLIs on your own repositories and want the work to finish while you are away. Daggry fits work that lives in a repository and has a check a script can run. A pull request from an issue is the first example. For others, see [Workflow patterns](/guide/how-to/workflow-patterns).
 
-Daggry covers any agentic work, not only delivery. It knows steps, artifacts and gates, and a pull request is one projection of a run. Delivery is the first workflow and retro is the second. For other kinds of work, see [Workflow patterns](/guide/how-to/workflow-patterns).
-
-## Two roles
-
-Daggry keeps two roles apart so that a hosted setup needs no new concept.
-
-| | Operator | Tenant |
-|---|---|---|
-| Owns | the cluster, the control plane and the seal key | its projects, its model credential and its project harness |
-| Uses | Helm and `kubectl` | the `daggry` CLI and GitHub |
-| Sees | the whole log and every run | only its own runs, artifacts and evidence |
-
-One person can hold both roles.
+You can only leave work alone if you do not need to trust whoever is doing it. Daggry never takes the agent's word.
 
 ## Where to go next
 
-1. To see the idea in one story, read [Overnight](/guide/overnight).
-2. To run it, follow [Getting started](/guide/getting-started).
-3. To understand how it is built, read [Architecture](/guide/concepts/architecture).
-4. To look up a field, command or term, open the [Reference](/reference/).
-5. To see what exists and what comes next, read the [Roadmap](/roadmap).
+1. To check the record yourself, read [Why you can trust a run](/guide/concepts/trust).
+2. To run a workflow, follow [Getting started](/guide/getting-started).
+3. To look up a field, command or term, open the [Reference](/reference/).
+
+For what exists today and what comes next, see the [Roadmap](/roadmap).

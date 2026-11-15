@@ -1,5 +1,9 @@
 # HTTP API reference
 
+*Reference*
+
+For the idea, read [Where it runs](/guide/concepts/architecture).
+
 This page lists the tenant API: the routes that a tenant client calls, their request and response fields, the status codes and the run states. The `daggry` CLI is the supported client and uses these routes. Details of the HTTP API may change. For a command-level view, see the [CLI reference](/reference/cli).
 
 ## Conventions

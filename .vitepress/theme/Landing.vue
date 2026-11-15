@@ -1,16 +1,39 @@
 <script setup lang="ts">
 import { withBase } from 'vitepress'
-const points = [
-  { n: '01', t: 'Work is a graph', d: 'Steps, artifacts and gates. A pull request is one projection of a run, not the definition of one.' },
-  { n: '02', t: 'Evidence is sealed', d: 'An agent’s output is a claim. Only code seals evidence, and a sealed artifact is immutable.' },
-  { n: '03', t: 'Jobs run in pods', d: 'One sandboxed Kubernetes pod per job. Connections go outward; nothing dials in.' },
-]
+
 const proof = [
-  { t: 'An evidence trail', d: 'Every handover is sealed into a hash-chained log, signed, and linked to what it built on. A Merkle chain you can recheck yourself.', l: '/guide/concepts/trust#pillar-1-the-evidence-trail', k: 'daggry verify' },
-  { t: 'Validators are code', d: 'Deterministic code checks every claim an agent makes. Code judges the work, and gates open only on facts code derived.', l: '/guide/concepts/trust#pillar-2-code-validators-judge-never-an-llm', k: 'criterion-coverage' },
-  { t: 'Public schemas', d: 'The envelope, every artifact kind and the workflow file have published JSON Schemas. Validate anything with any JSON Schema tool.', l: '/guide/concepts/trust#pillar-3-public-schemas-for-artifacts-and-evidence', k: '/schemas/*.json' },
+  { t: 'Nobody edits it quietly', d: 'Every result is linked to the one before and signed. Change one byte later and daggry verify shows where.', l: '/guide/concepts/trust' },
+  { t: 'Checks are code', d: 'The same work always gets the same verdict. An agent cannot talk its way to a pass.', l: '/guide/concepts/trust' },
+  { t: 'Formats are public', d: 'Every record format is a published JSON Schema. Read and check the trail with your own tools.', l: '/reference/kinds' },
 ]
-const kinds = ['Ship a change from an issue', 'Research and commit a sourced report', 'Process a batch of items', 'Migrate files in bounded batches', 'Update documentation with review', 'Run a gated release check', 'Audit and report']
+// Each chip links to its pattern's heading on the patterns page (VitePress heading slugs).
+const kinds = [
+  { t: 'Ship a change from an issue', a: 'ship-a-change-from-an-issue' },
+  { t: 'Write a sourced report', a: 'research-a-question-and-commit-a-sourced-report' },
+  { t: 'Migrate files in batches', a: 'migrate-files-in-bounded-batches' },
+  { t: 'Process a list of items', a: 'process-a-batch-of-items' },
+  { t: 'Update docs with review', a: 'update-documentation-with-a-human-review' },
+  { t: 'Run a release check', a: 'run-a-gated-release-check' },
+]
+
+// An eight-line workflow with no agent step: run a script, re-check, wait for you, open a pull request.
+// Valid against public/schemas/workflow.json. Split into key/value pieces for colouring.
+const snippet: { k?: string; v?: string; p?: string }[][] = [
+  [{ k: 'steps' }, { p: ':' }],
+  [{ p: '  - ' }, { k: 'id' }, { p: ': ' }, { v: 'migrate' }],
+  [{ p: '    ' }, { k: 'kind' }, { p: ': ' }, { v: 'command' }],
+  [{ p: '    ' }, { k: 'run' }, { p: ': ' }, { v: './scripts/migrate-config.sh' }],
+  [{ p: '    ' }, { k: 'scope' }, { p: ': [' }, { v: '"config/**"' }, { p: ']' }],
+  [{ p: '  - { ' }, { k: 'id' }, { p: ': ' }, { v: 'check' }, { p: ', ' }, { k: 'kind' }, { p: ': ' }, { v: 'verify' }, { p: ' }' }],
+  [{ p: '  - { ' }, { k: 'id' }, { p: ': ' }, { v: 'review' }, { p: ', ' }, { k: 'kind' }, { p: ': ' }, { v: 'human' }, { p: ', ' }, { k: 'waiting_for' }, { p: ': ' }, { v: 'input-needed' }, { p: ' }' }],
+  [{ p: '  - { ' }, { k: 'id' }, { p: ': ' }, { v: 'pr' }, { p: ', ' }, { k: 'kind' }, { p: ': ' }, { v: 'effect' }, { p: ', ' }, { k: 'do' }, { p: ': ' }, { v: 'open-pr' }, { p: ' }' }],
+]
+
+const doors = [
+  { t: 'Understand it', time: '10 minutes', d: 'Read the story of one night, and why each part is there.', l: '/guide/' },
+  { t: 'Try it', time: 'Hands on', d: 'Run a first workflow on a scratch repository and verify its trail.', l: '/guide/getting-started' },
+  { t: 'See the status', time: '2 minutes', d: 'What works today and what comes next.', l: '/roadmap' },
+]
 </script>
 
 <template>
@@ -21,62 +44,92 @@ const kinds = ['Ship a change from an issue', 'Research and commit a sourced rep
       <p class="eyebrow">Daggry · Danish for dawn</p>
       <h1>Agents do the work.<br /><em>Code checks it.</em></h1>
       <p class="lede">
-        A platform for agentic work. Work graphs, sealed evidence verified by code,
-        and sandboxed jobs in Kubernetes pods. A coding-agent CLI is the engine of a step.
+        Coding agents can work all night. Daggry makes that safe to sleep through: every step an agent finishes is
+        re-checked by code and recorded in a trail nobody can quietly edit.
       </p>
       <div class="cta">
-        <a class="btn primary" :href="withBase('/guide/')">Read the guide</a>
-        <a class="btn" :href="withBase('/guide/concepts/trust')">Why you can trust a run</a>
+        <a class="btn primary" :href="withBase('/guide/')">See one night</a>
+        <a class="btn" :href="withBase('/guide/getting-started')">Try it</a>
       </div>
-      <p class="status"><a :href="withBase('/roadmap')">Status and roadmap →</a></p>
-    </section>
-
-    <section class="points">
-      <article v-for="p in points" :key="p.n">
-        <span class="num">{{ p.n }}</span>
-        <h2>{{ p.t }}</h2>
-        <p>{{ p.d }}</p>
-      </article>
     </section>
 
     <section class="wide">
-      <p class="eyebrow">The idea</p>
+      <p class="eyebrow">The problem</p>
+      <h2>A night of work, and <em>only its word</em> for it.</h2>
+      <p class="sub">
+        By morning, all you have is the agent's own report.
+      </p>
+      <Compare />
+    </section>
+
+    <section class="wide">
+      <p class="eyebrow">Overnight</p>
       <h2>Go to bed. Wake at <em>daggry</em>.</h2>
-      <p class="sub">Daggry is Danish for dawn. Hand it an approved plan in the evening and let it work through the night. In the morning the pull request is open and every claim behind it is checked and sealed.</p>
+      <p class="sub">
+        For each item in your plan, the agent writes a test, Daggry shows the test fails, the agent makes it pass,
+        and Daggry re-runs it on a clean copy of the code. If a machine dies at 3 a.m., a new pod (a throwaway
+        container) starts from the last sealed commit and repeats the interrupted step.
+      </p>
       <Overnight />
     </section>
 
     <section class="wide">
-      <p class="eyebrow">Work graphs</p>
-      <h2>Any kind of work, <em>described as a graph</em>.</h2>
-      <p class="sub">A workflow is a file in your repo: steps, the artifacts they hand on, gates that read facts code derived, bounded loops, and the moments a person decides. The same few building blocks describe delivering a change, writing a report, or migrating a thousand files.</p>
-      <ul class="chips">
-        <li v-for="k in kinds" :key="k"><a :href="withBase('/guide/how-to/workflow-patterns')">{{ k }}</a></li>
-      </ul>
-      <p class="more"><a :href="withBase('/guide/how-to/workflow-patterns')">See the patterns →</a> <a :href="withBase('/guide/how-to/design-a-workflow')">Design your own →</a></p>
+      <p class="eyebrow">How it works</p>
+      <h2>Describe it once. <em>Check every step.</em></h2>
+      <p class="sub">
+        A workflow is a file in your repository: the steps, what each must hand to the next, the checks, and the
+        moments you decide. Daggry runs on your own Kubernetes cluster and works on GitHub repositories.
+      </p>
+      <HowItWorks />
     </section>
 
     <section class="wide">
       <p class="eyebrow">Proof, not promises</p>
       <h2>Trust the <em>trail</em>, not the agent.</h2>
-      <p class="sub">An agent’s output is a claim. Daggry turns claims into evidence only through code, and keeps the evidence where anyone can check it.</p>
+      <p class="sub">
+        This is what you read over coffee: every step, the check behind it, and a link to the record before.
+      </p>
+      <MorningTrail />
       <div class="proof">
         <a v-for="p in proof" :key="p.t" class="card" :href="withBase(p.l)">
-          <code>{{ p.k }}</code>
           <h3>{{ p.t }}</h3>
           <p>{{ p.d }}</p>
         </a>
       </div>
+      <p class="honest">
+        A seal proves the check ran and the record is unchanged. It does not prove your tests are the right ones.
+      </p>
     </section>
 
     <section class="wide">
-      <p class="eyebrow">How it fits together</p>
-      <h2>One pod per job. <em>One place</em> that seals.</h2>
-      <Architecture />
+      <p class="eyebrow">Any work with a check</p>
+      <h2>If a script can check it, <em>Daggry can run it</em>.</h2>
+      <p class="sub">
+        Any work that lives in a repository and has a check a script can run. This workflow needs no agent:
+        it runs a script, re-checks the result, waits for you, and opens a pull request.
+      </p>
+      <div class="work">
+        <ul class="chips">
+          <li v-for="k in kinds" :key="k.a"><a :href="withBase(`/guide/how-to/workflow-patterns#${k.a}`)">{{ k.t }}</a></li>
+        </ul>
+        <figure class="code">
+          <pre tabindex="0" aria-label="Example workflow file, eight lines"><code><template v-for="(line, i) in snippet" :key="i"><span v-for="(s, j) in line" :key="j" :class="s.k ? 'k' : s.v ? 'v' : 'p'">{{ s.k ?? s.v ?? s.p }}</span>{{ '\n' }}</template></code></pre>
+          <figcaption>A complete workflow. The check itself is set in the repository, where the run cannot change it.</figcaption>
+        </figure>
+      </div>
+      <p class="more"><a :href="withBase('/guide/how-to/workflow-patterns')">See the patterns</a></p>
     </section>
 
-    <section class="quote">
-      <p>One run takes an issue to a pull request, then to a retro on it — unattended, with a human in the loop on the issue and on the pull request.</p>
+    <section class="wide">
+      <p class="eyebrow">Where to start</p>
+      <h2>Three ways <em>in</em>.</h2>
+      <div class="doors">
+        <a v-for="d in doors" :key="d.t" class="door" :href="withBase(d.l)">
+          <span class="time">{{ d.time }}</span>
+          <h3>{{ d.t }}</h3>
+          <p>{{ d.d }}</p>
+        </a>
+      </div>
     </section>
   </div>
 </template>
@@ -108,7 +161,7 @@ const kinds = ['Ship a change from an issue', 'Research and commit a sourced rep
   -webkit-box-decoration-break: clone; box-decoration-break: clone;
 }
 .hero h1 em { padding-right: .08em; }
-.lede { max-width: 560px; margin: 36px auto 0; font-size: clamp(1.02rem, .95rem + .4vw, 1.15rem); line-height: 1.75; color: var(--dg-muted); }
+.lede { max-width: 580px; margin: 36px auto 0; font-size: clamp(1.02rem, .95rem + .4vw, 1.15rem); line-height: 1.75; color: var(--dg-muted); }
 .cta { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 44px; }
 .dg .btn {
   display: inline-flex; align-items: center; justify-content: center; min-height: 44px;
@@ -117,30 +170,57 @@ const kinds = ['Ship a change from an issue', 'Research and commit a sourced rep
   text-decoration: none; transition: transform .2s, box-shadow .2s;
 }
 .dg .btn:hover { color: var(--dg-ink); transform: translateY(-1px); box-shadow: 0 8px 24px -10px var(--dg-btn-shadow); }
-.dg .btn:focus-visible { outline: 2px solid var(--vp-c-brand-1); outline-offset: 3px; }
+.dg .btn:focus-visible, .card:focus-visible, .door:focus-visible, .chips a:focus-visible { outline: 2px solid var(--vp-c-brand-1); outline-offset: 3px; }
 .dg .btn.primary, .dg .btn.primary:hover { background: var(--dg-btn-primary-bg); color: var(--dg-btn-primary-fg); border-color: var(--dg-btn-primary-bg); }
-.status { margin-top: 36px; font-family: var(--vp-font-family-mono); font-size: .75rem; color: var(--dg-muted); }
-
-.points { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 56px; padding: 80px 0; border-top: 1px solid var(--vp-c-divider); }
-.num { font-family: var(--vp-font-family-mono); font-size: .75rem; color: var(--vp-c-brand-1); }
-.points h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(1.75rem, 1.4rem + 1vw, 2.1rem); line-height: 1.1; margin: 14px 0 12px; border: 0; padding: 0; letter-spacing: -0.01em; }
-.points p { margin: 0; color: var(--dg-muted); line-height: 1.75; }
 
 .wide { padding: 90px 0 0; border-top: 1px solid var(--vp-c-divider); }
 .wide .eyebrow { margin-bottom: 18px; }
 .wide h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(2rem, 4.6vw, 3.4rem); line-height: 1.05; letter-spacing: -0.02em; margin: 0 0 20px; border: 0; padding: 0; }
 .wide h2 em { padding-right: .06em; }
 .sub { max-width: 640px; color: var(--dg-muted); line-height: 1.75; font-size: 1.05rem; margin: 0 0 8px; }
+.wide + .wide { margin-top: 64px; }
 
-.quote { margin-top: 90px; padding: 80px 0 0; border-top: 1px solid var(--vp-c-divider); }
-.quote p { font-family: var(--font-display); font-size: clamp(1.6rem, 1rem + 2.6vw, 2.8rem); line-height: 1.2; max-width: 820px; margin: 0; letter-spacing: -0.01em; }
+.proof { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 8px; }
+.card, .door { display: block; min-width: 0; padding: 26px; border-radius: 22px; border: 1px solid var(--vp-c-divider); background: var(--dg-btn-bg); text-decoration: none; color: inherit; transition: transform .2s, box-shadow .2s; }
+.card:hover, .door:hover { transform: translateY(-2px); box-shadow: 0 14px 34px -18px var(--dg-btn-shadow); }
+.card h3, .door h3 { font-family: var(--font-display); font-weight: 400; font-size: 1.6rem; line-height: 1.1; margin: 0 0 10px; letter-spacing: -0.01em; color: var(--dg-ink); }
+.card p, .door p { margin: 0; color: var(--dg-muted); line-height: 1.7; font-size: .95rem; }
+.honest { max-width: 640px; margin: 28px 0 0; padding-left: 16px; border-left: 2px solid var(--dg-warm-stroke); color: var(--dg-ink); line-height: 1.7; font-size: 1rem; }
+
+.work { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 32px; align-items: start; margin-top: 32px; }
+.chips { list-style: none; display: flex; flex-wrap: wrap; gap: 10px; padding: 0; margin: 0; }
+.chips li { min-width: 0; max-width: 100%; }
+.chips li a { display: block; padding: 9px 16px; border-radius: 999px; font-size: .9rem; border: 1px solid var(--dg-btn-border); background: var(--dg-btn-bg); color: var(--dg-ink); text-decoration: none; transition: transform .2s; }
+.chips li a:hover { transform: translateY(-1px); }
+.code { margin: 0; min-width: 0; }
+.code pre {
+  margin: 0; padding: 20px 22px; border-radius: 18px; overflow-x: auto;
+  background: var(--dg-code-bg); border: 1px solid var(--dg-surface-stroke);
+  font: 13px/1.7 var(--vp-font-family-mono); color: var(--dg-ink);
+}
+.code pre:focus-visible { outline: 2px solid var(--vp-c-brand-1); outline-offset: 2px; }
+.code code { font: inherit; background: transparent; padding: 0; color: inherit; }
+.code .k { color: var(--vp-c-brand-1); }
+.code .v { color: var(--dg-ink); }
+.code .p { color: var(--dg-muted); }
+.code figcaption { margin-top: 10px; font-size: .85rem; line-height: 1.6; color: var(--dg-muted); }
+.more { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 24px 0 0; }
+.more a { color: var(--vp-c-brand-1); text-decoration: none; font-weight: 500; }
+.more a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.doors { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 32px; }
+.door { display: flex; flex-direction: column; gap: 10px; }
+.door h3 { margin: 0; }
+.time { font-size: .82rem; font-weight: 500; color: var(--vp-c-brand-1); }
+.door:first-child { background: linear-gradient(135deg, var(--dg-warm-fill), var(--dg-rose-fill)); border-color: var(--dg-warm-stroke); }
 
 @media (max-width: 959px) { .dg { padding-inline: 0; } }
+@media (max-width: 880px) { .work { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
 @media (max-width: 800px) {
-  .points { grid-template-columns: minmax(0, 1fr); gap: 40px; padding: 64px 0; }
+  .proof, .doors { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   .hero { padding: 72px 0 90px; }
   .wide { padding-top: 64px; }
-  .quote { margin-top: 64px; padding-top: 64px; }
+  .wide + .wide { margin-top: 48px; }
   .dg { padding-bottom: 80px; }
 }
 @media (max-width: 480px) {
@@ -150,23 +230,13 @@ const kinds = ['Ship a change from an issue', 'Research and commit a sourced rep
   .lede { margin-top: 28px; }
   .cta { margin-top: 36px; }
   .cta .btn { flex: 1 1 140px; }
+  .card, .door { padding: 22px; border-radius: 18px; }
+  .code pre { padding: 16px; font-size: 12px; }
 }
-@media (prefers-reduced-motion: reduce) { .dg .btn { transition: none; } .dg .btn:hover { transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .dg .btn, .card, .door, .chips li a { transition: none; }
+  .dg .btn:hover, .card:hover, .door:hover, .chips li a:hover { transform: none; }
+}
 /* Gradient text disappears in forced-colours mode; fall back to system text. */
 @media (forced-colors: active) { .hero h1 em, .wide h2 em { background: none; color: CanvasText; } }
-
-.chips { list-style: none; display: flex; flex-wrap: wrap; gap: 10px; padding: 0; margin: 28px 0 8px; }
-.chips li a { display: block; padding: 9px 16px; border-radius: 999px; font-size: .9rem; border: 1px solid var(--dg-btn-border); background: var(--dg-btn-bg); color: var(--dg-ink); text-decoration: none; transition: transform .2s; }
-.chips li a:hover { transform: translateY(-1px); }
-.more { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 20px 0 0; }
-.more a, .status a { color: var(--vp-c-brand-1); text-decoration: none; font-weight: 500; }
-.more a:hover, .status a:hover { text-decoration: underline; text-underline-offset: 3px; }
-.proof { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 32px; }
-.card { display: block; padding: 26px; border-radius: 22px; border: 1px solid var(--vp-c-divider); background: var(--dg-btn-bg); text-decoration: none; color: inherit; transition: transform .2s, box-shadow .2s; }
-.card:hover { transform: translateY(-2px); box-shadow: 0 14px 34px -18px var(--dg-btn-shadow); }
-.card code { font: 500 .72rem var(--vp-font-family-mono); color: var(--vp-c-brand-1); background: transparent; padding: 0; }
-.card h3 { font-family: var(--font-display); font-weight: 400; font-size: 1.6rem; line-height: 1.1; margin: 12px 0 10px; letter-spacing: -0.01em; }
-.card p { margin: 0; color: var(--dg-muted); line-height: 1.7; font-size: .95rem; }
-@media (max-width: 800px) { .proof { grid-template-columns: minmax(0, 1fr); } }
-@media (prefers-reduced-motion: reduce) { .card, .card:hover, .chips li a, .chips li a:hover { transition: none; transform: none; } }
 </style>

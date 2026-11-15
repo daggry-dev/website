@@ -1,5 +1,9 @@
 # Project profile
 
+*Reference*
+
+For the idea, read [Verify a run](/guide/how-to/verify-a-run).
+
 The project profile, `.daggry/profile.yaml`, is a repository's verification policy. This page defines its shape, the rules of the strict reader, and which files the reader accepts and refuses. It is for people who set up a repository for Daggry. For the step that uses it, see [Workflow schema](/reference/workflow-schema).
 
 The profiles on this page are illustrative.
@@ -71,9 +75,9 @@ With the plan from [Kinds and schemas](/reference/kinds), a passing `tests/c1-ex
 
 The runner reads the profile from the base commit, never from the head or the working tree. A step that edits the profile changes nothing: `.daggry/**` is protected, the runner puts the edit back, the control plane rejects it, and the command comes from the base commit. No run and no grant can write the profile.
 
-The red proof also uses the profile. The runner overlays a test step's new test paths on a worktree of the base commit and runs the base profile's `verify.test` there. See [Kinds and schemas](/reference/kinds).
+The red proof also uses the profile. The runner overlays a test step's new test paths on a clean copy of the base commit and runs the base profile's `verify.test` there. See [Kinds and schemas](/reference/kinds).
 
-The `verify` step measures as a different unix user, on a fresh worktree of the sealed commit, after the agent process has ended. When it cannot switch user, it measures nothing and the step fails with ``the verify step could not switch to a different unix user: <cause>; nothing was measured``.
+The `verify` step measures as a different unix user, on a clean copy of the sealed commit, after the agent process has ended. When it cannot switch user, it measures nothing and the step fails with ``the verify step could not switch to a different unix user: <cause>; nothing was measured``.
 
 ## Strict reader rules
 
@@ -169,7 +173,7 @@ verify:
 
 ## Limits
 
-The reader accepts `verify.test` only. The profile holds one test command. A lint command, a coverage threshold and further commands are planned; see the [Roadmap](/roadmap).
+The reader accepts `verify.test` only. The profile holds one test command. For what comes next, see the [Roadmap](/roadmap).
 
 A step that tries to rewrite the profile changes nothing. In this workflow, the `build` step overwrites the profile so that verification would fail. The run still succeeds, because the command comes from the base commit.
 

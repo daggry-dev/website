@@ -1,146 +1,88 @@
 # Design a workflow
 
-This page shows you how to turn a kind of work into a workflow graph, before you write any YAML. It is for anyone who wants Daggry to do work that the [workflow patterns](/guide/how-to/workflow-patterns) do not cover. The method has six decisions and ends with a worked example that is not software delivery.
+If you write a workflow file first and think later, you end up with steps that nothing checks. Design on paper first: decide what passes between steps, what code can check, and where you decide. This page gives you six decisions in order and ends with a worked example that is not software delivery.
 
-The example is illustrative. It is valid against the [workflow schema](/reference/workflow-schema), and `engine: <engine>` names the coding-agent engine a step uses.
+Before you start, pick one kind of work that you repeat, and one finished example of it. You must be able to say what a good result looks like. If you cannot, the workflow has nothing to check.
 
 ## The method in one list
 
-Make these decisions in order. Each one narrows the next.
+Each decision narrows the next.
 
-1. List the handovers.
-2. Split what code can check from what a person approves.
+1. List what passes from step to step.
+2. Split what code can check from what you approve.
 3. Pick a step kind for each piece of work.
-4. Choose the gate and the loop bounds.
-5. Set the scope of each step.
+4. Choose the gate and the loop limit.
+5. Set what each step may write.
 6. Place the human waits.
 
-Then write the file with [Write a workflow](/guide/how-to/write-a-workflow).
+Then write the file with [Write a workflow](/guide/how-to/write-a-workflow). The agent never changes the file you design. See [Work graphs](/guide/concepts/workflows).
 
-## Before you start
+## 1. List what passes from step to step
 
-Pick one kind of work that you repeat, and one finished example of it. You need to be able to say what a good result looks like. If you cannot, the workflow has nothing to check.
+Write each handover as a sentence: "The request becomes a list of items." "Each item becomes a file." "The files become a pull request." Then name the artifact that crosses it.
 
-Daggry runs each workflow as a fixed graph. You decide the graph, and the run decides how many iterations, which iterations repeat and when it waits. An agent never changes the graph. See [Work graphs](/guide/concepts/workflows).
+- A list of things to do is a `plan`. A loop can walk its criteria.
+- Files in the repository are a `change`.
+- A decision by a person is an `approval`, sealed when someone runs `daggry approve`.
 
-## 1. List the handovers
+Stop when the last handover is something you can accept or reject. For most work that is a pull request.
 
-A handover is a point where one piece of work gives something to the next. Write them as a sentence each: "The request becomes a list of items." "Each item becomes a file." "The files become a pull request."
+## 2. Split what code can check from what you approve
 
-For each handover, name the artifact that crosses it:
+For each handover, ask whether a script can say yes or no. A script can check that a file exists, a count matches, every link resolves, a field is present or a build passes. A script cannot say whether prose reads well or a plan is the right plan.
 
-- If it is a list of things to do, it is a `plan`. A loop can walk its criteria.
-- If it is files in the repository, it is a `change`.
-- If it is a decision by a person, it is an `approval`, sealed when someone runs `daggry approve`.
+- If code can decide it, put it in your `verify.test` command. A gate can read the result.
+- If only a person can decide it, make it a `human` step.
+- If an agent can do it but nothing can check it, keep it small and put a person after it.
 
-Stop listing when the last handover is something you can accept or reject. For most work that is a pull request.
-
-## 2. Split what code can check from what a person approves
-
-For each handover, ask: can a script say yes or no? A script can check a file exists, a count matches, every link resolves, a field is present or a build passes. A script cannot say whether prose reads well or a plan is the right plan.
-
-| If | Then |
-|---|---|
-| Code can decide it | Make it a check in your `verify.test` command. A gate can read the result. |
-| Only a person can decide it | Make it a `human` step. |
-| An agent can do it but nothing can check it | Keep it small and put a person after it. |
-
-Gates read only `derived` facts, which code computed. A gate never reads what an agent claims, so every pass or fail that moves the run must come from a check you wrote. See [Gate expressions](/reference/gates).
-
-Write the check as a script in the repository. The `verify` step runs it from the base commit, so no step can weaken it. See [Project profile](/reference/profile).
+Gates read only facts that code computed, never what an agent claims. So every pass or fail that moves the run must come from a check you wrote. Write the check as a script in the repository. The `verify` step runs it from the base commit, so no step can weaken it. See [Project profile](/reference/profile).
 
 ## 3. Pick a step kind for each piece of work
 
-| The work is | Use |
-|---|---|
-| Judgment or writing | `agent` |
-| A fixed script, such as a scan or a build | `command` |
-| Running your check on the sealed result | `verify` |
-| A decision by a person | `human` |
-| Opening the pull request | `effect` with `do: open-pr` |
+Use an `agent` step for judgment or writing, and a `command` step for a fixed script such as a scan or a build. Use `verify` to run your check on the sealed result, `human` for a decision by a person, and `effect` with `do: open-pr` to open the pull request.
 
 Put the judgment in an `agent` step and the checking in `verify`. Do not ask an agent to check its own work.
 
-## 4. Choose the gate and the loop bounds
+## 4. Choose the gate and the loop limit
 
-Use a loop when the same step runs once for each item in a list. The list is the `criteria` of a sealed `plan`, so the first step of such a workflow is an `agent` step that writes the plan, and a `human` step follows to approve it.
+Use a loop when the same step runs once for each item in a list. The list is the `criteria` of a sealed `plan`. The workflow therefore starts with an `agent` step that writes the plan, and a `human` step follows to approve it. If the work has no list, skip the loop: one agent step followed by `verify` is a complete workflow.
 
-Set the loop keys with these rules.
+Set the loop keys as follows.
 
-| Key | How to choose it |
-|---|---|
-| `over` | `plan`. |
-| `until` | `verdict.all_covered` when each item must have a passing check. |
-| `max` | The most items you expect, plus headroom for repeats. It bounds the whole loop, not each item. |
-| `on_exhausted` | A `human` step if a person can unstick the work. `fail` if a run that runs out should simply stop. |
+- `over` is `plan`.
+- `until` is `verdict.all_covered` when each item must have a passing check.
+- `max` is the most items you expect, plus room for repeats. It limits the whole loop, not each item.
+- `on_exhausted` is a `human` step if a person can unstick the work, or `fail` if a run that runs out should stop.
 
-An iteration is red when its `verify` step fails. The same item repeats. Daggry spends one iteration of `max` on each attempt, so a stubborn item uses the headroom. When `max` is spent, the run fails or waits at the `human` step you named.
+A failed `verify` makes the iteration red, and the same item repeats. Each try spends one iteration of `max`, so a stubborn item uses the spare room. When `max` is spent, the run fails or waits at the `human` step you named.
 
-If the work has no list, do not use a loop. A single agent step followed by `verify` is a complete graph.
+## 5. Set what each step may write
 
-## 5. Set the scope of each step
-
-A step's `scope` is the set of paths it may write. Give each step the least it needs.
-
-| The step | Scope |
-|---|---|
-| Reads and plans | `nothing` |
-| Writes one kind of file | A glob list, such as `["translations/**"]` |
-| Runs a script that writes output | A glob list for that output |
-| Anything else | Avoid `anywhere`. Use it only when you cannot name the paths. |
-
-No scope can include a [protected path](/guide/concepts/protection), such as `.daggry/**`.
+A step's `scope` is the set of paths it may write. Give each step the least it needs. A step that reads and plans gets `nothing`. A step that writes one kind of file gets a glob list such as `["translations/**"]`. Use `anywhere` only when you cannot name the paths. No scope can include a [protected path](/guide/concepts/protection), such as `.daggry/**`.
 
 ## 6. Place the human waits
 
 Put a `human` step where a decision changes what happens next, and nowhere else. Each wait stops the run until someone acts.
 
-| Place a wait | `waiting_for` |
-|---|---|
-| After the plan, before work starts | `approval` |
-| After the work, before it leaves the repository | `input-needed` |
-| As the `on_exhausted` target of a loop | `input-needed` |
-
-An `approval` binds to the sealed `plan`. An `input-needed` binds to the latest sealed `change`, so place it after a step that produces one.
+Wait with `approval` after the plan and before work starts. Wait with `input-needed` after the work and before it leaves the repository, and as the `on_exhausted` target of a loop. An `approval` binds to the sealed `plan`. An `input-needed` binds to the latest sealed `change`, so place it after a step that produces one.
 
 ## Worked example: translate documentation
 
-The work: translate the pages named in an issue into Danish. A person owns the tone. Code can check structure.
+The work: translate the pages named in an issue into Danish. A person owns the tone, and code can check structure. This example and its file are illustrative, and `engine: <engine>` names the coding-agent engine a step uses.
 
-### Handovers
+The handovers are three. The issue becomes a list of pages, which is a `plan`. Each page becomes a translated file, which is a `change`. All the files become a pull request.
 
-1. The issue becomes a list of pages to translate. That is a `plan`.
-2. Each page becomes a translated file. That is a `change`.
-3. All translated files become a pull request.
+Code and people split the questions as follows.
 
-### Code checks and human approvals
+- A person decides whether the list of pages is right, at the plan.
+- Code decides whether each translated file exists, has the same headings and links as the source, and uses the approved glossary terms.
+- A person decides whether it reads well in Danish, before the pull request.
 
-| Question | Who decides |
-|---|---|
-| Is the list of pages right? | A person, at the plan. |
-| Does each translated file exist? | Code. |
-| Does it have the same headings and the same links as the source? | Code. |
-| Does it use the approved glossary terms? | Code. |
-| Does it read well in Danish? | A person, before the pull request. |
+The check is a script, `scripts/check-translation.sh`, named in `verify.test`. It reports one passing test for each translated page, named with the page's criterion id. The exact lines it prints are in the [output contract](/reference/profile#output-contract).
 
-The check is a script, `scripts/check-translation.sh`, named in `verify.test` in the profile. It reports one passing test for each translated page, and names the test with the page's criterion id. The exact lines the command prints, with a shell example, are in the [output contract](/reference/profile#output-contract).
+The loop walks the plan. One `agent` step translates the current page and one `verify` step runs the check. The gate is `verdict.all_covered`. If an issue names at most 12 pages, `max: 16` leaves room for four repeats. The plan step writes nothing, and the translate step writes only `translations/da/**`.
 
-### Step kinds, gate and bounds
-
-- A `plan` step with an `agent` lists the pages, one criterion each.
-- A loop over the plan has one `agent` step to translate the current page and one `verify` step to run the check.
-- The gate is `verdict.all_covered`: every page has a passing check.
-- Assume an issue names at most 12 pages. Then `max: 16` leaves room for four repeats.
-- When `max` is spent, a person decides at `stuck`.
-
-### Scope and waits
-
-- The plan step has scope `nothing`.
-- The translate step writes only `translations/da/**`.
-- The waits are an approval after the plan, a review of the files after the loop, and `stuck` for exhaustion.
-
-### The file
-
+::: details The complete file
 ```yaml
 steps:
   - id: plan
@@ -183,8 +125,9 @@ steps:
     kind: effect
     do: open-pr
 ```
+:::
 
-`stuck` runs only when the loop runs out, because a loop's `on_exhausted` target is skipped in normal flow. `review` is on the normal path, so the run always waits there before the pull request.
+`stuck` runs only when the loop runs out. `review` is on the normal path, so the run always waits there before the pull request.
 
 ## Check your design
 
@@ -194,9 +137,9 @@ Before you write the file, answer each question.
 - Does a script check every pass or fail that moves the run?
 - Is every `max` above the number of items you expect?
 - Does every step have the smallest scope that works?
-- Does a person decide at the points where code cannot?
+- Do you decide at the points where code cannot?
 
 ## Next steps
 
 - To write the file, read [Write a workflow](/guide/how-to/write-a-workflow).
-- To compare your design with ready-made graphs, read [Workflow patterns](/guide/how-to/workflow-patterns).
+- To compare your design with ready-made files, read [Workflow patterns](/guide/how-to/workflow-patterns).

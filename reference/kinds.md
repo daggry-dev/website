@@ -1,5 +1,9 @@
 # Kinds and schemas
 
+*Reference*
+
+For the idea, read [Why you can trust a run](/guide/concepts/trust).
+
 Daggry has eight kinds of sealed artifact. This page lists each kind's body fields, its constraints, a valid example, who seals it, and the validators that judge measurements and plans. It is for people who write workflows, gates or tools that read the log. The envelope around every body is in [Envelope](/reference/envelope).
 
 The example bodies on this page are illustrative. Each is valid under the schema and the policy rules that follow it. Digests shown as short strings such as `ab` pass the schemas, which require only a non-empty string. Real digests are 64 lowercase hex digits.
@@ -849,7 +853,7 @@ Every `meta` value is `derived`, because code stamps it. Any field a schema does
 
 ## Validators
 
-A validator is code that turns sealed input artifacts into a verdict: a status, findings and derived facts. It reads nothing but those inputs, and the control plane seals the result as a `verdict`. The same code runs as a preview in the pod and as the judge in the control plane. Only the judge's verdicts open gates. See [Sealed evidence](/guide/concepts/evidence).
+A validator is code that turns sealed input artifacts into a verdict: a status, findings and derived facts. It reads nothing but those inputs, and the control plane seals the result as a `verdict`. The same code runs as a preview in the pod and as the judge in the control plane. Only the judge's verdicts open gates. See [Why you can trust a run](/guide/concepts/trust).
 
 ### Validator output
 
@@ -904,7 +908,7 @@ One malformed measurement makes every validator that reads measurements return `
 
 | Part | Where | What | Counts as evidence |
 |---|---|---|---|
-| measure | The `verify` step, in the job's pod. | Runs the project's test command on a fresh `git worktree` of the sealed commit, as a different unix user, after the agent process has ended. Reduces the output to a measurement. | Yes, once the control plane seals it as a `measurement`. |
+| measure | The `verify` step, in the job's pod. | Runs the project's test command on a clean copy of the sealed commit, as a different unix user, after the agent process has ended. Reduces the output to a measurement. | Yes, once the control plane seals it as a `measurement`. |
 | preview | The pod, through the `validate` tool. | Runs the same validators for fast feedback. Answers `status` and `findings` only. | No. Nothing is sealed. |
 | judge | The control plane. | Runs validators over the small sealed records and seals a `verdict` whose parents are the inputs. | Yes. The only verdicts that open gates. |
 

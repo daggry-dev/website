@@ -25,9 +25,13 @@
   .vp-doc > div > .dgm, .dg .wide > .dgm { margin-inline: -24px; border-radius: 0; border-inline: 0; padding: 22px 0; }
 }
 
-/* SVGs scale with the viewBox down to 640px wide, where 11px labels render at
-   about 7.3px. Below that the frame scrolls instead of shrinking further. */
-.dgm svg { width: 100%; height: auto; display: block; min-width: 820px; }
+/* The wide SVG diagrams (the direct child of a ScrollFrame) scale with their
+   viewBox down to 820px wide, where 11px labels render at about 9.4px. Below
+   that the frame scrolls instead of shrinking further. Only those SVGs: the
+   small icons and arrows inside the HTML diagrams keep their own size. */
+.dgm .sf-scroll > svg { width: 100%; height: auto; display: block; min-width: 820px; }
+.dg-arrow, .dg-icon { min-width: 0; }
+.dg-icon { width: 1em; height: 1em; flex: none; }
 
 /* Scroll frame (ScrollFrame.vue) ----------------------------------------- */
 .sf { position: relative; }
@@ -59,3 +63,42 @@
 .dgm .dash { stroke-dasharray: 4 4; }
 .dgm .arrow { fill: var(--dg-edge); }
 .dgm .arrow.hot { fill: var(--dg-edge-hot); }
+
+/* HTML explainer diagrams (HowItWorks, SealFlow, CheckFlow, LoopGate, ...) ---
+   Real text in cards, so they reflow instead of scrolling: a row on wide
+   panels, a column on narrow ones. Every width is min-width: 0 so long words
+   wrap and nothing pushes the page sideways at 320px. */
+.dgm .dg-body { padding: 0 var(--dgm-pad); min-width: 0; }
+.dgm .dg-flow { display: flex; align-items: stretch; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.dgm .dg-flow > li { display: flex; align-items: stretch; gap: 8px; flex: 1 1 0; min-width: 0; margin: 0; }
+.dgm .dg-flow > li > .dg-node { flex: 1 1 auto; }
+.dg-node {
+  min-width: 0; display: flex; flex-direction: column; gap: 4px;
+  padding: 14px 16px; border-radius: 14px; overflow-wrap: anywhere;
+  border: 1px solid var(--dg-surface-stroke); background: var(--dg-surface); color: var(--dg-ink);
+}
+.dg-node.warm { background: var(--dg-warm-fill); border-color: var(--dg-warm-stroke); }
+.dg-node.cool { background: var(--dg-cool-fill); border-color: var(--dg-cool-stroke); }
+.dg-node.rose { background: var(--dg-rose-fill); border-color: var(--dg-rose-stroke); }
+.dg-node.ok { background: var(--dg-ok-fill); border-color: var(--dg-ok-stroke); }
+.dg-node b { font-size: 14px; line-height: 1.35; font-weight: 600; }
+.dg-node span, .dg-node p { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--dg-muted); }
+.dg-who { font: 500 11px var(--vp-font-family-mono); color: var(--dg-muted); }
+.dg-mono { font-family: var(--vp-font-family-mono); font-size: 12px; }
+.dg-arrow { align-self: center; flex: none; width: 18px; height: 18px; color: var(--dg-edge); }
+.dg-arrow.hot { color: var(--dg-edge-hot); }
+.dg-chip {
+  display: inline-flex; align-items: center; gap: 5px; max-width: 100%;
+  padding: 2px 9px; border-radius: 999px; font: 500 11px/1.6 var(--vp-font-family-mono);
+  border: 1px solid var(--dg-surface-stroke); background: var(--dg-bubble); color: var(--dg-muted);
+  overflow-wrap: anywhere;
+}
+.dg-chip.ok { color: var(--dg-ok); background: var(--dg-ok-fill); border-color: var(--dg-ok-stroke); }
+.dg-chip.no { color: var(--dg-no); background: var(--dg-rose-fill); border-color: var(--dg-rose-stroke); }
+.dg-chip svg { width: 12px; height: 12px; flex: none; }
+@container dgm (max-width: 720px) {
+  .dgm .dg-flow { flex-direction: column; gap: 6px; }
+  .dgm .dg-flow > li { flex: none; flex-direction: column; gap: 6px; }
+  .dgm .dg-flow .dg-arrow { transform: rotate(90deg); }
+}
+@media (forced-colors: active) { .dg-node, .dg-chip { border-color: CanvasText; } }

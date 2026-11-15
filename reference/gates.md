@@ -1,5 +1,9 @@
 # Gate expressions
 
+*Reference*
+
+For the idea, read [Work graphs](/guide/concepts/workflows).
+
 A gate is an expression in a loop's `until` that reads facts from sealed evidence. This page defines the grammar, the contexts, every read form, the fact classes and the functions. It is for people who write loops in workflows. For where `until` sits, see [Workflow schema](/reference/workflow-schema). For the facts that validators emit, see [Kinds and schemas](/reference/kinds).
 
 The expressions on this page are illustrative. Where an example is refused, the page names the refusal.
