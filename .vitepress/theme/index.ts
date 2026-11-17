@@ -1,3 +1,4 @@
+import { h } from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import type { Theme } from 'vitepress'
 import '@fontsource-variable/inter'
@@ -19,9 +20,12 @@ import CheckFlow from './CheckFlow.vue'
 import LoopGate from './LoopGate.vue'
 import HumanWait from './HumanWait.vue'
 import Boundary from './Boundary.vue'
+import Notice from './Notice.vue'
+import Signup from './Signup.vue'
 
 export default {
   extends: DefaultTheme,
+  Layout: () => h(DefaultTheme.Layout, null, { 'layout-top': () => h(Notice) }),
   enhanceApp({ app }) {
     app.component('Landing', Landing)
     app.component('Overnight', Overnight)
@@ -36,5 +40,6 @@ export default {
     app.component('LoopGate', LoopGate)
     app.component('HumanWait', HumanWait)
     app.component('Boundary', Boundary)
+    app.component('Signup', Signup)
   },
 } satisfies Theme

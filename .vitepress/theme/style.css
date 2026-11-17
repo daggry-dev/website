@@ -266,3 +266,6 @@ html .Layout .VPLocalNav {
 html.dark .VPFooter .sponsor-light { display: none; }
 html.dark .VPFooter .sponsor-dark { display: block; }
 .VPFooter .copyright a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Private-preview notice (layout-top slot) pushes the fixed nav down. */
+:root { --vp-layout-top-height: 36px; }

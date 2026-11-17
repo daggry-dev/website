@@ -53,6 +53,8 @@ const doors = [
       </div>
     </section>
 
+    <Signup />
+
     <section class="wide">
       <p class="eyebrow">The problem</p>
       <h2>A night of work, and <em>only its word</em> for it.</h2>
