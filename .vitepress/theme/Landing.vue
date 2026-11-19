@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { withBase } from 'vitepress'
+import { SIGNUP_OPEN } from './features'
 
 const proof = [
   { t: 'Nobody edits it quietly', d: 'Every result is linked to the one before and signed. Change one byte later and daggry verify shows where.', l: '/guide/concepts/trust' },
@@ -53,7 +54,7 @@ const doors = [
       </div>
     </section>
 
-    <Signup />
+    <Signup v-if="SIGNUP_OPEN" />
 
     <section class="wide">
       <p class="eyebrow">The problem</p>

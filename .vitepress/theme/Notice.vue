@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { withBase } from 'vitepress'
+import { SIGNUP_OPEN } from './features'
 </script>
 
 <template>
   <div class="notice" role="note">
     <span class="dot" aria-hidden="true"></span>
     <span class="txt"><strong>Private preview.</strong> Daggry is not publicly available yet.</span>
-    <a class="go" :href="withBase('/#signup')">Join the public beta list</a>
+    <a v-if="SIGNUP_OPEN" class="go" :href="withBase('/#signup')">Join the public beta list</a>
   </div>
 </template>
 
