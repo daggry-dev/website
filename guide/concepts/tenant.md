@@ -39,7 +39,7 @@ The tenant config is one of three documents that shape a run. Each answers a dif
 | Document | The question it answers | Example |
 |---|---|---|
 | Tenant config | How does this factory work? | At most four job attempts at a time. Plans need approval. This repository gets the delivery workflow. |
-| Project config | What is true of this repository? | This check is the verification evidence. These paths are protected. |
+| Project config | What is true of this repository? | These are its areas. This check is the verification evidence. These paths are protected. |
 | Workflow | What is this piece of work? | Write a plan, wait for approval, then a test and a fix for each item. |
 
 A setting that holds for every repository belongs to the tenant. A setting that is true of one repository whatever the work, and whichever factory works on it, belongs to the project. A decision about one repository, such as which workflows run on it, belongs to the tenant. A setting that holds for one kind of work belongs to the workflow. See [Project config](/reference/project-config) and the [Workflow schema](/reference/workflow-schema).
@@ -50,7 +50,7 @@ The three documents are layered. The tenant config is the outer layer, the proje
 
 The rule has two halves.
 
-- **An inner layer can narrow.** A project can protect more paths and name the areas a run can be limited to. A workflow can give a step a smaller scope inside that limit.
+- **An inner layer can narrow.** A project can protect more paths. A workflow can give a step a smaller scope inside the scope of the run. The scope of a run is the tenant's choice among the areas the project defines: the project says which areas exist, and never which of them a run may change.
 - **An inner layer never widens.** A project cannot choose a workflow, an engine or an approval rule, and a workflow cannot open a path the project protects or replace the project's canonical check. Where two layers disagree, the outer one wins: the tenant's rule over the project's, and the project's over the workflow's.
 
 An extension key follows the same rule. It narrows or adds, and never widens.

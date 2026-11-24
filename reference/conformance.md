@@ -96,6 +96,7 @@ A factory runs work and seals what the work produced.
 - Reads a workflow by the [Workflow schema](/reference/workflow-schema): the same keys, the same refusals, the same strict YAML subset.
 - Reads a gate by the grammar in [Gate expressions](/reference/gates), and lets a gate read derived fields only.
 - Reads a [Project config](/reference/project-config) from the base commit, and refuses an unknown major.
+- Looks up every area name that a step, the tenant config or a run request gives in the project config of the base commit, and refuses the run when a name is unknown.
 - Reads a [Tenant config](/reference/tenant-config), and refuses an unknown major.
 - Applies the precedence tenant, then project, then workflow, and lets only a person widen a rule.
 - Follows the extension rule in all three documents: ignores and preserves a namespaced key it does not know, and refuses an unknown key without a namespace.
@@ -109,7 +110,7 @@ The standard says how to write things down. It does not say what a factory must 
 
 | Policy | Daggry's choice | Read more |
 |---|---|---|
-| The default protected paths | The always-protected set, such as `.daggry/**` and agent instruction files. | [Protected paths](/reference/protected-paths) |
+| The always-protected paths | The always-protected set, such as `.daggry/**` and agent instruction files. | [Protected paths](/reference/protected-paths) |
 | The validators a platform runs and admits | The built-in validators. | [Kinds and schemas](/reference/kinds#validators) |
 | A platform's own kinds | The four kinds in the `daggry` namespace. | [Kinds and schemas](/reference/kinds) |
 | The values in a tenant config | The limits, the roster, the engines and the approval points. | [Tenant config](/reference/tenant-config) |

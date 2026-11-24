@@ -29,6 +29,7 @@ These twelve words cover most of what you read on this site. The table after the
 |---|---|---|
 | agent runner | The module that runs agentic or model-generated work: it starts a coding agent through an engine adapter. Whatever the agent hands in is a claim. | [The modules](/guide/concepts/modules) |
 | approval | The moment a person decides, and the sealed artifact that records it. The artifact binds a person's decision to one digest: the pending plan or change, or the frozen file digest for an unfreeze. | [Kinds and schemas](/reference/kinds) |
+| area | A named group of paths in a repository, defined in the `areas` section of the project config, with an optional role and description. A step, a tenant or a run request names an area to set a scope, and the project names one to protect it. | [Project config](/reference/project-config#areas) |
 | artifact | A sealed value in the one envelope, with a kind and parents. | [Envelope](/reference/envelope) |
 | attempt | One try of a job. A takeover after a lapsed lease, or an `approve` at a `human` step, starts a new attempt. | [Work graphs](/guide/concepts/workflows) |
 | base | The commit a run starts from. Also the label of a measurement of that commit. | [Kinds and schemas](/reference/kinds) |
@@ -78,15 +79,15 @@ These twelve words cover most of what you read on this site. The table after the
 | pod | The throwaway pod a job runs in. | [Where it runs](/guide/concepts/architecture) |
 | prev | The link of the entry before this one in the chain. | [Envelope](/reference/envelope) |
 | preview | The part of verification that runs in the pod for fast feedback: validators, or a check the project exposes to the agent. A preview is never evidence. | [Kinds and schemas](/reference/kinds) |
-| profile | The file `.daggry/profile.yaml`, which holds the repository's verification policy. | [Project profile](/reference/profile) |
-| project config | The standard document for what is true of one repository: what it is, its checks, its one canonical check, its areas and its protected paths. It is the deterministic interface between a project and a factory, and names no workflow. It lives in the repository and is read from the base commit. | [Project config](/reference/project-config) |
-| protected path | A path that an agent can never change, whatever a workflow says. | [Protected paths](/reference/protected-paths) |
+| profile | The earlier name of the project config: the file `.daggry/profile.yaml`, which holds one test command. | [Project config](/reference/project-config#today) |
+| project config | The standard document for what is true of one repository: what it is, its areas, its checks, its one canonical check and the paths it protects. It is the deterministic interface between a project and a factory, and names no workflow. It lives in the repository and is read from the base commit. | [Project config](/reference/project-config) |
+| protected path | A path that no step can change, whatever its scope and whatever a workflow says: the always-protected set, plus the paths a project config adds. | [Protected paths](/reference/protected-paths) |
 | result contract | The named, published format of a check's output and the parser that reads it, such as `exit-code`, `libtest-lines` or `junit-xml`. | [Project config](/reference/project-config#result-contracts) |
 | red proof | A test that fails on the base commit, which shows that the test says something about the change. | [Kinds and schemas](/reference/kinds) |
 | run | One execution of a workflow for a work item. | [Work graphs](/guide/concepts/workflows) |
 | run lock | The sealed record of what a run pinned at start: validators, boundary rules, image and workflow. | [Kinds and schemas](/reference/kinds) |
 | runner | The program in the pod that runs a job's steps and the engine, and checks the work locally. | [Deploy Daggry](/guide/how-to/deploy) |
-| scope | What a step may write: `nothing`, a list of globs, or `anywhere` except protected paths and CI configuration folders such as `.github/**`. | [Workflow schema](/reference/workflow-schema) |
+| scope | The set of paths one step or one run may change. A step's scope is `nothing`, a list of globs and area references, or `anywhere` except protected paths and CI configuration folders such as `.github/**`. A run's scope is the areas the tenant or the run request names. | [Protected paths](/reference/protected-paths#scope) |
 | seal | The control plane's signature on an artifact. It says code validated the artifact, not that the artifact is true. | [Why you can trust a run](/guide/concepts/trust) |
 | step | A node of a workflow. Its kind is `command`, `agent`, `verify`, `human` or `effect`. | [Workflow schema](/reference/workflow-schema) |
 | tenant | A party whose runs an installation hosts, called a team or user elsewhere on the site. Each tenant has one chain. | [Envelope](/reference/envelope) |

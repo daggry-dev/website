@@ -14,7 +14,7 @@ The diagram shows what an agent can write, which is the files its step is scoped
 - **Constrains.** The workflow, each step's scope (the files it may write) and the protected set. These live outside the pod. The conductor (the module that orders the steps) reads the workflow, and the control plane (the module that holds the keys, seals and judges) checks scope and the protected set.
 - **Judges.** Tests written in earlier iterations, the project's checks and the validators. These come from the commit the run started from and from the control plane, never from the agent's change.
 
-For the exact list of protected paths, see [Protected paths](/reference/protected-paths).
+A project can add paths of its own to the protected set. For the exact list of protected paths and what a project adds, see [Protected paths](/reference/protected-paths).
 
 ## Frozen tests
 

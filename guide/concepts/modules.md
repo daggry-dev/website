@@ -55,7 +55,7 @@ The running modules never call each other through private formats. They read and
 
 - **Workflow.** The work, as steps. The conductor reads it. See [Work graphs](/guide/concepts/workflows).
 - **Evidence.** The sealed records. The control plane writes them, and anyone can verify them. See [Why you can trust a run](/guide/concepts/trust).
-- **Project config.** What is true of one repository: its checks, and the one canonical check whose result is the verification evidence. The runners read it. See [Project config](/reference/project-config).
+- **Project config.** What is true of one repository: its areas, its checks, the one canonical check whose result is the verification evidence, and the paths it protects. The runners read it. See [Project config](/reference/project-config).
 - **Tenant config.** How the factory works: which workflows run on which repository, how they are orchestrated, which agents work and under which rules. The conductor and the control plane read it. See [The tenant defines the factory](/guide/concepts/tenant).
 
 Each document has a published schema, a version and an extension mechanism. See [Open standards](/guide/concepts/standards).
