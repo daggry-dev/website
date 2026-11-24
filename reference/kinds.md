@@ -916,6 +916,6 @@ One malformed measurement makes every validator that reads measurements return `
 | preview | The pod, through the `validate` tool. | Runs the same validators for fast feedback. Answers `status` and `findings` only. | No. Nothing is sealed. |
 | judge | The control plane. | Runs validators over the small sealed records and seals a `verdict` whose parents are the inputs. | Yes. The only verdicts that open gates. |
 
-For the command that `measure` runs and the lines it must print, see [Project profile](/reference/profile#output-contract).
+For the command that `measure` runs and the lines it must print, see [Project config](/reference/project-config#libtest-lines).
 
 The witness rule makes a reviewer's finding gate only when code can confirm what it cites: a quoted line inside a changed hunk of the head, or a failing test that code runs. Any other finding is advice. A finding that cannot be confirmed never accepts work.

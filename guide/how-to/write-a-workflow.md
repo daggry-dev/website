@@ -36,13 +36,7 @@ The set of kinds is closed. A step does one thing, and you combine steps to desc
 
    Each step needs an `id` that is unique in the file. A `command` step needs `run`, the shell line, and `scope`, the paths it may write.
 
-2. Choose a `scope`. It is one of three forms.
-
-   | Value | The step may write |
-   |---|---|
-   | `nothing` | no path |
-   | `anywhere` | every path except protected paths and CI configuration folders such as `.github/**` |
-   | a list of globs, such as `["src/**"]` | paths that match one glob |
+2. Choose a `scope`: `nothing`, `anywhere`, or a list of globs such as `["src/**"]`. For what each value allows, see [Scope](/reference/workflow-schema#scope).
 
    No scope can include a [protected path](/guide/concepts/protection).
 
@@ -86,7 +80,7 @@ A `verify` step measures the last sealed commit in a clean copy of the code. It 
        kind: verify
    ```
 
-2. Make sure the repository's base commit holds the profile. For the file format, see [Project profile](/reference/profile).
+2. Make sure the repository's base commit holds `.daggry/profile.yaml`. For the file format, see [Project config](/reference/project-config#today).
 
    ```yaml
    verify:

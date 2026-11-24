@@ -86,9 +86,9 @@ steps:
 
 A sketch shows steps in order. `[agent]`, `[command]`, `[verify]` and `[effect]` are steps of that kind. `(human)` is a wait for a person. `{ ... }` is a loop that repeats once for each criterion of the sealed plan.
 
-Every pattern that uses `verify` needs a check in the repository's base commit, set in `.daggry/profile.yaml` as `verify.test`. See [Project profile](/reference/profile). A `verify` step is green when that command exits with 0.
+Every pattern that uses `verify` needs a check in the repository's base commit, set in `.daggry/profile.yaml` as `verify.test`. See [Project config](/reference/project-config#today). A `verify` step is green when that command exits with 0.
 
-A loop ends when its `until` gate holds. The gate `verdict.all_covered` holds when every plan criterion has a passing test that carries its id. In a workflow that does not deliver code, your check command reports one passing test for each criterion it accepts, named with the criterion id. The exact lines it prints are in the [output contract](/reference/profile#output-contract).
+A loop ends when its `until` gate holds. The gate `verdict.all_covered` holds when every plan criterion has a passing test that carries its id. In a workflow that does not deliver code, your check command reports one passing test for each criterion it accepts, named with the criterion id. The exact lines it prints are in the [`libtest-lines` contract](/reference/project-config#libtest-lines).
 
 Each loop's `max` limits the iterations of the whole loop. Set it above the number of items you expect.
 

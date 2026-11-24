@@ -64,7 +64,6 @@ export default defineConfig({
           { text: 'Gate expressions', link: '/reference/gates' },
           { text: 'Project config', link: '/reference/project-config' },
           { text: 'Tenant config', link: '/reference/tenant-config' },
-          { text: 'Project profile', link: '/reference/profile' },
           { text: 'Protected paths', link: '/reference/protected-paths' },
         ] },
         { text: 'Standards', items: [
