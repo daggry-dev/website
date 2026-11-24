@@ -148,7 +148,7 @@ Each tenant has one chain of log entries. An entry's link ties it to the entry b
 | link | SHA-256 of the 32 raw bytes of `prev` followed by the 32 raw bytes of the artifact digest. 64 bytes go in. |
 | head | The link of the last entry. |
 
-A signed head kept outside the cluster would let a reader see that entries were dropped from the end of a chain. See the [Roadmap](/roadmap) for its status.
+A signed head kept outside the cluster lets a reader see that entries were dropped from the end of a chain. See the [Roadmap](/roadmap) for its status.
 
 ### Lineage and log
 
@@ -210,12 +210,14 @@ A log entry holds the previous link and one sealed artifact. The next block is t
 
 | Error | Meaning |
 |---|---|
-| `entry <i>: prev does not match the link of the entry before it` | The chain is broken or reordered. |
-| `entry <i>: digest does not match the content` | A covered field changed. |
-| `entry <i>: no public key for key id <id>` | The key id is unknown. |
-| `entry <i>: signature does not verify` | The signature is wrong for this link and key. |
+| `entry <i>: prev does not match the link of the entry before it` | The chain is broken or reordered. An entry was removed, reordered or replaced. |
+| `entry <i>: digest does not match the content` | A covered field changed after the entry was sealed. |
+| `entry <i>: no public key for key id <id>` | The key id is unknown, so the signature cannot be checked. |
+| `entry <i>: signature does not verify` | The signature is wrong for this link and key. The entry was not sealed by the control plane's key. |
 | `entry <i>: <canonicalisation failure>` | A field cannot be written as canonical JSON. |
-| `blob <digest> does not hash to its digest` | A referenced blob changed. |
+| `blob <digest> does not hash to its digest` | A referenced blob changed: a stored file that the log references. |
+
+`<i>` is the position of the entry in the chain, counted from 0.
 
 Error text for the `meta`, number and format rules:
 

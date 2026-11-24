@@ -188,7 +188,7 @@ The command takes no argument. It fetches the chain, the seal public keys and ev
 verified <n> entries, <m> blobs
 ```
 
-On a mismatch it prints a one-line reason to stderr and exits with 1. For the reasons and what each means, see [Verify a run](/guide/how-to/verify-a-run).
+On a mismatch it prints a one-line reason to stderr and exits with 1. For the reasons and what each means, see [Verification errors](/reference/envelope#verification-errors). For the task, see [Verify a run](/guide/how-to/verify-a-run).
 
 This command is not the `verify` step of a workflow.
 

@@ -8,19 +8,11 @@ This page is for anyone who starts runs with `daggry run`. The snippets are illu
 
 The diagram shows the delivery workflow that the section [Add a bounded loop](#add-a-bounded-loop) builds: a plan, your approval, a bounded loop of test, fix and check, and a pull request. Other kinds of work use the same parts in a different order.
 
-A workflow is one YAML file with one key, `steps`: an ordered list of steps and loops. A workflow is a document in the tenant's catalogue, and the tenant decides which repositories it runs on. `daggry run --workflow <file>` is today's way to supply one. See [The tenant defines the factory](/guide/concepts/tenant). Workflows use strict-subset YAML, with no anchors, tags or merge keys. For the ideas behind it, see [Work graphs](/guide/concepts/workflows). To decide what the graph should contain before you write it, see [Design a workflow](/guide/how-to/design-a-workflow). To start from a complete file for a kind of work, see [Workflow patterns](/guide/how-to/workflow-patterns).
+A workflow is one YAML file with one key, `steps`: an ordered list of steps and loops. A workflow is a document in the tenant's catalogue, and the tenant decides which repositories it runs on. `daggry run --workflow <file>` supplies one as a file from your machine. See [The tenant defines the factory](/guide/concepts/tenant), and the [Roadmap](/roadmap) for which way is in use. Workflows use strict-subset YAML, with no anchors, tags or merge keys. For the ideas behind it, see [Work graphs](/guide/concepts/workflows). To decide what the workflow should contain before you write it, see [Design a workflow](/guide/how-to/design-a-workflow). To start from a complete file for a kind of work, see [Workflow patterns](/guide/how-to/workflow-patterns).
 
 ## Step kinds at a glance
 
-The set of kinds is closed. A step does one thing, and you combine steps to describe the work. Nothing in the kinds is specific to code: an `agent` step can draft a report or a triage note, and a `command` step can run any script.
-
-| Kind | Runs in | What it does |
-|---|---|---|
-| `agent` | the pod | A coding-agent session that must deliver named artifact kinds. |
-| `command` | the pod | A shell line, limited by a `scope` of paths it may write. |
-| `verify` | the pod | Runs your check on the sealed commit, in a clean copy of the code. |
-| `human` | nowhere | Releases the pod and waits. `daggry approve` completes it. |
-| `effect` | the control plane | An idempotent side effect, such as opening a pull request. |
+The set of kinds is closed: `agent`, `command`, `verify`, `human` and `effect`. A step does one thing, and you combine steps to describe the work. Nothing in the kinds is specific to code: an `agent` step can draft a report or a triage note, and a `command` step can run any script. For where each kind runs and what it does, see [Steps](/reference/workflow-schema#steps).
 
 ## Write a one-step workflow
 
@@ -66,7 +58,7 @@ An `agent` step runs a coding-agent session. It must deliver the artifact kinds 
 
 ## Add a verify step
 
-A `verify` step measures the last sealed commit in a clean copy of the code. It has no command of its own. It runs the command named in the base commit's `.daggry/profile.yaml`, so a step cannot weaken its own check. The command does not have to run tests: any deterministic check that exits with 0 when the work is good can be the command.
+A `verify` step measures the last sealed commit in a clean copy of the code. It has no command of its own. It runs the project's canonical check, which is the command named in the base commit's `.daggry/profile.yaml`, so a step cannot weaken its own check. The command does not have to run tests: any deterministic check that exits with 0 when the work is good can be the command.
 
 1. Add the step after the work it checks.
 
@@ -80,7 +72,7 @@ A `verify` step measures the last sealed commit in a clean copy of the code. It 
        kind: verify
    ```
 
-2. Make sure the repository's base commit holds `.daggry/profile.yaml`. For the file format, see [Project config](/reference/project-config#today).
+2. Make sure the repository's base commit holds `.daggry/profile.yaml`. For the file format, see [Project config](/reference/project-config#the-profile).
 
    ```yaml
    verify:
@@ -247,11 +239,11 @@ Loops cannot nest.
 
 ## Read the state of a run
 
-A run is one execution of a workflow for a work item. A job is a group of steps that share one pod, and a run is one job by default. An attempt is one try at a job: a killed pod is replaced by a new attempt. A run is `queued`, `running`, `waiting`, `parked`, `succeeded`, `failed` or `stopped`. While it is `waiting`, `daggry status` shows why.
+A run is one execution of a workflow for a work item. A job is a group of steps that share one pod, and a run is one job by default. An attempt is one try at a job: a killed pod is replaced by a new attempt. A run is in one of seven states, listed in [States and reasons](/reference/api#states-and-reasons). While it is `waiting`, `daggry status` shows why.
 
 ## Next steps
 
-- To plan a graph for your own kind of work, read [Design a workflow](/guide/how-to/design-a-workflow).
-- To copy a working graph, read [Workflow patterns](/guide/how-to/workflow-patterns).
+- To plan a workflow for your own kind of work, read [Design a workflow](/guide/how-to/design-a-workflow).
+- To copy a working workflow, read [Workflow patterns](/guide/how-to/workflow-patterns).
 - To see a run's record, read [Verify a run](/guide/how-to/verify-a-run).
 - For every field of every step, read the [workflow schema](/reference/workflow-schema).

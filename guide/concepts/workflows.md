@@ -1,12 +1,12 @@
 # Work graphs
 
-A workflow (the graph of steps) is a document that tells Daggry how a piece of work goes. An agent left to decide its own process can skip a step or loop all night, and you cannot predict which. Daggry takes that choice away: the agent follows the file and cannot change it.
+A work graph is a workflow: a document that tells Daggry how a piece of work goes. Every other page says workflow. An agent left to decide its own process can skip a step or loop all night, and you cannot predict which. Daggry takes that choice away: the agent follows the file and cannot change it.
 
 The workflow is one of Daggry's four open standards. The file has a standard layout with a published schema, so the work is defined by a document, not by the platform. A pull request from an issue is the first workflow, not the only one. See [Open standards](/guide/concepts/standards).
 
 ## Five building blocks
 
-A workflow is a document in the tenant's catalogue. Its file is kept in a repository the tenant chooses, which can be the repository the work is done on. The tenant decides which workflows run on which repository, and the repository does not. Today you supply the file with `daggry run --workflow <file>`. A new kind of work needs a new file, not a new release of Daggry. For a picture of the delivery workflow, see [Write a workflow](/guide/how-to/write-a-workflow).
+A workflow is a document in the tenant's catalogue. Its file is kept in a repository the tenant chooses, which can be the repository the work is done on. The tenant decides which workflows run on which repository, and the repository does not. `daggry run --workflow <file>` supplies a workflow as a file from the machine that starts the run. For which way is in use, see the [Roadmap](/roadmap). A new kind of work needs a new file, not a new release of Daggry. For a picture of the delivery workflow, see [Write a workflow](/guide/how-to/write-a-workflow).
 
 - A **step** is one unit of work: an agent session, a script, a check, a wait for a person, or opening a pull request.
 - An **output** is what a step hands to the next one. Daggry seals it: code checks it, then signs it so it cannot be quietly changed.
@@ -49,9 +49,9 @@ A gate reads only facts that code computed from sealed records, never what an ag
 
 ## Who runs each step
 
-A step's kind decides which module runs it. The deterministic runner runs `command` and `verify` steps: code that gives the same result for the same input, with no model. The agent runner runs `agent` steps through an engine adapter. The control plane runs `effect` steps, such as opening a pull request, because only it holds the key for the repository host. A `human` step runs nowhere: the run waits.
+A step's kind decides what runs it: the runner in the pod, the control plane, or nobody while the run waits for a person. For each kind, see [Which module runs a step](/reference/workflow-schema#which-module-runs-a-step).
 
-A `verify` step names no command. It runs the check that the repository's project config calls canonical, which can be a test suite, a build or a script of the project's own. The same workflow therefore works on projects in different languages. See [Project config](/reference/project-config).
+A `verify` step names no command. It runs the check that the repository's project config calls canonical, which can be a test suite, a build or a script of the project's own. In the profile, the earlier form of the project config, the canonical check is the one test command, `verify.test`. The same workflow therefore works on projects in different languages. See [Project config](/reference/project-config), and the [Roadmap](/roadmap) for which form is read.
 
 The conductor orders the steps and hands each job to a runner. How many jobs run at a time, how long a lease lasts and where a person must decide come from the tenant config. See [The modules](/guide/concepts/modules) and [The tenant defines the factory](/guide/concepts/tenant).
 

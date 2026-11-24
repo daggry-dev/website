@@ -58,16 +58,18 @@ A body that does not fit its schema is refused with the JSON pointer of the offe
 
 ### Who seals what
 
-| Kind | Artifact id | `meta` stamps | `parents` |
-|---|---|---|---|
-| `run-lock` | `run-lock` | tenant, run | none, because it starts the run |
-| `work-item` | `work-item` | tenant, run | none, because it starts the run |
-| `plan` | `<step>-<n>` | tenant, run, job, attempt, step | the artifacts it builds on |
-| `measurement` | `<step>-head`, `<step>-red` | tenant, run, job, attempt, step | the change it measured |
-| `change` | `change-<n>` | tenant, run, job, attempt, step | the plan it implements |
-| `observation` | `<step>-restored-<n>`, `observation-<n>` | tenant, run, job, attempt, step | the artifacts it concerns |
-| `verdict` | `verdict-<n>` | tenant, run, job, attempt, step | the digests of the inputs judged |
-| `approval` | `approval-<n>` | tenant, run, job, step | the one bound artifact |
+| Kind | Artifact id | `parents` |
+|---|---|---|
+| `run-lock` | `run-lock` | none, because it starts the run |
+| `work-item` | `work-item` | none, because it starts the run |
+| `plan` | `<step>-<n>` | the artifacts it builds on |
+| `measurement` | `<step>-head`, `<step>-red` | the change it measured |
+| `change` | `change-<n>` | the plan it implements |
+| `observation` | `<step>-restored-<n>`, `observation-<n>` | the artifacts it concerns |
+| `verdict` | `verdict-<n>` | the digests of the inputs judged |
+| `approval` | `approval-<n>` | the one bound artifact |
+
+For the `meta` keys stamped on each kind, see [Stamped keys](/reference/envelope#stamped-keys).
 
 `parents` names the artifacts a record builds on, so you can walk from a verdict back to the measurement, the change and the plan. `<n>` is a counter per run. A step submits only the kinds its workflow declares. An agent never writes a seal field.
 
@@ -135,7 +137,7 @@ Example:
 
 What a measuring step recorded: the exit code and the per-test outcomes of the project's test command.
 
-The body is shaped for tests: it holds an exit code and one record per test. A project's checks are wider than tests, and the record for a check with another result contract, such as lint findings or a coverage document, is an open point of the [Project config](/reference/project-config#open-points). No field on this page changes for it.
+The body is shaped for tests: it holds an exit code and one record per test. A project's checks are wider than tests, and the record for a check with another result contract, such as lint findings or a coverage document, is an open point of the project config. See the [Roadmap](/roadmap#open-points). No field on this page changes for it.
 
 | Field | Type | Req | Class | Constraints |
 |---|---|---|---|---|
@@ -840,20 +842,7 @@ Example, where `<owner>/<name>` is the repository:
 
 ## Fact classes by kind
 
-Every field has one class. A gate reads only `derived` fields. `judged` is a class for fields that a language-model verdict sets under a rubric a person approved for one named criterion.
-
-| Kind | `derived` (readable) | `claimed` (refused) | No class (refused) |
-|---|---|---|---|
-| `plan` | none | `criteria` | |
-| `measurement` | `label`, `criterion`, `exit_code`, `tests` | `revision` | |
-| `verdict` | `status`, every fact name in `facts` | | `validator`, `version`, `findings` |
-| `approval` | all seven fields | | |
-| `change` | `frozen` | `revision`, `paths` | |
-| `observation` | all five fields | | |
-| `run-lock` | all four fields | | |
-| `work-item` | | `repository`, `issue` | |
-
-Every `meta` value is `derived`, because code stamps it. Any field a schema does not list has no class.
+Every field has one class, and a gate reads only `derived` fields. For the classes and the class of every field of every kind, see [Fact classes](/reference/gates#fact-classes). Every `meta` value is `derived`, because code stamps it. Any field a schema does not list has no class.
 
 ## Validators
 

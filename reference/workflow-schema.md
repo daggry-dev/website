@@ -47,6 +47,14 @@ The loader reads a strict subset of YAML.
 
 Every step requires `id` and `kind`. `kind` is one of five values: `command`, `agent`, `verify`, `human`, `effect`. Any other value is refused at `/steps/<n>/kind`.
 
+| Kind | Runs in | What it does |
+|---|---|---|
+| `agent` | the pod | A coding-agent session that must deliver named artifact kinds. |
+| `command` | the pod | A shell line, limited by a `scope` of paths it may write. |
+| `verify` | the pod | Runs your check on the sealed commit, in a clean copy of the code. |
+| `human` | nowhere | Releases the pod and waits. `daggry approve` completes it. |
+| `effect` | the control plane | An idempotent side effect, such as opening a pull request. |
+
 ### command
 
 A shell line that the runner executes in the pod. A failed command step fails the run, also inside a loop.
@@ -87,7 +95,7 @@ Measures a clean copy of the last sealed commit.
 | `id` | string | yes | Non-empty. |
 | `kind` | string | yes | `verify`. |
 
-A `verify` step has no command and takes no other key. It runs the `verify.test` command from the base commit's profile. See [Project config](/reference/project-config#today). It must submit exactly one `head` measurement of the last sealed commit. Inside a loop, a non-zero exit code is red: the iteration ends and the run does not fail. Outside a loop, a failed `verify` step fails the run.
+A `verify` step has no command and takes no other key. It runs the project's canonical check: the `verify.test` command from the base commit's profile, or the check that `verification.canonical` names in a project config. See [The profile](/reference/project-config#the-profile) and [Checks by name](#checks-by-name). It must submit exactly one `head` measurement of the last sealed commit. Inside a loop, a non-zero exit code is red: the iteration ends and the run does not fail. Outside a loop, a failed `verify` step fails the run.
 
 ### human
 
@@ -272,11 +280,11 @@ Proposed standard; see the [Roadmap](/roadmap) for status.
 
 The workflow file is one of four open documents, with the evidence envelope, the [Project config](/reference/project-config) and the [Tenant config](/reference/tenant-config). This section defines the standard layout that lets a workflow grow without a change to the standard: a versioned header, a registry of step kinds and namespaced extension keys.
 
-### Today
+### A file without a header
 
-The sections above this one define the file the loader reads today, and [workflow.json](/schemas/workflow.json) is its schema.
+The sections above this one define a file with no `format` header, and [workflow.json](/schemas/workflow.json) is its schema. For which form the loader reads, see the [Roadmap](/roadmap).
 
-| Point | The file today |
+| Point | A file without a header |
 |---|---|
 | Header | None. The top level holds `steps` only. |
 | Step kinds | Five, closed: `command`, `agent`, `verify`, `human`, `effect`. |
@@ -287,7 +295,7 @@ The sections above this one define the file the loader reads today, and [workflo
 
 A workflow is a document in the tenant's catalogue. Each catalogue entry names the repository, the path and the commit the file is read from, and the tenant chooses that repository. It can be the repository the work is done on, but that repository does not assign the workflow to itself. The tenant config decides which workflows run on which repository. See [workflows](/reference/tenant-config#workflows) and [projects](/reference/tenant-config#projects).
 
-`daggry run --workflow <file>` is today's way to supply a workflow: the file is read from the machine that starts the run. See [CLI](/reference/cli).
+`daggry run --workflow <file>` supplies a workflow as a file: the file is read from the machine that starts the run. See [CLI](/reference/cli), and the [Roadmap](/roadmap) for which way is in use.
 
 ### The standard layout
 
@@ -299,20 +307,20 @@ A workflow document has three parts.
 | Body | `steps` | The ordered entries, as defined in [File shape](#file-shape). |
 | Extension keys | `<namespace>/<key>` | Any number. See [Extension keys in a workflow](#extension-keys-in-a-workflow). |
 
-A file with no `format` key is read by the rules of [Today](#today): it holds `steps` only and takes no extension key and no extension kind.
+A file with no `format` key is read by the rules of [A file without a header](#a-file-without-a-header): it holds `steps` only and takes no extension key and no extension kind.
 
 ### Step kind registry
 
-A step kind is an entry in a registry. Each entry names the kind, the keys a step of that kind takes and the module that runs it.
+A step kind is an entry in a registry. Each entry names the kind, the keys a step of that kind takes and what runs it: the runner, as the deterministic runner or the agent runner, or the control plane. See [The modules](/guide/concepts/modules#the-runner-two-kinds-of-step-execution).
 
-| Kind | Module that runs the step | Registered by |
+| Kind | What runs the step | Registered by |
 |---|---|---|
 | `command` | Deterministic runner | The standard. |
 | `verify` | Deterministic runner | The standard. |
 | `agent` | Agent runner | The standard. |
 | `effect` | Control plane | The standard. |
 | `human` | None. A person decides, and the control plane seals the decision. | The standard. |
-| `<namespace>/<name>` | The module its registration names: deterministic runner, agent runner or control plane. | The tenant, in `extensions.step_kinds` of the [Tenant config](/reference/tenant-config#extensions). |
+| `<namespace>/<name>` | What its registration names: the deterministic runner, the agent runner or the control plane. | The tenant, in `extensions.step_kinds` of the [Tenant config](/reference/tenant-config#extensions). |
 
 Rules for the registry:
 
@@ -324,16 +332,16 @@ Rules for the registry:
 
 ### Which module runs a step
 
-A workflow declares the module through the step's `kind` and through nothing else. The conductor reads the kind, looks it up in the registry and hands the step to that module.
+A workflow declares what runs a step through the step's `kind` and through nothing else. The conductor reads the kind, looks it up in the registry and hands the step to what the entry names.
 
-| Module | Runs | Never |
+| What runs the step | Runs | Never |
 |---|---|---|
 | Deterministic runner | Code that a person wrote into the workflow or the project: a `command` step's `run` line and the project's checks. | Starts a model. |
 | Agent runner | A coding-agent engine, and whatever the engine generates. | Judges its own work. |
 | Control plane | Effects, seals and validators. | Runs a command or an agent. |
 | A person | The decision at a `human` step. | - |
 
-No key of a step moves it to another module. An `agent` step always runs in the agent runner, and a `command` step never does.
+No key of a step changes what runs it. An `agent` step always runs in the agent runner, and a `command` step never does.
 
 ### Checks by name
 

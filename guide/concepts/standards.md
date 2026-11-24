@@ -12,7 +12,7 @@ The table names each document, what it says, who writes it and who reads it.
 |---|---|---|---|
 | Workflow | How one kind of work goes: the steps, what each hands to the next, the gates, the loops and the human waits. | A person, as a file. The tenant lists it in its catalogue. | The conductor, and every person who wants to know what a run can do. |
 | Evidence | What happened: one sealed record for each result, signed and linked to the record before it. | Code only. The control plane seals each record. | Gates, checks, the CLI and any tool of your own. |
-| Project config | What is true of one repository: what it is, which areas it has, which checks it has, which one check is the verification evidence and which paths it protects. | The repository's owner, as a file in the repository. | The runners and the control plane. |
+| Project config | What is true of one repository: what it is, which areas it has, which checks it has, which one check is the verification evidence and which paths it protects. | The repository's owner, as a file in the repository. | The runner and the control plane. |
 | Tenant config | How the factory works: which workflows it offers, which of them run on which repository, how work is orchestrated, which agents work and with what autonomy. | A person who runs the tenant. | The conductor and the control plane. |
 
 For each document in detail, see the [Workflow schema](/reference/workflow-schema), the [Envelope](/reference/envelope) and [Kinds and schemas](/reference/kinds), [Project config](/reference/project-config) and [Tenant config](/reference/tenant-config).
@@ -36,19 +36,13 @@ A breaking change to a kind is a new major. A sealed record never changes, so a 
 
 ## Signing and chaining are part of the standard
 
-Evidence is only portable if everyone seals it the same way. The evidence standard therefore fixes more than the shape of a record. It fixes these five things.
+Evidence is only portable if everyone seals it the same way. The evidence standard therefore fixes more than the shape of a record. It fixes five rules: the envelope, the canonical bytes, the digest, the chain link and the signature. For what each rule fixes, see [The rules an implementation follows](/reference/conformance#the-rules-an-implementation-follows).
 
-1. **The envelope.** Every record has the same fields, and a reader refuses a field it does not know.
-2. **The bytes.** A record is written as canonical JSON, so the same record always gives the same bytes.
-3. **The fingerprint.** The digest of a record is the SHA-256 of those bytes.
-4. **The chain.** Each entry's link is the SHA-256 of the previous link and the entry's digest. Each record therefore vouches for all the records before it.
-5. **The signature.** The link is signed with an Ed25519 key, and the record names the key by its key id.
-
-A verifier that follows these five rules can check any trail, whoever produced it. For the exact rules, see the [envelope reference](/reference/envelope).
+A verifier that follows the five rules can check any trail, whoever produced it. For the exact rules, see the [envelope reference](/reference/envelope).
 
 ## Any factory can implement it
 
-The claim is this: a factory that writes these four documents by the same specification, and seals evidence by the same signing and chaining, is interoperable with Daggry. Its trail verifies with any tool that follows the five rules above, and so does a Daggry trail. A workflow file written for one is a valid workflow file for the other, and a project config written for one tells the other how to check the same repository.
+The claim is this: a factory that writes these four documents by the same specification, and seals evidence by the same signing and chaining, is interoperable with Daggry. Its trail verifies with any tool that follows the five rules, and so does a Daggry trail. A workflow file written for one is a valid workflow file for the other, and a project config written for one tells the other how to check the same repository.
 
 The claim is tested, not asserted. A conformance suite states what an implementation must accept, refuse and produce. See [Conformance](/reference/conformance).
 

@@ -20,7 +20,7 @@ An agent's report is only a claim, so you should be able to check the record you
 
    The line means that the CLI checked 12 log entries and 2 stored blobs, and every one matched.
 
-The command checks the whole trail of your team, not one run. A run is verified as part of it. Run the command after any run you want to rely on.
+The command checks the whole trail of your tenant, not one run. A run is verified as part of it. Run the command after any run you want to rely on.
 
 ## Read a failure
 
@@ -30,22 +30,9 @@ On a mismatch, the command prints one line to stderr that starts with `daggry:`,
 daggry: entry 2: prev does not match the link of the entry before it
 ```
 
-The reasons you can see are in this table.
+For each mismatch reason and what it means, see [Verification errors](/reference/envelope#verification-errors). For a line that starts with `refused:` or `transport failure:`, see [Error output](/reference/cli#error-output).
 
-| Reason | What it means |
-|---|---|
-| `entry <i>: prev does not match the link of the entry before it` | The chain is broken or reordered. An entry was removed, reordered or replaced. |
-| `entry <i>: digest does not match the content` | A covered field changed after the entry was sealed. |
-| `entry <i>: no public key for key id <id>` | The key id is unknown, so the signature cannot be checked. |
-| `entry <i>: signature does not verify` | The signature is wrong for this link and key. The entry was not sealed by the control plane's key. |
-| `entry <i>: <canonicalisation failure>` | A field cannot be written as canonical JSON. |
-| `blob <digest> does not hash to its digest` | A stored file that the log references changed. |
-| `refused: ...` | The control plane refused a request the check needs, for example a blob that does not exist. |
-| `transport failure: ...` | The CLI could not reach the control plane. The check did not complete. |
-
-The CLI recomputes the link, the digest and the signature of each entry, in that order, and stops at the first failure. `<i>` is the position of the entry in your chain, counted from 0.
-
-A `prev`, digest, key or signature failure means the record was altered or damaged. Treat the affected entry and every later one as untrusted. A `refused` or `transport failure` message means the check could not finish, which is different from a mismatch. Fix the connection and run the command again.
+A `prev`, digest, key or signature failure means the record was altered or damaged. Treat the affected entry and every later one as untrusted. A `refused` or `transport failure` message means the check could not finish, for example because a blob does not exist or the CLI could not reach the control plane. That is different from a mismatch. Fix the connection and run the command again.
 
 ## Check a record against its schema
 
@@ -90,19 +77,13 @@ To check the shape of one record without Daggry, you need a JSON Schema tool. Th
 
 ## Exit codes
 
-| Code | Meaning |
-|---|---|
-| 0 | The chain, the signatures and the blobs all match. |
-| 1 | A mismatch, an API refusal or a transport failure. |
-| 2 | A usage error, or `DAGGRY_URL` or `DAGGRY_TOKEN` is missing or empty. |
-
-In a script, treat any non-zero code as "not verified".
+The command exits with 0 when the chain, the signatures and the blobs all match, and with a non-zero code otherwise. For each code, see [Exit codes](/reference/cli#exit-codes). In a script, treat any non-zero code as "not verified".
 
 ## What the command checks
 
 The CLI fetches raw data and recomputes the result on your machine.
 
-1. It fetches the whole trail of your team.
+1. It fetches the whole trail of your tenant.
 2. It fetches the seal public key for every key ID that appears in the chain.
 3. It recomputes each entry's digest from its bytes and checks that each entry points at the one before it.
 4. It checks each entry's signature against the public key.

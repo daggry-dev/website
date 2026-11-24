@@ -71,7 +71,7 @@ When the run reaches the `review` step, it prints one line of JSON.
 {"state":"waiting","attempts":[{"job":"main","n":1,"state":"waiting"}],"waiting_for":"input-needed"}
 ```
 
-The run is waiting for you, and `waiting_for` says why. The `state` field is one of `queued`, `running`, `waiting`, `parked`, `succeeded`, `failed` and `stopped`.
+The run is waiting for you, and `waiting_for` says why. For every value of `state`, see [States and reasons](/reference/api#states-and-reasons).
 
 ## 4. Read the logs
 
@@ -105,7 +105,7 @@ The run also pushed its commits to the branch `daggry/run-0123456789abcdef` on y
 
 ## 6. Verify the record
 
-To check everything Daggry sealed for your team, run `daggry verify`.
+To check everything Daggry sealed for your tenant, run `daggry verify`.
 
 ```sh
 daggry verify
