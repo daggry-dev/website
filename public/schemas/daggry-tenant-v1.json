@@ -1,0 +1,406 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "daggry/tenant@1",
+  "title": "daggry/tenant@1: the tenant configuration",
+  "type": "object",
+  "required": [
+    "format"
+  ],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+  },
+  "properties": {
+    "format": {
+      "const": "daggry/tenant@1"
+    },
+    "workflows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "source"
+        ],
+        "additionalProperties": false,
+        "patternProperties": {
+          "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+        },
+        "properties": {
+          "name": {
+            "$ref": "#/$defs/name"
+          },
+          "source": {
+            "type": "object",
+            "required": [
+              "repository",
+              "path",
+              "revision"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "repository": {
+                "$ref": "#/$defs/repository"
+              },
+              "path": {
+                "$ref": "#/$defs/name"
+              },
+              "revision": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    "orchestration": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "concurrency_cap": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "lease_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "attempts": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          },
+          "properties": {
+            "max": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "retry": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          },
+          "properties": {
+            "backoff_seconds": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "parking": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          },
+          "properties": {
+            "max_seconds": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    },
+    "agents": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "engines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "credential"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "name": {
+                "$ref": "#/$defs/name"
+              },
+              "credential": {
+                "type": "object",
+                "required": [
+                  "ref"
+                ],
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+                },
+                "properties": {
+                  "ref": {
+                    "$ref": "#/$defs/name"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "roster": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "engine"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "name": {
+                "$ref": "#/$defs/name"
+              },
+              "engine": {
+                "$ref": "#/$defs/name"
+              },
+              "instructions": {
+                "$ref": "#/$defs/name"
+              }
+            }
+          }
+        },
+        "approval": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          },
+          "properties": {
+            "require": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "plan",
+                  "effect"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "runners": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "images": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "image"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "name": {
+                "$ref": "#/$defs/name"
+              },
+              "image": {
+                "$ref": "#/$defs/name"
+              },
+              "default": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "classes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "module",
+              "network",
+              "model_credential"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "name": {
+                "$ref": "#/$defs/name"
+              },
+              "module": {
+                "enum": [
+                  "deterministic-runner",
+                  "agent-runner"
+                ]
+              },
+              "network": {
+                "enum": [
+                  "none",
+                  "open"
+                ]
+              },
+              "model_credential": {
+                "type": "boolean"
+              }
+            },
+            "if": {
+              "properties": {
+                "module": {
+                  "const": "deterministic-runner"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "model_credential": {
+                  "const": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "projects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "repository"
+        ],
+        "additionalProperties": false,
+        "patternProperties": {
+          "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+        },
+        "properties": {
+          "repository": {
+            "$ref": "#/$defs/repository"
+          },
+          "workflows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/name"
+            }
+          }
+        }
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "step_kinds": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "kind",
+              "module",
+              "schema"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "kind": {
+                "type": "string",
+                "pattern": "^[^/@]+/[^/@]+$"
+              },
+              "module": {
+                "enum": [
+                  "deterministic-runner",
+                  "agent-runner",
+                  "control-plane"
+                ]
+              },
+              "schema": {
+                "$ref": "#/$defs/name"
+              }
+            }
+          }
+        },
+        "artifact_kinds": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "kind",
+              "schema"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "kind": {
+                "type": "string",
+                "pattern": "^(?!evidence/|daggry/)[^/@]+/[^/@]+@[0-9]+$"
+              },
+              "schema": {
+                "$ref": "#/$defs/name"
+              }
+            }
+          }
+        },
+        "validators": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "version"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "name": {
+                "$ref": "#/$defs/name"
+              },
+              "version": {
+                "$ref": "#/$defs/name"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repository": {
+      "type": "string",
+      "pattern": "^[^/]+/[^/]+$"
+    }
+  }
+}
