@@ -12,6 +12,7 @@ import './airy.css'
 import Landing from './Landing.vue'
 import Overnight from './Overnight.vue'
 import Architecture from './Architecture.vue'
+import Modules from './Modules.vue'
 import ChainDiagram from './ChainDiagram.vue'
 import WorkflowGraph from './WorkflowGraph.vue'
 import Compare from './Compare.vue'
@@ -32,6 +33,7 @@ export default {
     app.component('Landing', Landing)
     app.component('Overnight', Overnight)
     app.component('Architecture', Architecture)
+    app.component('Modules', Modules)
     app.component('ChainDiagram', ChainDiagram)
     app.component('WorkflowGraph', WorkflowGraph)
     app.component('Compare', Compare)
