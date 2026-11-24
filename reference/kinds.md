@@ -135,6 +135,8 @@ Example:
 
 What a measuring step recorded: the exit code and the per-test outcomes of the project's test command.
 
+The body is shaped for tests: it holds an exit code and one record per test. A project's checks are wider than tests, and the record for a check with another result contract, such as lint findings or a coverage document, is an open point of the [Project config](/reference/project-config#open-points). No field on this page changes for it.
+
 | Field | Type | Req | Class | Constraints |
 |---|---|---|---|---|
 | `label` | string | yes | derived | Non-empty. Policy: `base`, `head` or `red`. |

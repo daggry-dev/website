@@ -281,6 +281,12 @@ The sections above this one define the file the loader reads today, and [workflo
 | Unknown keys | Refused everywhere. |
 | `engine` | An open string. The schema accepts any non-empty string, and the loader checks it against the engines your installation provides. |
 
+### Where a workflow comes from
+
+A workflow is a document in the tenant's catalogue. Each catalogue entry names the repository, the path and the commit the file is read from, and the tenant chooses that repository. It can be the repository the work is done on, but that repository does not assign the workflow to itself. The tenant config decides which workflows run on which repository. See [workflows](/reference/tenant-config#workflows) and [projects](/reference/tenant-config#projects).
+
+`daggry run --workflow <file>` is today's way to supply a workflow: the file is read from the machine that starts the run. See [CLI](/reference/cli).
+
 ### The standard layout
 
 A workflow document has three parts.
@@ -320,12 +326,28 @@ A workflow declares the module through the step's `kind` and through nothing els
 
 | Module | Runs | Never |
 |---|---|---|
-| Deterministic runner | Code that a person wrote into the workflow or the project: a `command` step's `run` line and the project's test command. | Starts a model. |
+| Deterministic runner | Code that a person wrote into the workflow or the project: a `command` step's `run` line and the project's checks. | Starts a model. |
 | Agent runner | A coding-agent engine, and whatever the engine generates. | Judges its own work. |
 | Control plane | Effects, seals and validators. | Runs a command or an agent. |
 | A person | The decision at a `human` step. | - |
 
 No key of a step moves it to another module. An `agent` step always runs in the agent runner, and a `command` step never does.
+
+### Checks by name
+
+A workflow never holds a project's verification command. It names a `verify` step, and the [Project config](/reference/project-config) of the repository supplies the check. A workflow therefore runs unchanged on projects in different languages.
+
+| Step | Runs |
+|---|---|
+| `verify` with no `check` key | The project's canonical check, `verification.canonical`, and each check in `verification.also`. The result is the verification evidence. |
+| `verify` with `check: <name>` | The one check of that name, as an optional run. The result decides the step and is not the verification evidence. |
+
+Rules:
+
+- `check` is read only in a file with a `format` header. Its value is a check name: a lowercase letter, then lowercase letters, digits, `-` or `_`.
+- The name is looked up in the project config of the base commit when the run starts. A name the project config lacks refuses the run.
+- A `verify` step with no `check` key needs a project config with `verification.canonical`.
+- Every check a step runs is run by the deterministic runner, on a clean copy of the sealed commit.
 
 ### Engine
 
