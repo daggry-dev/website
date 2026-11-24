@@ -1,4 +1,4 @@
-# Tenant configuration
+# Tenant config
 
 *Reference*
 
@@ -6,15 +6,15 @@ Proposed standard; see the [Roadmap](/roadmap) for status.
 
 For the idea, read [Where it runs](/guide/concepts/architecture).
 
-The tenant configuration is one YAML document that says how a tenant's factory works: which workflows it offers, how work is orchestrated, which agents work and with what autonomy, which runners run the steps and which repositories it serves. This page defines the standard layout and the precedence rule. It is for people who run a tenant and for people who write a reader of the document.
+The tenant config is one YAML document that says how a tenant's factory works: which workflows it offers, how work is orchestrated, which agents work and with what autonomy, which runners run the steps and which repositories it serves. This page defines the standard layout and the precedence rule. It is for people who run a tenant and for people who write a reader of the document.
 
-The format is open. It follows the same layout rules as the [Project configuration](/reference/project-config): a `format` header, named sections and namespaced extension keys.
+The format is open. It follows the same layout rules as the [Project config](/reference/project-config): a `format` header, named sections and namespaced extension keys.
 
 The documents on this page are illustrative. In examples, `<engine>` stands for the identifier of a coding-agent engine your installation provides.
 
 ## Download
 
-The tenant configuration has a published JSON Schema (draft 2020-12).
+The tenant config has a published JSON Schema (draft 2020-12).
 
 | Schema | File |
 |---|---|
@@ -37,13 +37,13 @@ A workflow reaches the control plane as a file given to `daggry run`. See [CLI](
 
 ### Layout
 
-A tenant configuration has three parts.
+A tenant config has three parts.
 
 | Part | Keys | Rule |
 |---|---|---|
 | Header | `format` | Required. Names the standard and its major version. |
 | Sections | `workflows`, `orchestration`, `agents`, `runners`, `projects`, `extensions` | Each is optional. Each appears at most once. |
-| Extension keys | `x-<vendor>/<name>` | Any number. The rules are in [Extension keys](/reference/project-config#extension-keys). |
+| Extension keys | `<namespace>/<key>` | Any number. The rules are in [Extension keys](/reference/project-config#extension-keys). |
 
 Every object is closed: a key that is not listed on this page and is not an extension key is refused. The document uses the strict [YAML subset](/reference/workflow-schema#yaml-subset).
 
@@ -133,7 +133,7 @@ The repositories the tenant's factory works on.
 | `projects[].repository` | string | yes | The repository, as `<owner>/<name>`. Unique. |
 | `projects[].workflows` | array of strings | no | Names from the catalogue this repository may use. Absent means the whole catalogue. |
 
-A run starts only for a listed repository. The repository's own rules are in its [Project configuration](/reference/project-config).
+A run starts only for a listed repository. The repository's own rules are in its [Project config](/reference/project-config).
 
 ### extensions
 
@@ -152,7 +152,7 @@ What the tenant admits beyond the standard.
 | `extensions.validators[].name` | string | yes | The validator's name. Non-empty. |
 | `extensions.validators[].version` | string | yes | The exact version admitted. Non-empty. |
 
-This section is the registry. A step kind, an artifact kind or a validator that is not built in and not listed here is refused.
+This section is the registry. A step kind, an artifact kind or a validator that is neither part of the standard nor listed here is refused.
 
 ### Where it lives
 
@@ -168,8 +168,8 @@ Three documents set rules for a run. The order is tenant, then project, then wor
 
 | Document | Sets | May not |
 |---|---|---|
-| Tenant configuration | Every limit: the catalogue, the engines, the images, the approval points and the orchestration limits. | - |
-| [Project configuration](/reference/project-config) | Narrower rules for one repository, picked from what the tenant offers. | Widen a tenant rule. |
+| Tenant config | Every limit: the catalogue, the engines, the images, the approval points and the orchestration limits. | - |
+| [Project config](/reference/project-config) | Narrower rules for one repository, picked from what the tenant offers. | Widen a tenant rule. |
 | [Workflow](/reference/workflow-schema) | Narrower rules for one step. | Widen a project or tenant rule. |
 
 Only a person widens a rule. An agent, a workflow and an extension key narrow or add, and never widen.
@@ -249,7 +249,7 @@ extensions:
     - name: acme-scan-clean
       version: "1.2.0"
 
-x-acme/billing:
+acme/billing:
   cost_centre: platform
 ```
 
@@ -270,10 +270,10 @@ x-acme/billing:
 | A roster entry whose `engine` is not in `agents.engines` | Unknown engine. |
 | A class with `module: deterministic-runner` and `model_credential: true` | A deterministic runner never holds a model credential. |
 | `extensions.artifact_kinds[]` with `kind: evidence/scan@1` | The `evidence` namespace takes no added kinds. |
-| `retries: 3` at the top level | Unknown key without the `x-<vendor>/` form. |
+| `retries: 3` at the top level | Unknown key without a namespace. |
 
 ## Next steps
 
-- For one repository's rules, see [Project configuration](/reference/project-config).
+- For one repository's rules, see [Project config](/reference/project-config).
 - For the workflow file a catalogue entry points to, see [Workflow schema](/reference/workflow-schema).
 - For what another factory implements to use the same documents, see [Conformance](/reference/conformance).

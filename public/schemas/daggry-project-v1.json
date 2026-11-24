@@ -1,14 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "daggry/project@1",
-  "title": "daggry/project@1: the project configuration",
+  "title": "daggry/project@1: the project config",
   "type": "object",
   "required": [
     "format"
   ],
   "additionalProperties": false,
   "patternProperties": {
-    "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+    "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
   },
   "properties": {
     "format": {
@@ -21,7 +21,7 @@
       ],
       "additionalProperties": false,
       "patternProperties": {
-        "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
       },
       "properties": {
         "test": {
@@ -34,7 +34,7 @@
       "type": "object",
       "additionalProperties": false,
       "patternProperties": {
-        "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
       },
       "properties": {
         "paths": {
@@ -46,7 +46,7 @@
       "type": "object",
       "additionalProperties": false,
       "patternProperties": {
-        "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
       },
       "properties": {
         "limit": {
@@ -73,7 +73,7 @@
         ],
         "additionalProperties": false,
         "patternProperties": {
-          "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
         },
         "properties": {
           "use": {
@@ -86,7 +86,7 @@
       "type": "object",
       "additionalProperties": false,
       "patternProperties": {
-        "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
       },
       "properties": {
         "image": {
@@ -102,7 +102,7 @@
             ],
             "additionalProperties": false,
             "patternProperties": {
-              "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
             },
             "properties": {
               "name": {

@@ -1,14 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "daggry/tenant@1",
-  "title": "daggry/tenant@1: the tenant configuration",
+  "title": "daggry/tenant@1: the tenant config",
   "type": "object",
   "required": [
     "format"
   ],
   "additionalProperties": false,
   "patternProperties": {
-    "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+    "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
   },
   "properties": {
     "format": {
@@ -24,7 +24,7 @@
         ],
         "additionalProperties": false,
         "patternProperties": {
-          "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
         },
         "properties": {
           "name": {
@@ -39,7 +39,7 @@
             ],
             "additionalProperties": false,
             "patternProperties": {
-              "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
             },
             "properties": {
               "repository": {
@@ -61,7 +61,7 @@
       "type": "object",
       "additionalProperties": false,
       "patternProperties": {
-        "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
       },
       "properties": {
         "concurrency_cap": {
@@ -76,7 +76,7 @@
           "type": "object",
           "additionalProperties": false,
           "patternProperties": {
-            "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
           },
           "properties": {
             "max": {
@@ -89,7 +89,7 @@
           "type": "object",
           "additionalProperties": false,
           "patternProperties": {
-            "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
           },
           "properties": {
             "backoff_seconds": {
@@ -102,7 +102,7 @@
           "type": "object",
           "additionalProperties": false,
           "patternProperties": {
-            "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
           },
           "properties": {
             "max_seconds": {
@@ -117,7 +117,7 @@
       "type": "object",
       "additionalProperties": false,
       "patternProperties": {
-        "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
       },
       "properties": {
         "engines": {
@@ -130,7 +130,7 @@
             ],
             "additionalProperties": false,
             "patternProperties": {
-              "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
             },
             "properties": {
               "name": {
@@ -143,7 +143,7 @@
                 ],
                 "additionalProperties": false,
                 "patternProperties": {
-                  "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+                  "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
                 },
                 "properties": {
                   "ref": {
@@ -164,7 +164,7 @@
             ],
             "additionalProperties": false,
             "patternProperties": {
-              "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
             },
             "properties": {
               "name": {
@@ -183,7 +183,7 @@
           "type": "object",
           "additionalProperties": false,
           "patternProperties": {
-            "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
           },
           "properties": {
             "require": {
@@ -203,7 +203,7 @@
       "type": "object",
       "additionalProperties": false,
       "patternProperties": {
-        "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
       },
       "properties": {
         "images": {
@@ -216,7 +216,7 @@
             ],
             "additionalProperties": false,
             "patternProperties": {
-              "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
             },
             "properties": {
               "name": {
@@ -243,7 +243,7 @@
             ],
             "additionalProperties": false,
             "patternProperties": {
-              "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
             },
             "properties": {
               "name": {
@@ -292,7 +292,7 @@
         ],
         "additionalProperties": false,
         "patternProperties": {
-          "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
         },
         "properties": {
           "repository": {
@@ -311,7 +311,7 @@
       "type": "object",
       "additionalProperties": false,
       "patternProperties": {
-        "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
       },
       "properties": {
         "step_kinds": {
@@ -325,7 +325,7 @@
             ],
             "additionalProperties": false,
             "patternProperties": {
-              "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
             },
             "properties": {
               "kind": {
@@ -355,7 +355,7 @@
             ],
             "additionalProperties": false,
             "patternProperties": {
-              "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
             },
             "properties": {
               "kind": {
@@ -378,7 +378,7 @@
             ],
             "additionalProperties": false,
             "patternProperties": {
-              "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
             },
             "properties": {
               "name": {
