@@ -33,15 +33,15 @@
       <text x="550" y="148" text-anchor="middle" class="sm">liveness by lease</text>
       <text x="550" y="172" text-anchor="middle" class="sm">holds no key</text>
       <!-- pod -->
-      <rect x="660" y="60" width="280" height="240" rx="18" class="rose"/>
-      <text x="800" y="88" text-anchor="middle" class="lbl">Throwaway pod · one job</text>
-      <rect x="674" y="104" width="122" height="64" rx="12" class="box"/><text x="735" y="131" text-anchor="middle" class="md">Agent</text><text x="735" y="150" text-anchor="middle" class="sm">does the work</text>
-      <rect x="804" y="104" width="122" height="64" rx="12" class="box"/><text x="865" y="131" text-anchor="middle" class="md">Checks</text><text x="865" y="150" text-anchor="middle" class="sm">on a clean copy</text>
-      <text x="800" y="196" text-anchor="middle" class="sm">holds a token for one repository</text>
-      <text x="800" y="214" text-anchor="middle" class="sm">and the model credential</text>
-      <text x="800" y="246" text-anchor="middle" class="md">The signing key never enters the pod</text>
-      <text x="800" y="270" text-anchor="middle" class="sm">dials out to the control plane</text>
-      <text x="800" y="286" text-anchor="middle" class="sm">nothing dials in</text>
+      <rect x="648" y="60" width="292" height="240" rx="18" class="rose"/>
+      <text x="794" y="88" text-anchor="middle" class="lbl">Throwaway pod · one job</text>
+      <rect x="662" y="104" width="128" height="64" rx="12" class="box"/><text x="726" y="131" text-anchor="middle" class="md">Agent</text><text x="726" y="150" text-anchor="middle" class="sm">does the work</text>
+      <rect x="798" y="104" width="128" height="64" rx="12" class="box"/><text x="862" y="131" text-anchor="middle" class="md">Checks</text><text x="862" y="150" text-anchor="middle" class="sm">on a clean copy</text>
+      <text x="794" y="196" text-anchor="middle" class="sm">holds a token for one repository</text>
+      <text x="794" y="214" text-anchor="middle" class="sm">and the model credential</text>
+      <text x="794" y="246" text-anchor="middle" class="md">The signing key never enters the pod</text>
+      <text x="794" y="270" text-anchor="middle" class="sm">dials out to the control plane</text>
+      <text x="794" y="286" text-anchor="middle" class="sm">nothing dials in</text>
       <!-- CLI -->
       <rect x="245" y="356" width="160" height="60" rx="14" class="box"/>
       <text x="325" y="381" text-anchor="middle" class="md">CLI</text>
@@ -52,9 +52,9 @@
       <path d="M210 278 H110" class="edge hot" marker-end="url(#arch-ah-hot)"/>
       <text x="155" y="296" text-anchor="middle" class="sm">opens a PR</text>
       <path d="M440 125 H480" class="edge" marker-end="url(#arch-ah)"/>
-      <path d="M620 125 H660" class="edge hot" marker-end="url(#arch-ah-hot)"/>
-      <path d="M660 240 H440" class="edge" marker-end="url(#arch-ah)"/>
-      <text x="550" y="232" text-anchor="middle" class="sm">results, as claims</text>
+      <path d="M620 125 H648" class="edge hot" marker-end="url(#arch-ah-hot)"/>
+      <path d="M648 240 H440" class="edge" marker-end="url(#arch-ah)"/>
+      <text x="544" y="232" text-anchor="middle" class="sm">results, as claims</text>
       <path d="M325 356 V300" class="edge" marker-end="url(#arch-ah)"/>
       <text x="337" y="334" class="sm">start · approve · verify</text>
     </svg>
