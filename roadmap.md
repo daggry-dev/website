@@ -32,6 +32,10 @@ In the table, **exists** means it is in [What exists today](#what-exists-today).
 | Workflow standard: the file of steps | Exists | Strict YAML, five step kinds, bounded loops and a published schema. |
 | Workflow `format` header, extension keys and extension step kinds | Direction | Today a workflow file holds `steps` only, and every unknown key and kind is refused. |
 | Project config standard | Direction | Today a repository has the [project profile](/reference/profile), which holds the test command only. |
+| Project config checks and canonical verification | Direction | Named checks in `.daggry/project.yaml` and one canonical check, `verification.canonical`, that a `verify` step measures. Today the profile holds one test command. See [Project config](/reference/project-config). |
+| Result contracts beyond libtest lines | Direction | `exit-code`, `junit-xml`, `tap`, `sarif` and `json` as named contracts for a check's output. Today the runner reads libtest-style lines only, and a measurement holds per-test records only. |
+| Agent-exposed preview checks | Direction | A check with `expose: agent` that the agent calls in the pod as a preview, never as evidence. Today the agent's preview is the `validate` tool. |
+| Tenant assigns workflows to projects | Direction | `projects[]` in the tenant config lists the workflows, agents and approval points for each repository. Today a workflow is a file given to `daggry run --workflow <file>` with the repository named beside it. |
 | Tenant config standard | Direction | Today the cluster admin sets the lease length, the concurrency cap, the job image and the model credential once for the whole installation. See [Deploy Daggry](/guide/how-to/deploy). |
 | Conformance suite | Direction | No suite exists. [Conformance](/reference/conformance) states what it is to test. |
 | Control plane | Exists | One backend that holds the keys, seals, judges and serves the API. |
