@@ -3,7 +3,7 @@ import { withBase } from 'vitepress'
 import { SIGNUP_OPEN } from './features'
 
 const proof = [
-  { t: 'Nobody edits it quietly', d: 'Every result is linked to the one before and signed. Change one byte later and daggry verify shows where.', l: '/guide/concepts/trust' },
+  { t: 'A changed record shows', d: 'Every result is linked to the one before and signed. Change one byte in the middle of the trail and daggry verify shows where. The trail is tamper-evident, not tamper-proof.', l: '/guide/concepts/trust' },
   { t: 'Checks are code', d: 'The same work always gets the same verdict. An agent cannot talk its way to a pass.', l: '/guide/concepts/trust' },
   { t: 'Formats are public', d: 'Every record format is a published JSON Schema. Read and check the trail with your own tools.', l: '/guide/concepts/standards' },
 ]
@@ -53,7 +53,7 @@ const doors = [
       <h1>Agents do the work.<br /><em>Code checks it.</em></h1>
       <p class="lede">
         Coding agents can work all night. Daggry makes that safe to sleep through: every step an agent finishes is
-        re-checked by code and recorded in a trail nobody can quietly edit. It is a factory kit, built from modules
+        re-checked by code and recorded in a signed, tamper-evident trail. It is a factory kit, built from modules
         and open standards.
       </p>
       <div class="cta">
@@ -98,8 +98,8 @@ const doors = [
       <p class="eyebrow">Modules and open standards</p>
       <h2>A factory kit, <em>not one machine</em>.</h2>
       <p class="sub">
-        Each module has one job: a conductor orders the work, a control plane seals it, one runner runs code and
-        another runs agents. Four open documents connect them, so nothing is tied to one kind of work, one agent,
+        Each module has one job: a conductor orders the work, a control plane seals it, and a runner runs code and
+        agents by two separate mechanisms. Four open documents connect them, so nothing is tied to one kind of work, one agent,
         one cloud or one factory.
       </p>
       <Modules />
@@ -134,6 +134,8 @@ const doors = [
       </div>
       <p class="honest">
         A seal proves the check ran and the record is unchanged. It does not prove your tests are the right ones.
+        Records dropped from the end of the trail show only against a signed head kept outside the cluster.
+        <a :href="withBase('/guide/concepts/trust')">Read the limits</a>
       </p>
     </section>
 

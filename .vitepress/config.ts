@@ -6,7 +6,7 @@ const base = process.env.SITE_BASE ?? '/'
 export default defineConfig({
   base,
   title: 'Daggry',
-  description: 'A kit of modules and open standards for autonomous software factories where every step is re-checked by code and recorded in a signed trail anyone can verify, so agents can work all night and nobody can quietly edit the trail.',
+  description: 'A kit of modules and open standards for autonomous software factories where every step is re-checked by code and recorded in a signed, tamper-evident trail anyone can verify, so agents can work all night.',
   cleanUrls: true,
   srcExclude: ['research/**', 'README.md'],
   // Light and dark, following the OS preference until the reader picks one.

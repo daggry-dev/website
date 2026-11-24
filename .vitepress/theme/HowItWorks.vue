@@ -48,7 +48,7 @@ const file = ['steps:', '  write a plan', '  wait for your approval', '  for eac
       </ol>
     </div>
     <figcaption class="cap">
-      Three steps. You write the plan of work once; each job gets its own pod and a token for one repository; and nothing moves on until code has re-checked it and added it to a trail that cannot be quietly edited.
+      Three steps. You write the plan of work once; each job gets its own pod and a token for one repository; and nothing moves on until code has re-checked it and added it to a signed, tamper-evident trail.
     </figcaption>
   </figure>
 </template>

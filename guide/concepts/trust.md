@@ -12,7 +12,7 @@ The three guarantees:
 - **Checks written as code.** The same work always gets the same verdict.
 - **Public schemas.** Every record format is published, so you can read the trail with your own tools.
 
-## Sealing: a trail nobody can quietly edit
+## Sealing: a tamper-evident trail
 
 A record you can edit later proves nothing. Sealing takes a fingerprint of the record, combines it with a link to the trail so far, and signs the result. Each record therefore vouches for all the records before it.
 
