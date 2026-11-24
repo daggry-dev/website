@@ -264,6 +264,115 @@ The loader does not check these at load. Each fails later or does nothing:
 | That `tests` and `scope` globs compile. | A bad glob fails at the boundary check. |
 | A fact name after `verdict.` | A name no validator emits is not caught at load. |
 
+## Extensibility
+
+Proposed standard; see the [Roadmap](/roadmap) for status.
+
+The workflow file is one of four open documents, with the evidence envelope, the [Project config](/reference/project-config) and the [Tenant config](/reference/tenant-config). This section defines the standard layout that lets a workflow grow without a change to the standard: a versioned header, a registry of step kinds and namespaced extension keys.
+
+### Today
+
+The sections above this one define the file the loader reads today, and [workflow.json](/schemas/workflow.json) is its schema.
+
+| Point | The file today |
+|---|---|
+| Header | None. The top level holds `steps` only. |
+| Step kinds | Five, closed: `command`, `agent`, `verify`, `human`, `effect`. |
+| Unknown keys | Refused everywhere. |
+| `engine` | An open string. The schema accepts any non-empty string, and the loader checks it against the engines your installation provides. |
+
+### The standard layout
+
+A workflow document has three parts.
+
+| Part | Keys | Rule |
+|---|---|---|
+| Header | `format` | Always `daggry/workflow@1`. A reader refuses a malformed `format` and a major version it does not know. |
+| Body | `steps` | The ordered entries, as defined in [File shape](#file-shape). |
+| Extension keys | `<namespace>/<key>` | Any number. See [Extension keys in a workflow](#extension-keys-in-a-workflow). |
+
+A file with no `format` key is read by the rules of [Today](#today): it holds `steps` only and takes no extension key and no extension kind.
+
+### Step kind registry
+
+A step kind is an entry in a registry. Each entry names the kind, the keys a step of that kind takes and the module that runs it.
+
+| Kind | Module that runs the step | Registered by |
+|---|---|---|
+| `command` | Deterministic runner | The standard. |
+| `verify` | Deterministic runner | The standard. |
+| `agent` | Agent runner | The standard. |
+| `effect` | Control plane | The standard. |
+| `human` | None. A person decides, and the control plane seals the decision. | The standard. |
+| `<namespace>/<name>` | The module its registration names: deterministic runner, agent runner or control plane. | The tenant, in `extensions.step_kinds` of the [Tenant config](/reference/tenant-config#extensions). |
+
+Rules for the registry:
+
+- A kind without a namespace belongs to the standard. The five above are the whole set. A new one is a change to the standard.
+- An extension kind has the form `<namespace>/<name>`: exactly one `/`, with each part made of ASCII letters, digits, `-` or `_`. The namespace names the party that defines the kind.
+- An extension kind is registered with the URL of a JSON Schema for its keys. A step of that kind takes `id`, `kind` and the keys that schema allows.
+- A kind that is not one of the five and is not registered by the tenant is refused at `/steps/<n>/kind`.
+- A loop is not a step kind, and no extension kind is a loop.
+
+### Which module runs a step
+
+A workflow declares the module through the step's `kind` and through nothing else. The conductor reads the kind, looks it up in the registry and hands the step to that module.
+
+| Module | Runs | Never |
+|---|---|---|
+| Deterministic runner | Code that a person wrote into the workflow or the project: a `command` step's `run` line and the project's test command. | Starts a model. |
+| Agent runner | A coding-agent engine, and whatever the engine generates. | Judges its own work. |
+| Control plane | Effects, seals and validators. | Runs a command or an agent. |
+| A person | The decision at a `human` step. | - |
+
+No key of a step moves it to another module. An `agent` step always runs in the agent runner, and a `command` step never does.
+
+### Engine
+
+`engine` is an open string, not a closed list, so a new coding-agent engine needs no change to the schema. The standard checks the value against the engines the tenant registers in `agents.engines` of the [Tenant config](/reference/tenant-config#agents). A value no registered engine has is refused.
+
+### Extension keys in a workflow
+
+| Rule | Detail |
+|---|---|
+| Form | `<namespace>/<key>`. Pattern `^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$`. |
+| Place | At the top level, on a step and on a `loop` object. |
+| A reader that does not know the key | Ignores the value and preserves it. |
+| A key without a namespace | Refused, unless this page defines it. |
+| Limit | An extension key never widens a step's scope, a loop's `max` or any rule of the project or the tenant, and never changes the meaning of a key this page defines. |
+
+The full rules are in [Extension keys](/reference/project-config#extension-keys).
+
+### Example
+
+This workflow carries the header, one extension key on the document, one on a step and one step of an extension kind. The file is illustrative.
+
+```yaml
+format: daggry/workflow@1
+acme/owner: platform-team
+steps:
+  - id: build
+    kind: command
+    run: make
+    scope: anywhere
+    acme/cost-centre: build
+  - id: scan
+    kind: acme/scan
+    profile: strict
+  - id: fix
+    kind: agent
+    engine: <engine>
+    prompt: Fix what the scan found.
+    outputs: [change]
+    scope: ["src/**"]
+```
+
+| Value | Meaning |
+|---|---|
+| `acme/owner`, `acme/cost-centre` | Extension keys. A reader that does not know the `acme` namespace ignores them. |
+| `acme/scan` | An extension kind. The tenant registers it with the module that runs it and the schema that allows `profile`. |
+| `<engine>` | The coding-agent engine the step uses, by a name the tenant registers. |
+
 ::: details Schema: workflow file
 This is the content of [workflow.json](/schemas/workflow.json).
 
