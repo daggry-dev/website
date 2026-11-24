@@ -5,7 +5,14 @@ import { SIGNUP_OPEN } from './features'
 const proof = [
   { t: 'Nobody edits it quietly', d: 'Every result is linked to the one before and signed. Change one byte later and daggry verify shows where.', l: '/guide/concepts/trust' },
   { t: 'Checks are code', d: 'The same work always gets the same verdict. An agent cannot talk its way to a pass.', l: '/guide/concepts/trust' },
-  { t: 'Formats are public', d: 'Every record format is a published JSON Schema. Read and check the trail with your own tools.', l: '/reference/kinds' },
+  { t: 'Formats are public', d: 'Every record format is a published JSON Schema. Read and check the trail with your own tools.', l: '/guide/concepts/standards' },
+]
+// The four open standards: what each document says.
+const standards = [
+  { t: 'Workflow', d: 'The work, as steps: what each hands to the next, the checks, and the moments you decide.', l: '/guide/concepts/workflows' },
+  { t: 'Evidence', d: 'One sealed record for each result, signed and linked to the record before it.', l: '/guide/concepts/trust' },
+  { t: 'Project config', d: 'What is true of one repository: how its work is measured and what no step may write.', l: '/reference/project-config' },
+  { t: 'Tenant config', d: 'How the factory works: which workflows, how they are orchestrated, which agents work and where a person decides.', l: '/guide/concepts/tenant' },
 ]
 // Each chip links to its pattern's heading on the patterns page (VitePress heading slugs).
 const kinds = [
@@ -46,7 +53,8 @@ const doors = [
       <h1>Agents do the work.<br /><em>Code checks it.</em></h1>
       <p class="lede">
         Coding agents can work all night. Daggry makes that safe to sleep through: every step an agent finishes is
-        re-checked by code and recorded in a trail nobody can quietly edit.
+        re-checked by code and recorded in a trail nobody can quietly edit. It is a factory kit, built from modules
+        and open standards.
       </p>
       <div class="cta">
         <a class="btn primary" :href="withBase('/guide/')">See one night</a>
@@ -87,6 +95,31 @@ const doors = [
     </section>
 
     <section class="wide">
+      <p class="eyebrow">Modules and open standards</p>
+      <h2>A factory kit, <em>not one machine</em>.</h2>
+      <p class="sub">
+        Each module has one job: a conductor orders the work, a control plane seals it, one runner runs code and
+        another runs agents. Four open documents connect them, so nothing is tied to one kind of work, one agent,
+        one cloud or one factory.
+      </p>
+      <Modules />
+      <div class="proof four">
+        <a v-for="s in standards" :key="s.t" class="card" :href="withBase(s.l)">
+          <h3>{{ s.t }}</h3>
+          <p>{{ s.d }}</p>
+        </a>
+      </div>
+      <p class="honest">
+        Each document has a published schema, a version and a way to extend it. Any factory can implement the same
+        specification and the same signing and chaining of evidence.
+      </p>
+      <p class="more">
+        <a :href="withBase('/guide/concepts/modules')">See the modules</a>
+        <a :href="withBase('/guide/concepts/standards')">Read the standards</a>
+      </p>
+    </section>
+
+    <section class="wide">
       <p class="eyebrow">Proof, not promises</p>
       <h2>Trust the <em>trail</em>, not the agent.</h2>
       <p class="sub">
@@ -108,8 +141,9 @@ const doors = [
       <p class="eyebrow">Any work with a check</p>
       <h2>If a script can check it, <em>Daggry can run it</em>.</h2>
       <p class="sub">
-        Any work that lives in a repository and has a check a script can run. This workflow needs no agent:
-        it runs a script, re-checks the result, waits for you, and opens a pull request.
+Any work that lives in a repository and has a check a script can run. A pull request from an issue is the
+        first workload, not the only one. This workflow needs no agent: it runs a script, re-checks the result,
+        waits for you, and opens a pull request.
       </p>
       <div class="work">
         <ul class="chips">
@@ -184,6 +218,7 @@ const doors = [
 .wide + .wide { margin-top: 64px; }
 
 .proof { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 8px; }
+.proof.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .card, .door { display: block; min-width: 0; padding: 26px; border-radius: 22px; border: 1px solid var(--vp-c-divider); background: var(--dg-btn-bg); text-decoration: none; color: inherit; transition: transform .2s, box-shadow .2s; }
 .card:hover, .door:hover { transform: translateY(-2px); box-shadow: 0 14px 34px -18px var(--dg-btn-shadow); }
 .card h3, .door h3 { font-family: var(--font-display); font-weight: 400; font-size: 1.6rem; line-height: 1.1; margin: 0 0 10px; letter-spacing: -0.01em; color: var(--dg-ink); }
@@ -218,9 +253,10 @@ const doors = [
 .door:first-child { background: linear-gradient(135deg, var(--dg-warm-fill), var(--dg-rose-fill)); border-color: var(--dg-warm-stroke); }
 
 @media (max-width: 959px) { .dg { padding-inline: 0; } }
+@media (max-width: 1000px) { .proof.four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 880px) { .work { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
 @media (max-width: 800px) {
-  .proof, .doors { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .proof, .proof.four, .doors { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   .hero { padding: 72px 0 90px; }
   .wide { padding-top: 64px; }
   .wide + .wide { margin-top: 48px; }

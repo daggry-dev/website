@@ -39,7 +39,7 @@
       <text x="520" y="318" text-anchor="middle" class="md">Agent runner</text>
       <text x="520" y="338" text-anchor="middle" class="sm">agentic or model-generated work</text>
       <rect x="410" y="350" width="220" height="36" rx="10" class="box"/>
-      <text x="520" y="372" text-anchor="middle" class="sm">engine adapter · the engine is replaceable</text>
+      <text x="520" y="372" text-anchor="middle" class="sm">engine adapter · replaceable engine</text>
       <!-- control plane -->
       <rect x="740" y="170" width="200" height="230" rx="18" class="warm"/>
       <text x="840" y="200" text-anchor="middle" class="md">Control plane</text>
