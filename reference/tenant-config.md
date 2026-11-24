@@ -139,7 +139,7 @@ The repositories the tenant's factory works on, and what the tenant decided for 
 | `projects[].agents.engines` | array of strings | no | Names from `agents.engines` that may work on this repository. Absent means every registered engine. |
 | `projects[].agents.roster` | array of strings | no | Names from `agents.roster` that may work on this repository. Absent means the whole roster. |
 | `projects[].approval.require` | array of strings | no | Points where a run on this repository always waits for a person, added to `agents.approval.require`. Each is `plan` or `effect`. |
-| `projects[].areas` | array of strings | no | Names from `scope.areas` of the repository's project config. Runs on this repository write inside those areas only. Absent means no limit by area. |
+| `projects[].areas` | array of area names | no | Names of areas that the repository's project config defines in [`areas`](/reference/project-config#areas). At least one name, none twice. Together they are the scope of every run on this repository: a run changes paths inside those areas only. Absent means the tenant sets no scope for runs on the repository. |
 | `projects[].image` | string | no | The name of a runner image from `runners.images`. Absent means the default image. |
 
 Rules for a project entry:
@@ -149,9 +149,10 @@ Rules for a project entry:
 - **A project entry narrows the tenant's own lists.** A name that the catalogue, the engines, the roster or the images lack is refused.
 - **Approval rules only add.** A project entry can require one more approval point than the tenant-wide rule. It cannot remove one. Autonomy on a repository is what is left between its approval points.
 - **A workflow must fit the repository.** A workflow with a `verify` step runs only on a repository whose project config names a canonical check. A run that does not fit is refused when it starts.
+- **An area must exist.** The names in `areas` are looked up in the project config of the base commit when a run starts. A run on a repository whose project config lacks one of the names is refused. A run request can name areas from the list to narrow the scope of that run, and a name outside the list refuses the run. See [The scope of a run](/reference/protected-paths#the-scope-of-a-run).
 - **An image must hold what the checks need.** When a check that a run uses names a toolchain in `needs.toolchains` that the repository's image does not list, or a runner class in `needs.runner` that `runners.classes` lacks, the run is refused when it starts.
 
-What is true of the repository itself, such as its checks and its protected paths, is in its project config.
+What is true of the repository itself, such as its areas, its checks and the paths it protects, is in its project config. The project config defines the areas, and this section chooses among them.
 
 ### extensions
 
@@ -186,15 +187,15 @@ Three documents set rules for a run. The order is tenant, then project, then wor
 
 | Document | Sets | May not |
 |---|---|---|
-| Tenant config | Every limit: the catalogue, the engines, the images, the approval points and the orchestration limits. Which workflows, agents and approval points apply to each repository. | - |
-| [Project config](/reference/project-config) | What is true of one repository: its checks, its canonical check, its areas and its protected paths. | Choose a workflow, an engine or an approval rule. Widen a tenant rule. |
-| [Workflow](/reference/workflow-schema) | Narrower rules for one step. | Widen a project or tenant rule. |
+| Tenant config | Every limit: the catalogue, the engines, the images, the approval points and the orchestration limits. Which workflows, agents, approval points and areas apply to each repository. | - |
+| [Project config](/reference/project-config) | What is true of one repository: its areas, its checks, its canonical check and the paths it protects. | Choose a workflow, an engine, an approval rule or the scope of a run. Widen a tenant rule. |
+| [Workflow](/reference/workflow-schema) | Narrower rules for one step: its scope inside the scope of the run, and a check called by name. | Replace the canonical check. Widen a project or tenant rule. |
 
-Only a person widens a rule. An agent, a workflow and an extension key narrow or add, and never widen.
+Only a person widens a rule: by changing the tenant config, by merging a change to the project config, or by a grant such as [unfreeze](/reference/protected-paths#unfreeze-grant). An agent, a workflow and an extension key narrow or add, and never widen.
 
 ### Worked example
 
-This tenant offers two workflows, runs at most four attempts at once, registers one engine and two agents, requires a person before work builds on a plan, and serves two repositories. It assigns both workflows to the first repository and one to the second, where it also requires a person before any effect and limits runs to one area.
+This tenant offers two workflows, runs at most four attempts at once, registers one engine and two agents, requires a person before work builds on a plan, and serves two repositories. It assigns both workflows to the first repository and one to the second, where it also requires a person before any effect and sets the scope of every run to one area.
 
 ```yaml
 format: daggry/tenant@1
@@ -293,7 +294,7 @@ acme/billing:
 | `<engine>` | The identifier of a coding-agent engine your installation provides. |
 | `<digest>` | The 64-digit digest of the image. |
 | `model-credential` | The name of a stored secret. The document never holds the secret. |
-| `app` | The name of an area in the project config of `example/shop-web`. |
+| `app` | The name of an area that the project config of `example/shop-web` defines. A run on that repository changes paths inside `app` only. |
 
 ### Examples a reader refuses
 
@@ -310,6 +311,8 @@ acme/billing:
 | A project entry whose `workflows.allowed` names a workflow the catalogue lacks | Unknown workflow. |
 | A project entry whose `workflows.default` is not an allowed name | The default is not allowed on the repository. |
 | A project entry whose `image` is not in `runners.images` | Unknown image. |
+| A project entry with `areas: []` | An entry names at least one area. |
+| A project entry with `areas: ["src/**"]` | Not an area name. A path group is defined in the project config and named here. |
 | `retries: 3` at the top level | Unknown key without a namespace. |
 
 ## Next steps

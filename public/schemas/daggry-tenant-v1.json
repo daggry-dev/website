@@ -363,8 +363,11 @@
           },
           "areas": {
             "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
             "items": {
-              "$ref": "#/$defs/name"
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]*$"
             }
           },
           "image": {
