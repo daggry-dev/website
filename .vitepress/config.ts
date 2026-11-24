@@ -30,6 +30,9 @@ export default defineConfig({
           { text: 'How Daggry works', link: '/guide/' },
         ] },
         { text: 'Concepts', items: [
+          { text: 'The modules', link: '/guide/concepts/modules' },
+          { text: 'Open standards', link: '/guide/concepts/standards' },
+          { text: 'The tenant defines the factory', link: '/guide/concepts/tenant' },
           { text: 'Why you can trust a run', link: '/guide/concepts/trust' },
           { text: 'Work graphs', link: '/guide/concepts/workflows' },
           { text: 'What an agent cannot change', link: '/guide/concepts/protection' },
@@ -59,8 +62,13 @@ export default defineConfig({
           { text: 'Kinds and schemas', link: '/reference/kinds' },
           { text: 'Workflow schema', link: '/reference/workflow-schema' },
           { text: 'Gate expressions', link: '/reference/gates' },
+          { text: 'Project config', link: '/reference/project-config' },
+          { text: 'Tenant config', link: '/reference/tenant-config' },
           { text: 'Project profile', link: '/reference/profile' },
           { text: 'Protected paths', link: '/reference/protected-paths' },
+        ] },
+        { text: 'Standards', items: [
+          { text: 'Conformance', link: '/reference/conformance' },
         ] },
         { text: 'Terms', items: [
           { text: 'Glossary', link: '/reference/glossary' },
