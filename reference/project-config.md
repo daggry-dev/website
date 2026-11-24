@@ -149,7 +149,7 @@ Rules:
 - **The project names, others choose.** The project says which areas exist. It never says which of them a run may change. A workflow chooses the scope of a step, and the tenant or the run request chooses the scope of a run.
 - **A name must exist.** A step, a tenant entry, a run request or a `protect.paths` entry that names an area this section lacks is refused. For the first three the run is refused when it starts.
 - **Areas may overlap.** A path can be in more than one area, for example in one with `role: source` and one with `role: tests`. A path is inside a scope when at least one named area holds it, and it is protected when at least one protected area holds it.
-- **A path in no area** is outside every scope that names areas.
+- **A path in no area** is outside the scope of every run that names areas.
 - **A role is a label.** A reader that does not know a role keeps it and applies nothing. `role: tests` does not freeze a path. Frozen tests come from a step's `tests` key. See [Frozen tests](/reference/protected-paths#frozen-tests).
 
 How a scope is judged, and how the scope of a run and the scope of a step combine, is in [Scope](/reference/protected-paths#scope).

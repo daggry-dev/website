@@ -160,7 +160,7 @@ A loop entry has an `id` and a `loop` object. A loop is not a sixth step kind.
 
 ### Red then green
 
-A red-then-green loop has three steps in an iteration: a test step (an `agent` step with `tests`) writes a test whose title carries the criterion id, an implementer (an `agent` step) makes it pass, and a `verify` step measures a clean copy of the code. The runner overlays the test step's new test paths on a clean copy of the base commit and runs the profile's test command there. A test step in a loop that does not prove red is rejected. Frozen tests and unfreeze are described in [Protected paths](/guide/concepts/protection).
+A red-then-green loop has three steps in an iteration: a test step (an `agent` step with `tests`) writes a test whose title carries the criterion id, an implementer (an `agent` step) makes it pass, and a `verify` step measures a clean copy of the code. The runner overlays the test step's new test paths on a clean copy of the base commit and runs the profile's test command there. A test step in a loop that does not prove red is rejected. Frozen tests and unfreeze are defined in [Protected paths](/reference/protected-paths#frozen-tests).
 
 ## A full valid example
 

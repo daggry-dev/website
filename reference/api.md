@@ -1,4 +1,4 @@
-# HTTP API reference
+# HTTP API
 
 *Reference*
 

@@ -57,6 +57,7 @@ These twelve words cover most of what you read on this site. The table after the
 | extension key | A key the standard does not define, written `<namespace>/<key>`. A reader that does not know it ignores and preserves it. An unknown key without a namespace is refused. | [Project config](/reference/project-config) |
 | fact | A named value in a verdict, a boolean, an integer or a string, that a gate can read. | [Gate expressions](/reference/gates) |
 | fact class | Whether a field is `claimed`, `derived` or `judged`. | [Gate expressions](/reference/gates) |
+| factory | A system that takes in work, puts agents on it and hands back checked results. A tenant config says how one factory works. | [The tenant defines the factory](/guide/concepts/tenant) |
 | frozen test | A test path sealed in an earlier loop iteration, recorded with its file digest. A step cannot change it. | [Protected paths](/reference/protected-paths) |
 | gate | A rule over derived facts that a run must pass. It is written as an expression in a loop's `until`. | [Gate expressions](/reference/gates) |
 | genesis digest | The digest of no history: 64 zero characters. It is the `prev` of a chain's first entry. | [Envelope](/reference/envelope) |
@@ -92,7 +93,7 @@ These twelve words cover most of what you read on this site. The table after the
 | step | A node of a workflow. Its kind is `command`, `agent`, `verify`, `human` or `effect`. | [Workflow schema](/reference/workflow-schema) |
 | tenant | A party whose runs an installation hosts, called a team or user elsewhere on the site. Each tenant has one chain. | [Envelope](/reference/envelope) |
 | tenant config | The standard document for how a tenant's factory works: its workflow catalogue, orchestration limits, agents, runners and repositories, and which workflows run on which repository. Its rules win over the project config's and the workflow's. | [Tenant config](/reference/tenant-config) |
-| unfreeze | The one human grant: `daggry approve <run-id> --unfreeze <path>` frees one frozen test path for one iteration. | [Protected paths](/reference/protected-paths) |
+| unfreeze | The human grant that frees one frozen test path for one iteration: `daggry approve <run-id> --unfreeze <path>`. | [Protected paths](/reference/protected-paths) |
 | validator | A check written as code: it turns sealed inputs into a verdict. | [Kinds and schemas](/reference/kinds) |
 | verdict | The artifact a validator produces, with a status, findings and derived facts. | [Kinds and schemas](/reference/kinds) |
 | verify step | The step that measures a clean copy of the code. It is not the `daggry verify` command, which checks the log. | [Verify a run](/guide/how-to/verify-a-run) |

@@ -481,7 +481,7 @@ A commit, the paths it changed, and the run's frozen test set at that seal.
 | `frozen[].path` | string | yes | - | Non-empty. |
 | `frozen[].digest` | string | yes | - | Non-empty. The file's git blob id. |
 
-The frozen set holds each path of a test step's change that matches the step's `tests` globs, with its file digest. The set carries forward: each new `change` holds the previous frozen set plus new frozen paths. An unfrozen path is re-entered at its new digest, or dropped if the file is gone. The set is frozen for every later step of the run. See [Protected paths](/guide/concepts/protection).
+The frozen set holds each path of a test step's change that matches the step's `tests` globs, with its file digest. The set carries forward: each new `change` holds the previous frozen set plus new frozen paths. An unfrozen path is re-entered at its new digest, or dropped if the file is gone. The set is frozen for every later step of the run. See [Protected paths](/reference/protected-paths#frozen-tests).
 
 The control plane seals a `change` after an accepted `agent` or `command` step. A `verify` step seals none.
 
