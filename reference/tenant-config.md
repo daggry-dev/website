@@ -6,7 +6,7 @@ Proposed standard; see the [Roadmap](/roadmap) for status.
 
 For the idea, read [The tenant defines the factory](/guide/concepts/tenant) and [Where it runs](/guide/concepts/architecture).
 
-The tenant config is one YAML document that says how a tenant's factory works: which workflows it offers, how work is orchestrated, which agents work and with what autonomy, which runners run the steps and which repositories it serves. This page defines the standard layout and the precedence rule. It is for people who run a tenant and for people who write a reader of the document.
+The tenant config is one YAML document that says how a tenant's factory works: which workflows it offers, how work is orchestrated, which agents work and with what autonomy, which runners run the steps, which repositories it serves and which workflows run on each repository. This page defines the standard layout and the precedence rule. It is for people who run a tenant and for people who write a reader of the document.
 
 The format is open. It follows the same layout rules as the [Project config](/reference/project-config): a `format` header, named sections and namespaced extension keys.
 
@@ -31,7 +31,7 @@ Today the settings of this kind are chart values. The cluster admin sets them on
 | `images.job` | placeholder | Default image for every job, by digest. | `runners.images` |
 | `modelSecret` | a Secret name | Secret that holds the model credential. | `agents.engines[].credential` |
 
-A workflow reaches the control plane as a file given to `daggry run`. See [CLI](/reference/cli). The roster of agents is on the [Roadmap](/roadmap).
+A workflow reaches the control plane as a file given to `daggry run --workflow <file>`, and the person who starts the run names the repository. Nothing assigns a workflow to a repository today. See [CLI](/reference/cli). The roster of agents is on the [Roadmap](/roadmap).
 
 ## The standard
 
@@ -62,12 +62,14 @@ The catalogue: the workflows the tenant offers, and where each one comes from.
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `workflows` | array of objects | no | The catalogue. Names are unique. |
-| `workflows[].name` | string | yes | The name a project uses to pick the workflow. Non-empty. |
-| `workflows[].source.repository` | string | yes | The repository that holds the workflow file, as `<owner>/<name>`. |
+| `workflows[].name` | string | yes | The name a project entry uses to assign the workflow. Non-empty. See [projects](#projects). |
+| `workflows[].source.repository` | string | yes | The repository that holds the workflow file, as `<owner>/<name>`. The tenant chooses it. |
 | `workflows[].source.path` | string | yes | The path of the workflow file in that repository. |
 | `workflows[].source.revision` | string | yes | The commit the file is read from: 40 lowercase hex digits. |
 
 A workflow is pinned to a commit, so a catalogue entry names exactly one file content. The file itself follows the [Workflow schema](/reference/workflow-schema). A run uses only a workflow from the catalogue.
+
+A workflow is a document in the tenant's catalogue, wherever its file is kept. The source can be a repository of workflows, or the repository the work is done on. In both cases the tenant names it here, and the repository itself assigns nothing.
 
 ### orchestration
 
@@ -112,11 +114,12 @@ The images that run steps, and the isolation class of each kind of runner.
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `runners.images` | array of objects | no | The images the tenant offers. |
-| `runners.images[].name` | string | yes | The name a project uses in `runner.image`. Non-empty. Unique. |
+| `runners.images[].name` | string | yes | The name a project entry uses in `projects[].image`. Non-empty. Unique. |
 | `runners.images[].image` | string | yes | The image reference, by digest. |
-| `runners.images[].default` | boolean | no | `true` on at most one image: the one a project gets when it names none. |
+| `runners.images[].toolchains` | array of labels | no | The toolchains the image holds, by the labels a project config uses in `needs.toolchains`. |
+| `runners.images[].default` | boolean | no | `true` on at most one image: the one a repository gets when its project entry names none. |
 | `runners.classes` | array of objects | no | The isolation classes. |
-| `runners.classes[].name` | string | yes | The class name. Non-empty. Unique. |
+| `runners.classes[].name` | string | yes | The class name. Non-empty. Unique. A check in a project config asks for a class by this name in `needs.runner`. |
 | `runners.classes[].module` | string | yes | `deterministic-runner` or `agent-runner`: the module the class applies to. |
 | `runners.classes[].network` | string | yes | `none` or `open`: whether a pod of the class reaches the network. |
 | `runners.classes[].model_credential` | boolean | yes | Whether a pod of the class holds an engine's credential. `false` is required for `deterministic-runner`. |
@@ -125,15 +128,30 @@ The two runner modules are isolated differently because they run different thing
 
 ### projects
 
-The repositories the tenant's factory works on.
+The repositories the tenant's factory works on, and what the tenant decided for each one. This section is where a workflow is assigned to a repository.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `projects` | array of objects | no | The repositories. |
 | `projects[].repository` | string | yes | The repository, as `<owner>/<name>`. Unique. |
-| `projects[].workflows` | array of strings | no | Names from the catalogue this repository may use. Absent means the whole catalogue. |
+| `projects[].workflows.allowed` | array of strings | no | Names from the catalogue that may run on this repository. Absent means the whole catalogue. |
+| `projects[].workflows.default` | string | no | The workflow a run uses when it names none. One of the allowed names. |
+| `projects[].agents.engines` | array of strings | no | Names from `agents.engines` that may work on this repository. Absent means every registered engine. |
+| `projects[].agents.roster` | array of strings | no | Names from `agents.roster` that may work on this repository. Absent means the whole roster. |
+| `projects[].approval.require` | array of strings | no | Points where a run on this repository always waits for a person, added to `agents.approval.require`. Each is `plan` or `effect`. |
+| `projects[].areas` | array of strings | no | Names from `scope.areas` of the repository's project config. Runs on this repository write inside those areas only. Absent means no limit by area. |
+| `projects[].image` | string | no | The name of a runner image from `runners.images`. Absent means the default image. |
 
-A run starts only for a listed repository. The repository's own rules are in its [Project config](/reference/project-config).
+Rules for a project entry:
+
+- **A run starts only for a listed repository.**
+- **The tenant assigns, the project does not.** A run on a repository uses a workflow from `workflows.allowed`. The repository's own [Project config](/reference/project-config) has no key that names a workflow, an engine or an approval rule.
+- **A project entry narrows the tenant's own lists.** A name that the catalogue, the engines, the roster or the images lack is refused.
+- **Approval rules only add.** A project entry can require one more approval point than the tenant-wide rule. It cannot remove one. Autonomy on a repository is what is left between its approval points.
+- **A workflow must fit the repository.** A workflow with a `verify` step runs only on a repository whose project config names a canonical check. A run that does not fit is refused when it starts.
+- **An image must hold what the checks need.** When a check that a run uses names a toolchain in `needs.toolchains` that the repository's image does not list, or a runner class in `needs.runner` that `runners.classes` lacks, the run is refused when it starts.
+
+What is true of the repository itself, such as its checks and its protected paths, is in its project config.
 
 ### extensions
 
@@ -168,15 +186,15 @@ Three documents set rules for a run. The order is tenant, then project, then wor
 
 | Document | Sets | May not |
 |---|---|---|
-| Tenant config | Every limit: the catalogue, the engines, the images, the approval points and the orchestration limits. | - |
-| [Project config](/reference/project-config) | Narrower rules for one repository, picked from what the tenant offers. | Widen a tenant rule. |
+| Tenant config | Every limit: the catalogue, the engines, the images, the approval points and the orchestration limits. Which workflows, agents and approval points apply to each repository. | - |
+| [Project config](/reference/project-config) | What is true of one repository: its checks, its canonical check, its areas and its protected paths. | Choose a workflow, an engine or an approval rule. Widen a tenant rule. |
 | [Workflow](/reference/workflow-schema) | Narrower rules for one step. | Widen a project or tenant rule. |
 
 Only a person widens a rule. An agent, a workflow and an extension key narrow or add, and never widen.
 
 ### Worked example
 
-This tenant offers two workflows, runs at most four attempts at once, registers one engine and two agents, requires a person before work builds on a plan and before any effect, and serves one repository.
+This tenant offers two workflows, runs at most four attempts at once, registers one engine and two agents, requires a person before work builds on a plan, and serves two repositories. It assigns both workflows to the first repository and one to the second, where it also requires a person before any effect and limits runs to one area.
 
 ```yaml
 format: daggry/tenant@1
@@ -216,13 +234,17 @@ agents:
       engine: <engine>
       instructions: agents/tester.md
   approval:
-    require: [plan, effect]
+    require: [plan]
 
 runners:
   images:
     - name: rust-stable
       image: registry.example/jobs/rust@sha256:<digest>
+      toolchains: [rust-1.90]
       default: true
+    - name: node-lts
+      image: registry.example/jobs/node@sha256:<digest>
+      toolchains: [node-22]
   classes:
     - name: checks
       module: deterministic-runner
@@ -235,7 +257,20 @@ runners:
 
 projects:
   - repository: example/shop
-    workflows: [delivery, translate-docs]
+    workflows:
+      allowed: [delivery, translate-docs]
+      default: delivery
+    image: rust-stable
+  - repository: example/shop-web
+    workflows:
+      allowed: [delivery]
+      default: delivery
+    agents:
+      roster: [lead]
+    approval:
+      require: [effect]
+    areas: [app]
+    image: node-lts
 
 extensions:
   step_kinds:
@@ -258,6 +293,7 @@ acme/billing:
 | `<engine>` | The identifier of a coding-agent engine your installation provides. |
 | `<digest>` | The 64-digit digest of the image. |
 | `model-credential` | The name of a stored secret. The document never holds the secret. |
+| `app` | The name of an area in the project config of `example/shop-web`. |
 
 ### Examples a reader refuses
 
@@ -270,10 +306,14 @@ acme/billing:
 | A roster entry whose `engine` is not in `agents.engines` | Unknown engine. |
 | A class with `module: deterministic-runner` and `model_credential: true` | A deterministic runner never holds a model credential. |
 | `extensions.artifact_kinds[]` with `kind: evidence/scan@1` | The `evidence` namespace takes no added kinds. |
+| `projects[]` with `workflows: [delivery]` | Not an object. The names go in `workflows.allowed`. |
+| A project entry whose `workflows.allowed` names a workflow the catalogue lacks | Unknown workflow. |
+| A project entry whose `workflows.default` is not an allowed name | The default is not allowed on the repository. |
+| A project entry whose `image` is not in `runners.images` | Unknown image. |
 | `retries: 3` at the top level | Unknown key without a namespace. |
 
 ## Next steps
 
-- For one repository's rules, see [Project config](/reference/project-config).
+- For what a repository says about itself, see [Project config](/reference/project-config).
 - For the workflow file a catalogue entry points to, see [Workflow schema](/reference/workflow-schema).
 - For what another factory implements to use the same documents, see [Conformance](/reference/conformance).

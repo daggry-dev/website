@@ -225,6 +225,12 @@
               "image": {
                 "$ref": "#/$defs/name"
               },
+              "toolchains": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/label"
+                }
+              },
               "default": {
                 "type": "boolean"
               }
@@ -299,10 +305,70 @@
             "$ref": "#/$defs/repository"
           },
           "workflows": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "allowed": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/name"
+                }
+              },
+              "default": {
+                "$ref": "#/$defs/name"
+              }
+            }
+          },
+          "agents": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "engines": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/name"
+                }
+              },
+              "roster": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/name"
+                }
+              }
+            }
+          },
+          "approval": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "require": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "plan",
+                    "effect"
+                  ]
+                }
+              }
+            }
+          },
+          "areas": {
             "type": "array",
             "items": {
               "$ref": "#/$defs/name"
             }
+          },
+          "image": {
+            "$ref": "#/$defs/name"
           }
         }
       }
@@ -401,6 +467,10 @@
     "repository": {
       "type": "string",
       "pattern": "^[^/]+/[^/]+$"
+    },
+    "label": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
     }
   }
 }
