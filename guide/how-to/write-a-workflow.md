@@ -8,7 +8,7 @@ This page is for anyone who starts runs with `daggry run`. The snippets are illu
 
 The diagram shows the delivery workflow that the section [Add a bounded loop](#add-a-bounded-loop) builds: a plan, your approval, a bounded loop of test, fix and check, and a pull request. Other kinds of work use the same parts in a different order.
 
-A workflow is one YAML file with one key, `steps`: an ordered list of steps and loops. Workflows use strict-subset YAML, with no anchors, tags or merge keys. For the ideas behind it, see [Work graphs](/guide/concepts/workflows). To decide what the graph should contain before you write it, see [Design a workflow](/guide/how-to/design-a-workflow). To start from a complete file for a kind of work, see [Workflow patterns](/guide/how-to/workflow-patterns).
+A workflow is one YAML file with one key, `steps`: an ordered list of steps and loops. A workflow is a document in the tenant's catalogue, and the tenant decides which repositories it runs on. `daggry run --workflow <file>` is today's way to supply one. See [The tenant defines the factory](/guide/concepts/tenant). Workflows use strict-subset YAML, with no anchors, tags or merge keys. For the ideas behind it, see [Work graphs](/guide/concepts/workflows). To decide what the graph should contain before you write it, see [Design a workflow](/guide/how-to/design-a-workflow). To start from a complete file for a kind of work, see [Workflow patterns](/guide/how-to/workflow-patterns).
 
 ## Step kinds at a glance
 
@@ -72,7 +72,7 @@ An `agent` step runs a coding-agent session. It must deliver the artifact kinds 
 
 ## Add a verify step
 
-A `verify` step measures the last sealed commit in a clean copy of the code. It has no command of its own. It runs the command named in the base commit's `.daggry/profile.yaml`, so a step cannot weaken its own check.
+A `verify` step measures the last sealed commit in a clean copy of the code. It has no command of its own. It runs the command named in the base commit's `.daggry/profile.yaml`, so a step cannot weaken its own check. The command does not have to run tests: any deterministic check that exits with 0 when the work is good can be the command.
 
 1. Add the step after the work it checks.
 

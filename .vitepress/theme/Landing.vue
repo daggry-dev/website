@@ -88,7 +88,7 @@ const doors = [
       <p class="eyebrow">How it works</p>
       <h2>Describe it once. <em>Check every step.</em></h2>
       <p class="sub">
-        A workflow is a file in your repository: the steps, what each must hand to the next, the checks, and the
+        A workflow is a short file: the steps, what each must hand to the next, the checks, and the
         moments you decide. Daggry runs on your own Kubernetes cluster and works on GitHub repositories.
       </p>
       <HowItWorks />

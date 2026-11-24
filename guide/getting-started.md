@@ -22,7 +22,7 @@ daggry --help
 
 ## 1. Write a workflow
 
-A workflow is a file of steps in a standard layout. This one runs a command, waits for you, and runs a second command. Save it as `first.yaml`.
+A workflow is a file of steps in a standard layout. You supply it to `daggry run` as a file on your own machine, so it does not have to be in the repository the work is done on. This one runs a command, waits for you, and runs a second command. Save it as `first.yaml`.
 
 ```yaml
 steps:
