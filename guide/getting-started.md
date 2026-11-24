@@ -2,7 +2,9 @@
 
 By the end of this page you will have run a small workflow on a scratch repository, approved a wait, and checked the sealed record on your own machine. You will see how Daggry stops for a person, seals a result and lets you verify it.
 
-The first workflow has no agent step. That lets you see sealing, approval and verification without model cost or a model credential. When you are ready, [Write a workflow](/guide/how-to/write-a-workflow) shows how to add an agent step.
+Daggry is built from modules and four open standards. On this page you touch two of the standards: you write a workflow, and you verify evidence. The file you write follows the published [Workflow schema](/reference/workflow-schema), and the records you verify follow the published [envelope](/reference/envelope). See [Open standards](/guide/concepts/standards).
+
+The first workflow has no agent step. Its two `command` steps are deterministic work, which runs with no model. That lets you see sealing, approval and verification without model cost or a model credential. When you are ready, [Write a workflow](/guide/how-to/write-a-workflow) shows how to add an agent step.
 
 The commands and outputs on this page are illustrative. Placeholders in angle brackets, such as `<owner>`, stand for values you choose.
 
@@ -20,7 +22,7 @@ daggry --help
 
 ## 1. Write a workflow
 
-A workflow is a file of steps. This one runs a command, waits for you, and runs a second command. Save it as `first.yaml`.
+A workflow is a file of steps in a standard layout. This one runs a command, waits for you, and runs a second command. Save it as `first.yaml`.
 
 ```yaml
 steps:
@@ -121,5 +123,6 @@ The command recomputes every fingerprint and signature on your machine. If anyth
 
 - To add an agent step, a check and a bounded loop, read [Write a workflow](/guide/how-to/write-a-workflow).
 - To understand what you just ran, read [Why you can trust a run](/guide/concepts/trust) and [Where it runs](/guide/concepts/architecture).
+- To see the parts Daggry is built from, read [The modules](/guide/concepts/modules) and [Open standards](/guide/concepts/standards).
 - To look up a flag or an exit code, read the [CLI reference](/reference/cli).
 - For what exists today, see the [Roadmap](/roadmap).

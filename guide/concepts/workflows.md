@@ -2,9 +2,11 @@
 
 A workflow (the graph of steps) is a file that tells Daggry how a piece of work goes. An agent left to decide its own process can skip a step or loop all night, and you cannot predict which. Daggry takes that choice away: the agent follows the file and cannot change it.
 
+The workflow is one of Daggry's four open standards. The file has a standard layout with a published schema, so the work is defined by a document, not by the platform. A pull request from an issue is the first workflow, not the only one. See [Open standards](/guide/concepts/standards).
+
 ## Five building blocks
 
-A workflow is a file in your repository. A new kind of work needs a new file, not a new release of Daggry. For a picture of the delivery workflow, see [Write a workflow](/guide/how-to/write-a-workflow).
+A workflow is a file in a repository. A new kind of work needs a new file, not a new release of Daggry. For a picture of the delivery workflow, see [Write a workflow](/guide/how-to/write-a-workflow).
 
 - A **step** is one unit of work: an agent session, a script, a check, a wait for a person, or opening a pull request.
 - An **output** is what a step hands to the next one. Daggry seals it: code checks it, then signs it so it cannot be quietly changed.
@@ -45,9 +47,19 @@ Anything that makes a run predictable is fixed in the file before it starts. Any
 
 A gate reads only facts that code computed from sealed records, never what an agent said. For the syntax, see [Gate expressions](/reference/gates).
 
+## Who runs each step
+
+A step's kind decides which module runs it. The deterministic runner runs `command` and `verify` steps: code that gives the same result for the same input, with no model. The agent runner runs `agent` steps through an engine adapter. The control plane runs `effect` steps, such as opening a pull request, because only it holds the key for the repository host. A `human` step runs nowhere: the run waits.
+
+The conductor orders the steps and hands each job to a runner. How many jobs run at a time, how long a lease lasts and where a person must decide come from the tenant config. See [The modules](/guide/concepts/modules) and [The tenant defines the factory](/guide/concepts/tenant).
+
+## Extending the workflow
+
+The standard grows without changing. A step kind that the standard does not define is named `<namespace>/<name>`, and a tenant admits it by name in its tenant config. A key the standard does not define is written `<namespace>/<key>`. A key or a kind without a namespace that the standard does not define is refused. See the [Workflow schema](/reference/workflow-schema).
+
 ## Limits that keep a run readable
 
-An agent never adds, removes or reorders steps. The control plane (the part of Daggry that schedules steps and signs results) holds the file outside every workspace. There is no `if`: branching happens at gates, loops and human waits. Steps run in order and loops do not nest. You can read a workflow and know every path a run can take.
+An agent never adds, removes or reorders steps. The conductor (the module that orders the steps and schedules them across runners) reads the file, and the control plane (the module that holds the keys and seals results) keeps it outside every workspace. There is no `if`: branching happens at gates, loops and human waits. Steps run in order and loops do not nest. You can read a workflow and know every path a run can take.
 
 Daggry fits work that you can break into steps with named outputs, check with a script, and hand to a person where code cannot decide. For ready-made files, see [Workflow patterns](/guide/how-to/workflow-patterns).
 
@@ -56,5 +68,6 @@ Daggry fits work that you can break into steps with named outputs, check with a 
 - To turn your kind of work into a workflow, read [Design a workflow](/guide/how-to/design-a-workflow).
 - To write the file, read [Write a workflow](/guide/how-to/write-a-workflow).
 - To see what an agent cannot change, read [What an agent cannot change](/guide/concepts/protection).
+- To see which module runs each step, read [The modules](/guide/concepts/modules).
 - To see where each step runs, read [Where it runs](/guide/concepts/architecture).
 - For what exists today, see the [Roadmap](/roadmap).
