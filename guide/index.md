@@ -2,6 +2,8 @@
 
 An agent can do a night's work, but its own report is the only proof. Daggry runs the work as fixed steps, has code re-check each step, and keeps a signed record you can verify yourself.
 
+Daggry is a factory kit. A factory is a system that takes in work, puts agents on it and hands back checked results. The kit is a set of modules, each with one job, and four open standards that connect them. A pull request from an issue is the first workload, not the only one.
+
 Daggry is Danish for dawn. You start the work, go to sleep, and at first light it is done and checked.
 
 ## One night
@@ -16,6 +18,20 @@ Daggry is Danish for dawn. You start the work, go to sleep, and at first light i
 
 The trail shows one night in four entries: the plan you approved, the test that failed first, the same test passing, and the pull request opening. Each entry is checked by code and signed.
 
+## One night is one workflow
+
+Nothing in that night is built into Daggry. The plan, the test that fails first, the approval and the pull request are steps in a workflow, a file you can read and change. Another file describes other work: a report, a migration, a release check.
+
+The same holds for the rest of the factory. Which agents work, on which engine, how many jobs run at a time and where a person must decide are data in the tenant config. What is true of one repository, such as how to run its tests, is in its project config.
+
+## Built from modules and open standards
+
+**Modules.** A conductor orders the steps and schedules them across runners. A control plane holds the keys, seals and judges. A deterministic runner runs commands and checks, and never starts a model. An agent runner runs a coding agent through an adapter, so the agent is replaceable. See [The modules](/guide/concepts/modules).
+
+**Open standards.** Four documents connect the modules: the workflow, the evidence, the project config and the tenant config. Each has a published schema, a version and a way to extend it. Any factory can implement the same specification and the same signing and chaining of evidence. See [Open standards](/guide/concepts/standards).
+
+**The tenant defines the factory.** How workflows are chosen, how they are orchestrated and how agents are put to work is captured in the tenant config, not in code. See [The tenant defines the factory](/guide/concepts/tenant).
+
 ## Four ideas, and why each exists
 
 **Fixed steps.** An agent left to choose its own process can skip testing or loop all night. You describe the work as a short file of steps. The agent follows it and cannot change it. See [Work graphs](/guide/concepts/workflows).
@@ -28,14 +44,15 @@ The trail shows one night in four entries: the plan you approved, the test that 
 
 ## Who it is for
 
-You run coding-agent CLIs on your own repositories and want the work to finish while you are away. Daggry fits work that lives in a repository and has a check a script can run. A pull request from an issue is the first example. For others, see [Workflow patterns](/guide/how-to/workflow-patterns).
+You run coding-agent CLIs on your own repositories and want the work to finish while you are away. Daggry fits work that lives in a repository and has a check a script can run. A pull request from an issue is the first workload. For others, see [Workflow patterns](/guide/how-to/workflow-patterns).
 
 You can only leave work alone if you do not need to trust whoever is doing it. Daggry never takes the agent's word.
 
 ## Where to go next
 
-1. To check the record yourself, read [Why you can trust a run](/guide/concepts/trust).
-2. To run a workflow, follow [Getting started](/guide/getting-started).
-3. To look up a field, command or term, open the [Reference](/reference/).
+1. To see the parts and what connects them, read [The modules](/guide/concepts/modules) and [Open standards](/guide/concepts/standards).
+2. To check the record yourself, read [Why you can trust a run](/guide/concepts/trust).
+3. To run a workflow, follow [Getting started](/guide/getting-started).
+4. To look up a field, command or term, open the [Reference](/reference/).
 
 For what exists today and what comes next, see the [Roadmap](/roadmap).
