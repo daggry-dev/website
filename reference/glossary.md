@@ -27,6 +27,7 @@ These twelve words cover most of what you read on this site. The table after the
 
 | Term | Definition | Read more |
 |---|---|---|
+| agent runner | The module that runs agentic or model-generated work: it starts a coding agent through an engine adapter. Whatever the agent hands in is a claim. | [The modules](/guide/concepts/modules) |
 | approval | The moment a person decides, and the sealed artifact that records it. The artifact binds a person's decision to one digest: the pending plan or change, or the frozen file digest for an unfreeze. | [Kinds and schemas](/reference/kinds) |
 | artifact | A sealed value in the one envelope, with a kind and parents. | [Envelope](/reference/envelope) |
 | attempt | One try of a job. A takeover after a lapsed lease, or an `approve` at a `human` step, starts a new attempt. | [Work graphs](/guide/concepts/workflows) |
@@ -38,9 +39,12 @@ These twelve words cover most of what you read on this site. The table after the
 | claim | What an agent produced before code checked and sealed it. A claim is never evidence. | [Why you can trust a run](/guide/concepts/trust) |
 | cluster admin | The person who installs and runs Daggry on a Kubernetes cluster. | [Roadmap](/roadmap) |
 | command step | A step that runs a shell line in the pod. | [Workflow schema](/reference/workflow-schema) |
+| conductor | The module that orders the steps of a run and schedules job attempts across runners. It holds no key and seals nothing. | [The modules](/guide/concepts/modules) |
+| conformance | What an implementation does to follow the standards: it accepts, refuses and produces what the rules say and passes the published test vectors. It has three levels: verifier, signer and factory. | [Conformance](/reference/conformance) |
 | control plane | The one backend. It decides the next step, holds the keys, seals and judges. | [Where it runs](/guide/concepts/architecture) |
 | criterion | An acceptance criterion with an id in the approved plan. | [Kinds and schemas](/reference/kinds) |
 | derived | A fact class: code computed the value from sealed inputs. Gates can read it. | [Gate expressions](/reference/gates) |
+| deterministic runner | The module that runs commands, measures and checks: code that gives the same result for the same input. It never starts a model. | [The modules](/guide/concepts/modules) |
 | digest | The SHA-256 hash that names a sealed artifact by its content. Parents and blobs are referenced by digest. | [Envelope](/reference/envelope) |
 | effect step | A step that the control plane runs, such as opening a pull request. | [Workflow schema](/reference/workflow-schema) |
 | engine | The coding-agent CLI that does an agent step's work. | [Where it runs](/guide/concepts/architecture) |
@@ -48,6 +52,7 @@ These twelve words cover most of what you read on this site. The table after the
 | envelope | The one JSON shape every artifact has: the draft's `kind`, `id` and `body`, plus the seal fields that only code adds. | [Envelope](/reference/envelope) |
 | evidence | A sealed artifact whose acceptance a validator or a human gate decided. | [Why you can trust a run](/guide/concepts/trust) |
 | evidence trail | The signed, linked record of everything the control plane sealed, in order. Reference pages call it the log or the chain. | [Why you can trust a run](/guide/concepts/trust) |
+| extension key | A key the standard does not define, written `<namespace>/<key>`. A reader that does not know it ignores and preserves it. An unknown key without a namespace is refused. | [Project config](/reference/project-config) |
 | fact | A named value in a verdict, a boolean, an integer or a string, that a gate can read. | [Gate expressions](/reference/gates) |
 | fact class | Whether a field is `claimed`, `derived` or `judged`. | [Gate expressions](/reference/gates) |
 | frozen test | A test path sealed in an earlier loop iteration, recorded with its file digest. A step cannot change it. | [Protected paths](/reference/protected-paths) |
@@ -73,6 +78,7 @@ These twelve words cover most of what you read on this site. The table after the
 | prev | The link of the entry before this one in the chain. | [Envelope](/reference/envelope) |
 | preview | The part of verification that runs validators in the pod for fast feedback. A preview is never evidence. | [Kinds and schemas](/reference/kinds) |
 | profile | The file `.daggry/profile.yaml`, which holds the repository's verification policy. | [Project profile](/reference/profile) |
+| project config | The standard document for what is true of one repository: how it is measured, what is protected, which workflows apply and what a runner needs. It lives in the repository and is read from the base commit. | [Project config](/reference/project-config) |
 | protected path | A path that an agent can never change, whatever a workflow says. | [Protected paths](/reference/protected-paths) |
 | red proof | A test that fails on the base commit, which shows that the test says something about the change. | [Kinds and schemas](/reference/kinds) |
 | run | One execution of a workflow for a work item. | [Work graphs](/guide/concepts/workflows) |
@@ -82,6 +88,7 @@ These twelve words cover most of what you read on this site. The table after the
 | seal | The control plane's signature on an artifact. It says code validated the artifact, not that the artifact is true. | [Why you can trust a run](/guide/concepts/trust) |
 | step | A node of a workflow. Its kind is `command`, `agent`, `verify`, `human` or `effect`. | [Workflow schema](/reference/workflow-schema) |
 | tenant | A party whose runs an installation hosts, called a team or user elsewhere on the site. Each tenant has one chain. | [Envelope](/reference/envelope) |
+| tenant config | The standard document for how a tenant's factory works: its workflow catalogue, orchestration limits, agents, runners and repositories. Its rules win over the project config's and the workflow's. | [Tenant config](/reference/tenant-config) |
 | unfreeze | The one human grant: `daggry approve <run-id> --unfreeze <path>` frees one frozen test path for one iteration. | [Protected paths](/reference/protected-paths) |
 | validator | A check written as code: it turns sealed inputs into a verdict. | [Kinds and schemas](/reference/kinds) |
 | verdict | The artifact a validator produces, with a status, findings and derived facts. | [Kinds and schemas](/reference/kinds) |

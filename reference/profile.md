@@ -6,6 +6,8 @@ For the idea, read [Verify a run](/guide/how-to/verify-a-run).
 
 The project profile, `.daggry/profile.yaml`, is a repository's verification policy. This page defines its shape, the rules of the strict reader, and which files the reader accepts and refuses. It is for people who set up a repository for Daggry. For the step that uses it, see [Workflow schema](/reference/workflow-schema).
 
+The profile is the `verify` section of the [Project config](/reference/project-config), the standard layout for everything a repository says about itself. That page states how the two relate.
+
 The profiles on this page are illustrative.
 
 ## Shape

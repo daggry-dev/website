@@ -6,6 +6,8 @@ For the idea, read [Why you can trust a run](/guide/concepts/trust).
 
 Daggry has eight kinds of sealed artifact. This page lists each kind's body fields, its constraints, a valid example, who seals it, and the validators that judge measurements and plans. It is for people who write workflows, gates or tools that read the log. The envelope around every body is in [Envelope](/reference/envelope).
 
+A kind's namespace says who defines it. The `evidence` namespace holds the kinds of the standard, and `daggry` holds this platform's own. Another factory adds kinds in a namespace of its own and leaves both of these unchanged, so a new kind of record never changes the standard. See [Conformance](/reference/conformance).
+
 The example bodies on this page are illustrative. Each is valid under the schema and the policy rules that follow it. Digests shown as short strings such as `ab` pass the schemas, which require only a non-empty string. Real digests are 64 lowercase hex digits.
 
 ## Download

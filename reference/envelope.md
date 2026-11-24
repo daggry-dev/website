@@ -4,7 +4,9 @@
 
 For the idea, read [Why you can trust a run](/guide/concepts/trust).
 
-The envelope is the one JSON shape every sealed artifact has. This page lists every field, the rules for `meta`, the canonical JSON rules, and how the digest, the chain link and the signature are computed. It is for people who write a reader, a verifier or a tool that checks a log.
+The envelope is the one JSON shape every sealed artifact has. It is an open standard: any factory that follows the field, canonical JSON, digest, chain link and signature rules on this page produces evidence that any verifier can check, whoever built either one. For what an implementation must do, see [Conformance](/reference/conformance).
+
+This page lists every field, the rules for `meta`, the canonical JSON rules, and how the digest, the chain link and the signature are computed. It is for people who write a reader, a verifier or a tool that checks a log.
 
 The hand-written values on this page are illustrative. The test vector in [Worked example](#worked-example-recompute-a-digest-and-a-link) is copied from the published test vector.
 
