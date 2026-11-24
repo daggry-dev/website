@@ -87,7 +87,7 @@ Measures a clean copy of the last sealed commit.
 | `id` | string | yes | Non-empty. |
 | `kind` | string | yes | `verify`. |
 
-A `verify` step has no command and takes no other key. It runs the `verify.test` command from the base commit's [Project profile](/reference/profile). It must submit exactly one `head` measurement of the last sealed commit. Inside a loop, a non-zero exit code is red: the iteration ends and the run does not fail. Outside a loop, a failed `verify` step fails the run.
+A `verify` step has no command and takes no other key. It runs the `verify.test` command from the base commit's profile. See [Project config](/reference/project-config#today). It must submit exactly one `head` measurement of the last sealed commit. Inside a loop, a non-zero exit code is red: the iteration ends and the run does not fail. Outside a loop, a failed `verify` step fails the run.
 
 ### human
 
@@ -123,7 +123,9 @@ Runs in the control plane, never in the pod.
 | `anywhere` | Any path except protected paths and CI configuration folders such as `.github/**`. |
 | a list of glob strings | Only paths that match a glob. Each glob is non-empty. `[]` is valid and matches no path. |
 
-Any other word, such as `everywhere`, is refused. A glob that does not compile is refused at run time. Scope is judged on the step's own change against the last sealed commit. Protected paths are judged against the base commit. See [Protected paths](/guide/concepts/protection).
+Any other word, such as `everywhere`, is refused. A glob that does not compile is refused at run time. In a file with a `format` header, a list entry can also name an area of the project. See [Areas by name](#areas-by-name).
+
+How a scope is judged and enforced is in [Protected paths](/reference/protected-paths#scope).
 
 ## Loop
 
@@ -348,6 +350,35 @@ Rules:
 - The name is looked up in the project config of the base commit when the run starts. A name the project config lacks refuses the run.
 - A `verify` step with no `check` key needs a project config with `verification.canonical`.
 - Every check a step runs is run by the deterministic runner, on a clean copy of the sealed commit.
+
+### Areas by name
+
+A workflow can name a part of a repository without knowing its paths. An entry of a `scope` list is a glob or an area reference, `area:<name>`, and the [Project config](/reference/project-config#areas) of the repository supplies the paths.
+
+| Entry | Stands for |
+|---|---|
+| `area:<name>` | Every path that the area of that name holds. |
+| Any other string | A glob. |
+
+Rules:
+
+- An area reference is read only in a file with a `format` header. In a file without one, every entry is a glob.
+- The name follows the rule for a check name. It is looked up in the project config of the base commit when the run starts. A name the project config lacks refuses the run.
+- A list can mix globs and area references. A path is in the scope of the step when one entry holds it.
+- An area reference never opens a protected path, and it applies inside the scope of the run. See [The scope of a run](/reference/protected-paths#the-scope-of-a-run).
+
+```yaml
+format: daggry/workflow@1
+steps:
+  - id: fix
+    kind: agent
+    engine: <engine>
+    prompt: Fix the failing page.
+    outputs: [change]
+    scope: ["area:app", "CHANGELOG.md"]
+```
+
+Illustrative. `app` is an area in the project config of the repository, and `<engine>` is the coding-agent engine the step uses.
 
 ### Engine
 
