@@ -35,7 +35,7 @@ For each handover, ask whether a script can say yes or no. A script can check th
 - If only a person can decide it, make it a `human` step.
 - If an agent can do it but nothing can check it, keep it small and put a person after it.
 
-Gates read only facts that code computed, never what an agent claims. So every pass or fail that moves the run must come from a check you wrote. Write the check as a script in the repository. The `verify` step runs it from the base commit, so no step can weaken it. See [Project config](/reference/project-config#today).
+Gates read only facts that code computed, never what an agent claims. So every pass or fail that moves the run must come from a check you wrote. Write the check as a script in the repository. The `verify` step runs it from the base commit, so no step can weaken it. See [Project config](/reference/project-config#the-profile).
 
 ## 3. Pick a step kind for each piece of work
 

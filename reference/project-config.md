@@ -22,9 +22,9 @@ The project config has a published JSON Schema (draft 2020-12).
 |---|---|
 | `daggry/project@1` | [daggry-project-v1.json](/schemas/daggry-project-v1.json) |
 
-## Today
+## The profile
 
-The reader of today reads the profile, `.daggry/profile.yaml`: the earlier name and the earlier form of this file. It holds one check, a test command, and nothing else.
+The profile, `.daggry/profile.yaml`, is the earlier name and the earlier form of this file. It holds one check, a test command, and nothing else. For which form a reader reads, see the [Roadmap](/roadmap).
 
 ```yaml
 verify:
@@ -630,13 +630,7 @@ To check a file of your own, give the schema and the file to any validator that 
 
 ## Open points
 
-The standard leaves these points open. Each one is listed on the [Roadmap](/roadmap).
-
-- **Records for contracts other than tests.** A [measurement](/reference/kinds#evidence-measurement-1) holds an exit code and per-test records. The record that carries the findings of `sarif` or the document of `json` is not defined yet.
-- **Records for supporting checks and thresholds.** How the results of `verification.also` and of each threshold are sealed beside the canonical measurement is not defined yet.
-- **Facts for a gate.** Which derived facts a gate reads from a check other than the canonical one is not defined yet.
-- **Areas in a run request.** The key by which a run request names areas is not defined yet.
-- **Areas in the run lock.** How an area reference and the scope of a run are written into the boundary rules of a [run lock](/reference/kinds#daggry-run-lock-1) is not defined yet.
+The points this standard leaves open are listed on the [Roadmap](/roadmap#open-points).
 
 ## Next steps
 

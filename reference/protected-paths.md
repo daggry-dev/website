@@ -8,7 +8,7 @@ These paths are protected in every run. No workflow and no step widens the set.
 
 | Protected | Why |
 |---|---|
-| `.daggry/**` | the project config (today `.daggry/profile.yaml`) and the project harness |
+| `.daggry/**` | the project config, or its earlier form the profile, `.daggry/profile.yaml`, and the project harness |
 | `**/AGENTS.md`, `.agents/**`, `**/SKILL.md` | instruction files and skills for coding agents |
 | agent-specific instruction files and config directories | the same, for each supported engine |
 | `**/.mcp.json` | tool-server configuration |

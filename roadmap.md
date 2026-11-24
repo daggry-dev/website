@@ -10,7 +10,7 @@ Status as of 2026-11-24. No wave exit test has passed yet, and the shapes of the
 
 | Area | Exists | Not yet |
 |---|---|---|
-| Evidence | The envelope, digests, the signed chain, one log per team, fact classes, the validator contract and all eight kinds with schemas. | Signed head, revocation, tombstoning and older-major decoding. Lineage by `parents` is filled for `verdict` and `approval` only. |
+| Evidence | The envelope, digests, the signed chain, one log per tenant, fact classes, the validator contract and all eight kinds with schemas. | Signed head, revocation, tombstoning and older-major decoding. Lineage by `parents` is filled for `verdict` and `approval` only. |
 | Verification | `daggry verify`. The `verify` step measures a clean copy of the code with one test command and reads libtest-style result lines. `criterion-coverage` and `red-proof` run in a run. | Lints and coverage in a measurement, the witness rule, external validators and `judged` facts. |
 | Gates and workflows | The gate grammar, strict YAML, five step kinds, bounded loops, `approve` and `approve --unfreeze`, and the `open-pr` effect. | Reads of `meta` in a gate, delegation to other agents, a review of the finished run and parallel steps. |
 | Protection | Always-protected paths, scope, frozen tests, restore in the pod and a recheck in the control plane. The platform's own instructions are read-only in the pod. A project's own agent config is read from the working tree and protected by the boundary check. | A human grant for protected paths other than `.daggry/**`. |
@@ -31,22 +31,34 @@ In the table, **exists** means it is in [What exists today](#what-exists-today).
 | Evidence kinds from another namespace | Direction | Today a kind outside the `evidence` and `daggry` namespaces is refused as unknown. |
 | Workflow standard: the file of steps | Exists | Strict YAML, five step kinds, bounded loops and a published schema. |
 | Workflow `format` header, extension keys and extension step kinds | Direction | Today a workflow file holds `steps` only, and every unknown key and kind is refused. |
-| Project config standard | Direction | Today a repository has the profile, `.daggry/profile.yaml`, which holds the test command only. See [Project config](/reference/project-config#today). |
+| Project config standard | Direction | Today a repository has the profile, `.daggry/profile.yaml`, which holds the test command only. See [The profile](/reference/project-config#the-profile). |
 | Project config areas | Direction | Named groups of paths in the `areas` section of `.daggry/project.yaml`, each with an optional role and description. A step's scope and a `protect.paths` entry name one as `area:<name>`, and the tenant's `projects[].areas` or a run request names areas as the scope of a run. Today a step's scope is `nothing`, `anywhere` or a list of globs, and a run has no scope of its own. |
 | Paths a project protects | Direction | `protect.paths` in the project config, and the default protection of the scripts a check runs. Today the protected set is the always-protected paths and the frozen tests. See [Protected paths](/reference/protected-paths). |
 | Project config checks and canonical verification | Direction | Named checks in `.daggry/project.yaml` and one canonical check, `verification.canonical`, that a `verify` step measures. Today the profile holds one test command. See [Project config](/reference/project-config). |
 | Result contracts beyond libtest lines | Direction | `exit-code`, `junit-xml`, `tap`, `sarif` and `json` as named contracts for a check's output. Today the runner reads libtest-style lines only, and a measurement holds per-test records only. |
 | Agent-exposed preview checks | Direction | A check with `expose: agent` that the agent calls in the pod as a preview, never as evidence. Today the agent's preview is the `validate` tool. |
-| Project config open points | Direction | Not designed yet: the records for `sarif` and `json` results, for supporting checks and for thresholds, the facts a gate reads from a check other than the canonical one, the key by which a run request names areas, and how areas are written into a run lock. See [Open points](/reference/project-config#open-points). |
+| Project config open points | Direction | Not designed yet. See [Open points](#open-points). |
 | Tenant assigns workflows to projects | Direction | `projects[]` in the tenant config lists the workflows, agents, approval points and areas for each repository. Today a workflow is a file given to `daggry run --workflow <file>` with the repository named beside it. |
 | Tenant config standard | Direction | Today the cluster admin sets the lease length, the concurrency cap, the job image and the model credential once for the whole installation. See [Deploy Daggry](/guide/how-to/deploy). |
 | Conformance suite | Direction | No suite exists. [Conformance](/reference/conformance) states what it is to test. |
 | Control plane | Exists | One backend that holds the keys, seals, judges and serves the API. |
 | Conductor as its own module | Direction | Today the control plane also decides the next step and manages leases, and a launcher turns each job attempt into a pod. |
 | Leases as the authority on liveness | Exists | A lapsed lease starts a new attempt from the last sealed commit. |
-| Deterministic runner and agent runner as two modules | Direction | Today one runner in the pod runs commands, checks and the engine. The `verify` step already measures as a different unix user, after the agent process has ended. |
+| Separate runner classes for the deterministic runner and the agent runner | Direction | Today one runner in one pod runs commands, checks and the engine. The `verify` step already measures as a different unix user, after the agent process has ended. |
 | Engine adapter | Exists | Two engines run behind it: the replay engine and the live coding-agent adapter. |
 | Runners other than Kubernetes pods | Direction | Today every job runs in a pod. |
+
+## Open points
+
+The design leaves these points open. No decision is made on any of them.
+
+- **Engine of a step.** An `agent` step names an engine in its `engine` key, and each agent on the tenant's roster has an engine. Which of the two chooses the engine a step runs on is open. See [agent](/reference/workflow-schema#agent) and [agents](/reference/tenant-config#agents).
+- **Tenant config in the run lock.** The fields of a run lock are the validators, the boundary rules, the image digest and the workflow digest. The tenant config reference says a run records the configuration it started under in its run lock. Whether the tenant config is pinned there is open. See [run lock](/reference/kinds#daggry-run-lock-1) and [Where it lives](/reference/tenant-config#where-it-lives).
+- **Areas in a run request.** The key by which a run request names areas is not defined yet.
+- **Areas in the run lock.** How an area reference and the scope of a run are written into the boundary rules of a [run lock](/reference/kinds#daggry-run-lock-1) is not defined yet.
+- **Records for contracts other than tests.** A [measurement](/reference/kinds#evidence-measurement-1) holds an exit code and per-test records. The record that carries the findings of `sarif` or the document of `json` is not defined yet.
+- **Records for supporting checks and thresholds.** How the results of `verification.also` and of each threshold are sealed beside the canonical measurement is not defined yet.
+- **Facts for a gate.** Which derived facts a gate reads from a check other than the canonical one is not defined yet.
 
 ## The three waves
 

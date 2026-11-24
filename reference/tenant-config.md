@@ -20,9 +20,9 @@ The tenant config has a published JSON Schema (draft 2020-12).
 |---|---|
 | `daggry/tenant@1` | [daggry-tenant-v1.json](/schemas/daggry-tenant-v1.json) |
 
-## Today
+## Chart values
 
-Today the settings of this kind are chart values. The cluster admin sets them once for the whole installation, not for one tenant. See [Deploy Daggry](/guide/how-to/deploy).
+Without a tenant config, the settings of this kind are chart values. The cluster admin sets them once for the whole installation, not for one tenant. See [Deploy Daggry](/guide/how-to/deploy). For which of the two is in use, see the [Roadmap](/roadmap).
 
 | Chart value | Default | Meaning | Section of the standard |
 |---|---|---|---|
@@ -31,7 +31,7 @@ Today the settings of this kind are chart values. The cluster admin sets them on
 | `images.job` | placeholder | Default image for every job, by digest. | `runners.images` |
 | `modelSecret` | a Secret name | Secret that holds the model credential. | `agents.engines[].credential` |
 
-A workflow reaches the control plane as a file given to `daggry run --workflow <file>`, and the person who starts the run names the repository. Nothing assigns a workflow to a repository today. See [CLI](/reference/cli). The roster of agents is on the [Roadmap](/roadmap).
+Without a tenant config, a workflow reaches the control plane as a file given to `daggry run --workflow <file>`, and the person who starts the run names the repository: nothing assigns a workflow to a repository. See [CLI](/reference/cli).
 
 ## The standard
 
@@ -120,11 +120,11 @@ The images that run steps, and the isolation class of each kind of runner.
 | `runners.images[].default` | boolean | no | `true` on at most one image: the one a repository gets when its project entry names none. |
 | `runners.classes` | array of objects | no | The isolation classes. |
 | `runners.classes[].name` | string | yes | The class name. Non-empty. Unique. A check in a project config asks for a class by this name in `needs.runner`. |
-| `runners.classes[].module` | string | yes | `deterministic-runner` or `agent-runner`: the module the class applies to. |
+| `runners.classes[].module` | string | yes | `deterministic-runner` or `agent-runner`: the kind of step execution the class applies to. |
 | `runners.classes[].network` | string | yes | `none` or `open`: whether a pod of the class reaches the network. |
 | `runners.classes[].model_credential` | boolean | yes | Whether a pod of the class holds an engine's credential. `false` is required for `deterministic-runner`. |
 
-The two runner modules are isolated differently because they run different things. The deterministic runner runs code a person wrote into the workflow or the project, and never holds a model credential. The agent runner runs a coding-agent engine and whatever that engine generates. No class gives a pod the signing key.
+The two kinds of step execution are isolated differently because they run different things. The deterministic runner runs code a person wrote into the workflow or the project, and never holds a model credential. The agent runner runs a coding-agent engine and whatever that engine generates. No class gives a pod the signing key.
 
 ### projects
 
@@ -162,7 +162,7 @@ What the tenant admits beyond the standard.
 |---|---|---|---|
 | `extensions.step_kinds` | array of objects | no | Step kinds besides the five built-in ones. |
 | `extensions.step_kinds[].kind` | string | yes | `<namespace>/<name>`. See [Extensibility](/reference/workflow-schema#extensibility). |
-| `extensions.step_kinds[].module` | string | yes | The module that runs the step: `deterministic-runner`, `agent-runner` or `control-plane`. |
+| `extensions.step_kinds[].module` | string | yes | What runs the step: `deterministic-runner`, `agent-runner` or `control-plane`. |
 | `extensions.step_kinds[].schema` | string | yes | The URL of the JSON Schema for the step's keys. |
 | `extensions.artifact_kinds` | array of objects | no | Artifact kinds besides the eight in [Kinds and schemas](/reference/kinds). |
 | `extensions.artifact_kinds[].kind` | string | yes | `<namespace>/<name>@<major>`, in a namespace other than `evidence` and `daggry`. |

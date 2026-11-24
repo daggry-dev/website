@@ -6,7 +6,8 @@ import { SIGNUP_OPEN } from './features'
 <template>
   <div class="notice" role="note">
     <span class="dot" aria-hidden="true"></span>
-    <span class="txt"><strong>Private preview.</strong> Daggry is not publicly available yet.</span>
+    <span class="txt"><strong>Private preview.</strong> Daggry is not publicly released.</span>
+    <a class="go" :href="withBase('/roadmap')">Roadmap</a>
     <a v-if="SIGNUP_OPEN" class="go" :href="withBase('/#signup')">Join the public beta list</a>
   </div>
 </template>

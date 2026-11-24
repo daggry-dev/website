@@ -86,7 +86,7 @@ steps:
 
 A sketch shows steps in order. `[agent]`, `[command]`, `[verify]` and `[effect]` are steps of that kind. `(human)` is a wait for a person. `{ ... }` is a loop that repeats once for each criterion of the sealed plan.
 
-Every pattern that uses `verify` needs a check in the repository's base commit, set in `.daggry/profile.yaml` as `verify.test`. See [Project config](/reference/project-config#today). A `verify` step is green when that command exits with 0.
+Every pattern that uses `verify` needs a check in the repository's base commit, set in `.daggry/profile.yaml` as `verify.test`. See [Project config](/reference/project-config#the-profile). A `verify` step is green when that command exits with 0.
 
 A loop ends when its `until` gate holds. The gate `verdict.all_covered` holds when every plan criterion has a passing test that carries its id. In a workflow that does not deliver code, your check command reports one passing test for each criterion it accepts, named with the criterion id. The exact lines it prints are in the [`libtest-lines` contract](/reference/project-config#libtest-lines).
 
@@ -337,7 +337,7 @@ steps:
 
 ## Audit and report
 
-**Use when** you run a read-mostly audit, such as a dependency or configuration scan. A command collects the findings, an agent summarizes them, and the pull request carries the report. There is no wait in the graph, because the review happens on the pull request.
+**Use when** you run a read-mostly audit, such as a dependency or configuration scan. A command collects the findings, an agent summarizes them, and the pull request carries the report. There is no wait in the workflow, because the review happens on the pull request.
 
 **Code checks:** The format of the summary. A person reviews the report on the pull request.
 
