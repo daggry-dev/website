@@ -10,8 +10,8 @@ The diagram shows what an agent can write, which is the files its step is scoped
 
 ## What instructs, constrains and judges
 
-- **Instructs.** The step prompt, skills and project instruction files. The pod holds them on a read-only volume, so editing a copy in the working tree changes nothing for the run.
-- **Constrains.** The workflow, each step's scope (the files it may write) and the protected set. These live in the control plane (the part of Daggry that schedules steps and signs results), outside the pod.
+- **Instructs.** Daggry's own instructions, such as the step prompt, and your project's own agent configuration: instruction files, agent folders, skills, commands, hooks and project settings. The pod holds Daggry's own instructions on a read-only volume. The agent reads your project's configuration from the working tree, so it works the way your repository says. The boundary check keeps the rule for those files: a changed path is restored in the pod and rechecked in the control plane, and the step fails.
+- **Constrains.** The workflow, each step's scope (the files it may write) and the protected set. These live outside the pod. The conductor (the module that orders the steps) reads the workflow, and the control plane (the module that holds the keys, seals and judges) checks scope and the protected set.
 - **Judges.** Tests written in earlier iterations, the test command and the validators. These come from the commit the run started from and from the control plane, never from the agent's change.
 
 For the exact list of protected paths, see [Protected paths](/reference/protected-paths).

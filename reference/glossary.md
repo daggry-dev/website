@@ -41,7 +41,7 @@ These twelve words cover most of what you read on this site. The table after the
 | command step | A step that runs a shell line in the pod. | [Workflow schema](/reference/workflow-schema) |
 | conductor | The module that orders the steps of a run and schedules job attempts across runners. It holds no key and seals nothing. | [The modules](/guide/concepts/modules) |
 | conformance | What an implementation does to follow the standards: it accepts, refuses and produces what the rules say and passes the published test vectors. It has three levels: verifier, signer and factory. | [Conformance](/reference/conformance) |
-| control plane | The one backend. It decides the next step, holds the keys, seals and judges. | [Where it runs](/guide/concepts/architecture) |
+| control plane | The one backend. It holds the keys, seals, judges and serves the API. In a default install it also hosts the conductor, which decides the next step. | [Where it runs](/guide/concepts/architecture) |
 | criterion | An acceptance criterion with an id in the approved plan. | [Kinds and schemas](/reference/kinds) |
 | derived | A fact class: code computed the value from sealed inputs. Gates can read it. | [Gate expressions](/reference/gates) |
 | deterministic runner | The module that runs commands, measures and checks: code that gives the same result for the same input. It never starts a model. | [The modules](/guide/concepts/modules) |

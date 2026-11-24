@@ -74,7 +74,8 @@ An engine hook can give early feedback. It is never the gate.
 
 ## Pod boundary
 
-- The instructions sit in a volume that is read-only in the main container.
+- Daggry's own instructions, such as the step prompt, sit in a volume that is read-only in the main container.
+- The project's own agent configuration (instruction files, agent folders, skills, commands, hooks and project settings) is read from the working tree. The boundary check under Enforcement guards it: a changed path is put back in the pod and rechecked in the control plane, and the step fails.
 - The seal key and the GitHub App key never enter the pod.
 - A `verify` step runs on a clean copy of the code as a different unix user after the agent has ended, with commands read from the base commit.
 - If the `verify` step cannot switch user, it measures nothing and the step fails.

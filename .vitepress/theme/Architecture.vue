@@ -29,7 +29,7 @@
       <rect x="480" y="60" width="140" height="130" rx="18" class="box"/>
       <text x="550" y="90" text-anchor="middle" class="md">Conductor</text>
       <text x="550" y="112" text-anchor="middle" class="sm">orders the steps</text>
-      <text x="550" y="130" text-anchor="middle" class="sm">starts a pod per job</text>
+      <text x="550" y="130" text-anchor="middle" class="sm">asks for a pod per job</text>
       <text x="550" y="148" text-anchor="middle" class="sm">liveness by lease</text>
       <text x="550" y="172" text-anchor="middle" class="sm">holds no key</text>
       <!-- pod -->

@@ -25,7 +25,7 @@ Four modules run. Four are documents, each an open standard. The table lists eac
 
 ## The conductor orders and schedules
 
-The conductor decides which step comes next and where it runs. It reads the workflow for the order and the tenant config for the limits. It hands each job attempt to a runner, which on Kubernetes is a throwaway pod.
+The conductor decides which step comes next and where it runs. It reads the workflow for the order and the tenant config for the limits. It hands each job attempt to a runner. On Kubernetes a job runs in one throwaway pod: the conductor asks for the pod, and the launcher (a separate small part, in process by default) creates it.
 
 Liveness is decided by lease. A lease is a time-limited claim on a job attempt that the runner keeps alive. If the lease lapses, for example because a machine died, the conductor starts a new attempt from the last sealed commit. No other signal says whether a runner is alive.
 
@@ -47,7 +47,7 @@ The **deterministic runner** runs code that gives the same result for the same i
 
 The **agent runner** runs work whose result a model produces. It starts a coding agent through an engine adapter. The engine (the coding-agent CLI that does the work) is replaceable: the adapter gives every engine the same prompt, the same tools and the same way to hand in a result. Whatever the agent hands in is a claim.
 
-Both runners have the same interface to the rest of the platform. Each accepts a job attempt and sends back claims. Neither holds the signing key.
+Both runners have the same interface to the rest of the platform. Each accepts a job attempt and sends back claims. Neither holds the signing key. A tenant config may name more than one runner class; see the [Tenant config reference](/reference/tenant-config).
 
 ## Four standards connect them
 

@@ -4,7 +4,7 @@
 
 Proposed standard; see the [Roadmap](/roadmap) for status.
 
-For the idea, read [Where it runs](/guide/concepts/architecture).
+For the idea, read [The tenant defines the factory](/guide/concepts/tenant) and [Where it runs](/guide/concepts/architecture).
 
 The tenant config is one YAML document that says how a tenant's factory works: which workflows it offers, how work is orchestrated, which agents work and with what autonomy, which runners run the steps and which repositories it serves. This page defines the standard layout and the precedence rule. It is for people who run a tenant and for people who write a reader of the document.
 
