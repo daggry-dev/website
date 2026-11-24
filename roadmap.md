@@ -1,21 +1,45 @@
 # Roadmap
 
-Daggry is built in three waves, and this page is the one place on the site that states build status. Daggry is not yet publicly released; installation is from source for early users. Steps that run commands, checks and approvals work today. The live coding-agent adapter is not built yet, so steps that run a live coding agent do not run yet. A replay engine plays back a recorded transcript in place of the agent.
+Daggry is built in three waves, and this page is the one place on the site that states build status. Daggry is not yet publicly released; installation is from source for early users. Steps that run commands, checks and approvals work today. The live coding-agent adapter exists, and two live smoke runs passed on 2026-11-16. A replay engine plays back a recorded transcript in place of the agent.
+
+The rest of the site describes the design: a factory kit built from modules and open standards. Part of that design is direction and is not built. [Direction: modules and open standards](#direction-modules-and-open-standards) says which part.
 
 ## What exists today
 
-Status as of 2026-11-15. No wave exit test has passed yet, and the shapes of the schemas can still change. The table lists, for each area, what exists and what does not.
+Status as of 2026-11-24. No wave exit test has passed yet, and the shapes of the schemas can still change. The table lists, for each area, what exists and what does not.
 
 | Area | Exists | Not yet |
 |---|---|---|
 | Evidence | The envelope, digests, the signed chain, one log per team, fact classes, the validator contract and all eight kinds with schemas. | Signed head, revocation, tombstoning and older-major decoding. Lineage by `parents` is filled for `verdict` and `approval` only. |
 | Verification | `daggry verify`. The `verify` step measures a clean copy of the code with one test command and reads libtest-style result lines. `criterion-coverage` and `red-proof` run in a run. | Lints and coverage in a measurement, the witness rule, external validators and `judged` facts. |
 | Gates and workflows | The gate grammar, strict YAML, five step kinds, bounded loops, `approve` and `approve --unfreeze`, and the `open-pr` effect. | Reads of `meta` in a gate, delegation to other agents, a review of the finished run and parallel steps. |
-| Protection | Always-protected paths, scope, frozen tests, restore in the pod and a recheck in the control plane. | A human grant for protected paths other than `.daggry/**`. |
-| Engine | The replay engine and the tool server that offers `submit` and `validate`. | The live coding-agent adapter, `ask_human` and `delegate`. |
+| Protection | Always-protected paths, scope, frozen tests, restore in the pod and a recheck in the control plane. The platform's own instructions are read-only in the pod. A project's own agent config is read from the working tree and protected by the boundary check. | A human grant for protected paths other than `.daggry/**`. |
+| Engine | The replay engine, the live coding-agent adapter and the tool server that offers `submit` and `validate`. Two live smoke runs passed on 2026-11-16. | `ask_human` and `delegate`. |
 | Interfaces and deployment | CLI `run`, `status`, `logs`, `verify` and `approve`. Helm charts with a SQLite log and filesystem blobs. | `stop`, `retry`, `doctor` and `update`. Postgres and S3 storage. |
 
 To try the parts that exist, follow [Getting started](/guide/getting-started). To see the formats, read [Envelope](/reference/envelope) and [Kinds and schemas](/reference/kinds). To see the commands, read the [CLI reference](/reference/cli).
+
+## Direction: modules and open standards
+
+The design is a factory kit: modules with one job each, connected by four open standards. See [The modules](/guide/concepts/modules), [Open standards](/guide/concepts/standards) and [The tenant defines the factory](/guide/concepts/tenant). Those pages describe the design. This section says what of it exists.
+
+In the table, **exists** means it is in [What exists today](#what-exists-today). **Direction** means it is designed and not built. No direction item belongs to a wave yet.
+
+| Item | Status | Detail |
+|---|---|---|
+| Evidence standard: envelope, kinds, signing and chaining | Exists | The envelope, the eight kinds with published schemas, the signed chain and `daggry verify`. |
+| Evidence kinds from another namespace | Direction | Today a kind outside the `evidence` and `daggry` namespaces is refused as unknown. |
+| Workflow standard: the file of steps | Exists | Strict YAML, five step kinds, bounded loops and a published schema. |
+| Workflow `format` header, extension keys and extension step kinds | Direction | Today a workflow file holds `steps` only, and every unknown key and kind is refused. |
+| Project config standard | Direction | Today a repository has the [project profile](/reference/profile), which holds the test command only. |
+| Tenant config standard | Direction | Today the cluster admin sets the lease length, the concurrency cap, the job image and the model credential once for the whole installation. See [Deploy Daggry](/guide/how-to/deploy). |
+| Conformance suite | Direction | No suite exists. [Conformance](/reference/conformance) states what it is to test. |
+| Control plane | Exists | One backend that holds the keys, seals, judges and serves the API. |
+| Conductor as its own module | Direction | Today the control plane also decides the next step and manages leases, and a launcher turns each job attempt into a pod. |
+| Leases as the authority on liveness | Exists | A lapsed lease starts a new attempt from the last sealed commit. |
+| Deterministic runner and agent runner as two modules | Direction | Today one runner in the pod runs commands, checks and the engine. The `verify` step already measures as a different unix user, after the agent process has ended. |
+| Engine adapter | Exists | Two engines run behind it: the replay engine and the live coding-agent adapter. |
+| Runners other than Kubernetes pods | Direction | Today every job runs in a pod. |
 
 ## The three waves
 
