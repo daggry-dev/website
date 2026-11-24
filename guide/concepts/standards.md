@@ -32,18 +32,19 @@ A breaking change to a kind is a new major. A sealed record never changes, so a 
 
 ## Signing and chaining are part of the standard
 
-Evidence is only portable if everyone seals it the same way. The evidence standard therefore fixes more than the shape of a record. It fixes these four things.
+Evidence is only portable if everyone seals it the same way. The evidence standard therefore fixes more than the shape of a record. It fixes these five things.
 
-1. **The bytes.** A record is written as canonical JSON, so the same record always gives the same bytes.
-2. **The fingerprint.** The digest of a record is the SHA-256 of those bytes.
-3. **The chain.** Each entry's link is the SHA-256 of the previous link and the entry's digest. Each record therefore vouches for all the records before it.
-4. **The signature.** The link is signed with an Ed25519 key, and the record names the key by its key id.
+1. **The envelope.** Every record has the same fields, and a reader refuses a field it does not know.
+2. **The bytes.** A record is written as canonical JSON, so the same record always gives the same bytes.
+3. **The fingerprint.** The digest of a record is the SHA-256 of those bytes.
+4. **The chain.** Each entry's link is the SHA-256 of the previous link and the entry's digest. Each record therefore vouches for all the records before it.
+5. **The signature.** The link is signed with an Ed25519 key, and the record names the key by its key id.
 
-A verifier that follows these four rules can check any trail, whoever produced it. For the exact rules, see the [envelope reference](/reference/envelope).
+A verifier that follows these five rules can check any trail, whoever produced it. For the exact rules, see the [envelope reference](/reference/envelope).
 
 ## Any factory can implement it
 
-The claim is this: a factory that writes these four documents by the same specification, and seals evidence by the same signing and chaining, is interoperable with Daggry. Its trail verifies with any tool that follows the four rules above, and so does a Daggry trail. A workflow file written for one is a valid workflow file for the other.
+The claim is this: a factory that writes these four documents by the same specification, and seals evidence by the same signing and chaining, is interoperable with Daggry. Its trail verifies with any tool that follows the five rules above, and so does a Daggry trail. A workflow file written for one is a valid workflow file for the other.
 
 The claim is tested, not asserted. A conformance suite states what an implementation must accept, refuse and produce. See [Conformance](/reference/conformance).
 
