@@ -6,9 +6,13 @@ For the idea, read [Verify a run](/guide/how-to/verify-a-run).
 
 The project profile, `.daggry/profile.yaml`, is a repository's verification policy. This page defines its shape, the rules of the strict reader, and which files the reader accepts and refuses. It is for people who set up a repository for Daggry. For the step that uses it, see [Workflow schema](/reference/workflow-schema).
 
-The profile is the `verify` section of the [Project config](/reference/project-config), the standard layout for everything a repository says about itself. That page states how the two relate.
-
 The profiles on this page are illustrative.
+
+## Today
+
+The profile is the file the reader reads today. It holds one check: a test command, `verify.test`, whose output is read by the [output contract](#output-contract) for libtest lines. Every rule from [Shape](#shape) to [Limits](#limits) describes that reader.
+
+The [Project config](/reference/project-config) is the standard layout for everything a repository says about itself, and tests are one kind of check in it. [Mapping to the project config](#mapping-to-the-project-config) shows where each part of the profile goes.
 
 ## Shape
 
@@ -173,9 +177,49 @@ verify:
   test:x
 ```
 
+## Mapping to the project config
+
+Proposed standard; see the [Roadmap](/roadmap) for status.
+
+In the [Project config](/reference/project-config), the profile's one command is a check named `test`, and that check is the canonical one.
+
+| Profile | Project config | Note |
+|---|---|---|
+| `.daggry/profile.yaml` | `.daggry/project.yaml` | The same folder. |
+| No header. | `format: daggry/project@1` | Required. |
+| `verify.test: <command>` | `checks.test.run` | An argument list or a script path, not a shell line. |
+| The [output contract](#output-contract) | `checks.test.result.contract: libtest-lines` | The same lines and the same records. |
+| The one command is the evidence. | `verification.canonical: test` | Names the one check a `verify` step measures. |
+| Unknown top-level keys are skipped. | Unknown keys without a namespace are refused. | See below. |
+
+This profile:
+
+```yaml
+verify:
+  test: cargo test --workspace
+```
+
+maps to this project config:
+
+```yaml
+format: daggry/project@1
+checks:
+  test:
+    run: [cargo, test, --workspace]
+    kind: tests
+    result:
+      contract: libtest-lines
+verification:
+  canonical: test
+```
+
+The two readers treat an unknown key differently. The profile reader skips every top-level key other than `verify`, so `name: example` beside `verify` is accepted. The standard refuses a key that it does not define and that has no namespace, so the same line in a project config is an error. A key of your own is written `<namespace>/<key>`. See [Extension keys](/reference/project-config#extension-keys).
+
+A `verify.test` that uses shell syntax, such as a pipe, moves into a script in the repository, and `run` names the script.
+
 ## Limits
 
-The reader accepts `verify.test` only. The profile holds one test command. For what comes next, see the [Roadmap](/roadmap).
+The reader accepts `verify.test` only. The profile holds one test command and one output contract. Other checks, such as a linter or a script of your own, and other result contracts belong to the project config. For what comes next, see the [Roadmap](/roadmap).
 
 A step that tries to rewrite the profile changes nothing. In this workflow, the `build` step overwrites the profile so that verification would fail. The run still succeeds, because the command comes from the base commit.
 
