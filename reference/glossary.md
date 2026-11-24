@@ -10,13 +10,13 @@ This page defines the terms Daggry uses, in alphabetical order. Start with the t
 
 These twelve words cover most of what you read on this site. The table after them is the complete list.
 
-- **Workflow.** A file in your repository that lists the steps of the work, what each step hands to the next, the checks and the moments you decide.
+- **Workflow.** A file that lists the steps of the work, what each step hands to the next, the checks and the moments you decide.
 - **Step.** One unit of work in a workflow, such as running a command, running a coding agent or waiting for you.
 - **Run.** One execution of a workflow for one piece of work, such as a GitHub issue.
 - **Job.** A group of steps that share one pod.
 - **Pod.** A throwaway container in which one job runs. It holds a token for one repository and never the signing key.
 - **Claim.** What an agent says it did. A claim is only a statement until code checks it.
-- **Check.** Something code does to test a claim, such as re-running the tests. A check written as code is called a validator.
+- **Check.** Something code does to test a claim, such as running the tests, a linter or a script of the project's own. A check that judges sealed records is called a validator.
 - **Seal.** Code checks a record, then signs it so it cannot be quietly changed.
 - **Evidence.** A sealed record that code has checked.
 - **Evidence trail.** The signed, linked list of every sealed record, in order. The reference pages call it the log or the chain.
@@ -34,8 +34,9 @@ These twelve words cover most of what you read on this site. The table after the
 | base | The commit a run starts from. Also the label of a measurement of that commit. | [Kinds and schemas](/reference/kinds) |
 | blob | Bytes stored beside the log and named by the SHA-256 of their content, such as a workflow file. | [Envelope](/reference/envelope) |
 | chain | One sequence of linked log entries, verifiable from its first entry. Each tenant has exactly one. Prose elsewhere calls it the evidence trail. | [Envelope](/reference/envelope) |
+| canonical check | The one check in a project config whose result is the verification evidence. A `verify` step measures it on a clean copy of the code. | [Project config](/reference/project-config#verification) |
 | change | A sealed record of a commit, the paths it changed and the frozen test set. | [Kinds and schemas](/reference/kinds) |
-| check | Something code does to test a claim, such as re-running the tests. A check written as code is a validator. | [Why you can trust a run](/guide/concepts/trust) |
+| check | Something code does to test a claim: a test run, a linter, a build or a script of the project's own. A project declares its checks by name in the project config. A check that judges sealed records is a validator. | [Project config](/reference/project-config#checks) |
 | claim | What an agent produced before code checked and sealed it. A claim is never evidence. | [Why you can trust a run](/guide/concepts/trust) |
 | cluster admin | The person who installs and runs Daggry on a Kubernetes cluster. | [Roadmap](/roadmap) |
 | command step | A step that runs a shell line in the pod. | [Workflow schema](/reference/workflow-schema) |
@@ -70,16 +71,17 @@ These twelve words cover most of what you read on this site. The table after the
 | link | SHA-256 of the previous link and the entry's digest. The signature covers it. | [Envelope](/reference/envelope) |
 | log | The append-only, hash-chained record of everything the control plane sealed. It is the source of truth for state. Prose elsewhere calls it the evidence trail. | [Envelope](/reference/envelope) |
 | loop | A bounded sequential repeat of steps over a list, ended by a gate. It is an entry in a workflow, not a step kind. | [Workflow schema](/reference/workflow-schema) |
-| measure | The part of verification that runs the project's tests on a clean copy of the code and records a measurement. | [Kinds and schemas](/reference/kinds) |
+| measure | The part of verification that runs the project's verification command on a clean copy of the code and records a measurement. | [Kinds and schemas](/reference/kinds) |
 | meta | The envelope's optional map from namespaced keys to scalar values, stamped by code at seal time. | [Envelope](/reference/envelope) |
 | observation | A sealed record that is not a verdict: `protected-restored` or `step-failed`. It is kept for the record. | [Kinds and schemas](/reference/kinds) |
 | parents | The digests of the artifacts an artifact builds on. | [Envelope](/reference/envelope) |
 | pod | The throwaway pod a job runs in. | [Where it runs](/guide/concepts/architecture) |
 | prev | The link of the entry before this one in the chain. | [Envelope](/reference/envelope) |
-| preview | The part of verification that runs validators in the pod for fast feedback. A preview is never evidence. | [Kinds and schemas](/reference/kinds) |
+| preview | The part of verification that runs in the pod for fast feedback: validators, or a check the project exposes to the agent. A preview is never evidence. | [Kinds and schemas](/reference/kinds) |
 | profile | The file `.daggry/profile.yaml`, which holds the repository's verification policy. | [Project profile](/reference/profile) |
-| project config | The standard document for what is true of one repository: how it is measured, what is protected, which workflows apply and what a runner needs. It lives in the repository and is read from the base commit. | [Project config](/reference/project-config) |
+| project config | The standard document for what is true of one repository: what it is, its checks, its one canonical check, its areas and its protected paths. It is the deterministic interface between a project and a factory, and names no workflow. It lives in the repository and is read from the base commit. | [Project config](/reference/project-config) |
 | protected path | A path that an agent can never change, whatever a workflow says. | [Protected paths](/reference/protected-paths) |
+| result contract | The named, published format of a check's output and the parser that reads it, such as `exit-code`, `libtest-lines` or `junit-xml`. | [Project config](/reference/project-config#result-contracts) |
 | red proof | A test that fails on the base commit, which shows that the test says something about the change. | [Kinds and schemas](/reference/kinds) |
 | run | One execution of a workflow for a work item. | [Work graphs](/guide/concepts/workflows) |
 | run lock | The sealed record of what a run pinned at start: validators, boundary rules, image and workflow. | [Kinds and schemas](/reference/kinds) |
@@ -88,11 +90,11 @@ These twelve words cover most of what you read on this site. The table after the
 | seal | The control plane's signature on an artifact. It says code validated the artifact, not that the artifact is true. | [Why you can trust a run](/guide/concepts/trust) |
 | step | A node of a workflow. Its kind is `command`, `agent`, `verify`, `human` or `effect`. | [Workflow schema](/reference/workflow-schema) |
 | tenant | A party whose runs an installation hosts, called a team or user elsewhere on the site. Each tenant has one chain. | [Envelope](/reference/envelope) |
-| tenant config | The standard document for how a tenant's factory works: its workflow catalogue, orchestration limits, agents, runners and repositories. Its rules win over the project config's and the workflow's. | [Tenant config](/reference/tenant-config) |
+| tenant config | The standard document for how a tenant's factory works: its workflow catalogue, orchestration limits, agents, runners and repositories, and which workflows run on which repository. Its rules win over the project config's and the workflow's. | [Tenant config](/reference/tenant-config) |
 | unfreeze | The one human grant: `daggry approve <run-id> --unfreeze <path>` frees one frozen test path for one iteration. | [Protected paths](/reference/protected-paths) |
 | validator | A check written as code: it turns sealed inputs into a verdict. | [Kinds and schemas](/reference/kinds) |
 | verdict | The artifact a validator produces, with a status, findings and derived facts. | [Kinds and schemas](/reference/kinds) |
 | verify step | The step that measures a clean copy of the code. It is not the `daggry verify` command, which checks the log. | [Verify a run](/guide/how-to/verify-a-run) |
 | witness | Evidence for a finding that code can confirm, such as a quoted line inside a changed hunk. A finding without a witness is advice. | [Kinds and schemas](/reference/kinds) |
 | work item | The input that starts a run, such as a GitHub issue. | [Kinds and schemas](/reference/kinds) |
-| workflow | The file that lists the steps of the work, written as data in a graph of steps. You write a new workflow as a file in your repository. | [Workflow schema](/reference/workflow-schema) |
+| workflow | The document that lists the steps of the work, written as data in a graph of steps. It is an entry in the tenant's catalogue, and its file is kept in a repository the tenant chooses. `daggry run --workflow <file>` supplies one as a file. | [Workflow schema](/reference/workflow-schema) |
