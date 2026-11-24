@@ -6,11 +6,11 @@ Proposed standard; see the [Roadmap](/roadmap) for status.
 
 For the idea, read [Open standards](/guide/concepts/standards) and [What an agent cannot change](/guide/concepts/protection).
 
-The project config is one YAML file in a repository. It describes the project itself: what it is, how to check it, which areas it has and what an agent may never write. It is the deterministic interface between a project and a factory. A workflow can assume that a verification step exists, and the factory knows how to run it, whether the project uses `cargo test`, vitest, `dotnet test` or a script of its own.
+The project config is one YAML file in a repository, `.daggry/project.yaml`. It describes the project itself: what it is, which areas it has, how to check it and which paths it protects. It is the deterministic interface between a project and a factory. A workflow can assume that a verification step exists, and the factory knows how to run it, whether the project uses `cargo test`, vitest, `dotnet test` or a script of its own.
 
-The file says nothing about the factory. A project does not know which workflows run on it, which agents work on it or where a person must approve. Those are the tenant's decisions. See [Tenant config](/reference/tenant-config).
+The file says what exists and what is protected. It never says what a run may change: a workflow chooses the scope of each step, and the tenant or the run request chooses the scope of a run. The file also names no workflow, no agent and no approval rule. Those are the tenant's decisions. See [Tenant config](/reference/tenant-config).
 
-This page defines the standard layout, the checks, the result contracts and the extension rules. It is for people who set up a repository and for people who write a reader of the file.
+This page defines the sections of the file, the checks, the result contracts and the extension rules. It is for people who set up a repository and for people who write a reader of the file.
 
 The files on this page are illustrative. Each one is valid against the published schema. See [Validation](#validation).
 
@@ -24,9 +24,57 @@ The project config has a published JSON Schema (draft 2020-12).
 
 ## Today
 
-The file that is read today is the [Project profile](/reference/profile), `.daggry/profile.yaml`. It holds one key, `verify.test`, and has no `format` header. Its reader, its output contract and its refusal messages are defined on that page and are unchanged by this one.
+The reader of today reads the profile, `.daggry/profile.yaml`: the earlier name and the earlier form of this file. It holds one check, a test command, and nothing else.
 
-The standard below generalises the profile. See [Relation to the profile](#relation-to-the-profile).
+```yaml
+verify:
+  test: <command>
+```
+
+| Key | Type | Required | Meaning |
+|---|---|---|---|
+| `verify` | block mapping | yes | The verification block. Appears once. |
+| `verify.test` | string | yes | The shell line that runs the project's tests. |
+
+A `verify` step runs `verify.test` from the base commit. The exit code is the measurement's `exit_code`, and a command that exits non-zero is a measurement, not an error. The output is read by the [`libtest-lines`](#libtest-lines) contract.
+
+Each part of the profile has a place in the standard.
+
+| Profile | Project config | Note |
+|---|---|---|
+| `.daggry/profile.yaml` | `.daggry/project.yaml` | The same folder. |
+| No header. | `format: daggry/project@1` | Required. |
+| `verify.test`, a shell line. | `checks.test.run` | An argument list or a script path. A line that uses shell syntax, such as a pipe, moves into a script in the repository. |
+| Output is read as libtest lines. | `checks.test.result.contract: libtest-lines` | The same lines and the same records. |
+| The one command is the evidence. | `verification.canonical: test` | Names the one check a `verify` step measures. |
+| Other top-level keys are skipped. | A key without a namespace that this page does not define is refused. | `name: example` beside `verify` is accepted in a profile and is an error in a project config. |
+| No areas and no protected paths of its own. | `areas` and `protect` | The always-protected set applies to both. See [Protected paths](/reference/protected-paths). |
+
+A profile with `test: sh check.sh` becomes the file in [Smallest file](#smallest-file).
+
+The profile reader accepts one fixed shape, not full YAML.
+
+| Rule | Detail |
+|---|---|
+| `verify:` | Stands alone on an unindented line, once. |
+| Other top-level keys | Skipped, with their indented lines, blank lines and comment lines. |
+| Block under `verify:` | Holds `test:` and nothing else, once. A space follows the colon. |
+| Indentation | Spaces only. A tab is refused. |
+| Command | Stands on the `test:` line, as a plain scalar or in single or double quotes. |
+| Quotes | No escapes. A quoted command cannot contain its own quote character. A double-quoted one cannot contain a backslash. |
+| Plain command | Refused when it starts with one of ``[ { & * ! | > % @ ` #`` or contains ` #` or `: `. Put such a command in quotes. |
+| Empty command | Refused. |
+| Missing `verify.test` | Refused. |
+
+A refused profile is a profile error with the message `profile: <reason>`. The `verify` step then measures nothing. A base commit with no profile file also stops the step.
+
+| Message | Cause |
+|---|---|
+| `` `verify:` must be a block mapping `` | A value on the same line as `verify:`, such as `verify: {test: x}`. |
+| `` `verify:` appears twice `` | A second `verify:` line. |
+| `` `verify:` holds `test:` only `` | A key other than `test:` in the block. |
+| `tabs are not indentation` | A tab used as indentation. |
+| ``profile: no `verify.test` `` | The block has no `test:`. |
 
 ## The standard
 
@@ -37,18 +85,18 @@ A project config has three parts.
 | Part | Keys | Rule |
 |---|---|---|
 | Header | `format` | Required. Names the standard and its major version. |
-| Sections | `project`, `checks`, `verification`, `scope`, `protect` | Each is optional. Each appears at most once. |
+| Sections | `project`, `areas`, `checks`, `verification`, `protect` | Each is optional. Each appears at most once. |
 | Extensions | `<namespace>/<key>` | Any number. See [Extension keys](#extension-keys). |
 
 Each section answers one question a factory asks about a repository.
 
-| Section | Question | Verb |
-|---|---|---|
-| `project` | What is this project? | Orient |
-| `checks` | What can run and decide something about it? | Verify |
-| `verification` | Which check is the evidence? | Verify |
-| `scope` | Which areas does it have? | Scope |
-| `protect` | What may an agent never write? | Protect |
+| Section | Question |
+|---|---|
+| `project` | What is this project, and how is it built? |
+| `areas` | Which parts does the repository have? |
+| `checks` | What can run and decide something about it? |
+| `verification` | Which check is the evidence? |
+| `protect` | Which paths does the project add to the protected set? |
 
 Every object is closed: a key that is not listed on this page and is not an extension key is refused.
 
@@ -62,14 +110,13 @@ Every object is closed: a key that is not listed on this page and is not an exte
 
 ### project
 
-What the project is. A factory reads this section to orient, and it grants and limits nothing.
+The project's identity and toolchain. A factory reads this section to orient and to prepare a copy of the repository. It names no path group: the parts of the repository are in [`areas`](#areas).
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `project.name` | string | no | The project's name. Non-empty. |
 | `project.languages` | array of labels | no | The languages the project is written in, for example `rust` or `typescript`. |
 | `project.toolchains` | array of labels | no | The toolchains the project is built with, for example `rust-1.90` or `node-22`. |
-| `project.layout` | map from a label to an array of globs | no | Hints about where things are, for example `source`, `tests` and `docs`. |
 | `project.setup` | array of commands | no | Commands that prepare a fresh copy of the repository, in order, such as installing dependencies. |
 | `project.build` | array of commands | no | Commands that build the project, in order. |
 | `project.entry_points` | array of paths | no | The files a reader starts from, such as a main source file. |
@@ -77,6 +124,35 @@ What the project is. A factory reads this section to orient, and it grants and l
 A label is a short name made of ASCII letters, digits, `.`, `_` and `-`. Labels are an open vocabulary. A reader that does not know a label keeps it and applies nothing.
 
 A command has the form defined in [Commands](#commands). On a clean copy, a reader runs `project.setup` and then `project.build` before the first check.
+
+### areas
+
+The parts of the repository. An area is a named group of paths. `areas` is a map from an area name to an area, and it is the only place in the four standards that gives a group of paths a name. A name follows the rule for a [check name](#checks).
+
+| Key | Type | Required | Meaning |
+|---|---|---|---|
+| `paths` | array of globs | yes | The paths the area holds. At least one glob, each non-empty. |
+| `role` | label | no | What the paths are for. Open vocabulary. The recommended set is `source`, `tests`, `docs`, `config`, `generated`, `vendor` and `infrastructure`. |
+| `description` | string | no | One or two sentences for a reader, person or agent. Non-empty. |
+
+An area has three uses. Each one refers to the area by its name.
+
+| Use | Who names the area | Effect | Defined in |
+|---|---|---|---|
+| Orient | Nobody. The factory reads every name, `role` and `description`. | None. An area on its own grants and limits nothing. | This section. |
+| Scope | A workflow step, in `scope`, as `area:<name>`. | The step may change only the paths its scope holds. | [Areas by name](/reference/workflow-schema#areas-by-name) |
+| Scope | The tenant, in `projects[].areas`, or a run request. | The run may change only paths inside the named areas. | [projects](/reference/tenant-config#projects) |
+| Protect | The project, in `protect.paths`, as `area:<name>`. | No step may change a path the area holds. | [protect](#protect) |
+
+Rules:
+
+- **The project names, others choose.** The project says which areas exist. It never says which of them a run may change. A workflow chooses the scope of a step, and the tenant or the run request chooses the scope of a run.
+- **A name must exist.** A step, a tenant entry, a run request or a `protect.paths` entry that names an area this section lacks is refused. For the first three the run is refused when it starts.
+- **Areas may overlap.** A path can be in more than one area, for example in one with `role: source` and one with `role: tests`. A path is inside a scope when at least one named area holds it, and it is protected when at least one protected area holds it.
+- **A path in no area** is outside every scope that names areas.
+- **A role is a label.** A reader that does not know a role keeps it and applies nothing. `role: tests` does not freeze a path. Frozen tests come from a step's `tests` key. See [Frozen tests](/reference/protected-paths#frozen-tests).
+
+How a scope is judged, and how the scope of a run and the scope of a step combine, is in [Scope](/reference/protected-paths#scope).
 
 ### Commands
 
@@ -121,7 +197,7 @@ A result contract names the published format of a check's output and the parser 
 | Contract | Reads | Gives |
 |---|---|---|
 | `exit-code` | The exit code only. | Pass when the code is 0, fail otherwise. No per-item records. |
-| `libtest-lines` | Standard output and standard error, by the rules in [Output contract](/reference/profile#output-contract). | One record per test: passed, failed or ignored. |
+| `libtest-lines` | Standard output and standard error, by the rules in [libtest-lines](#libtest-lines). | One record per test: passed, failed or ignored. |
 | `junit-xml` | The JUnit XML report at `result.path`. | One record per `testcase` element: passed, failed, or ignored when skipped. |
 | `tap` | Standard output, as Test Anything Protocol version 13 or 14. | One record per test point: passed for `ok`, failed for `not ok`, ignored for a `SKIP` directive. |
 | `sarif` | A SARIF 2.1.0 document at `result.path`, or on standard output when no path is given. | One finding per result, with its rule, level and location. |
@@ -133,6 +209,40 @@ Rules for every contract:
 - Output that does not follow the contract gives no records. A report that is missing or does not parse makes the check fail.
 - A reader refuses a contract it has no parser for. An extension contract is `<namespace>/<name>`, and the party that owns the namespace publishes its format.
 - The three test contracts, `libtest-lines`, `junit-xml` and `tap`, give the same per-test records. A record's name is the test's name in the report.
+
+#### libtest-lines
+
+The reader keeps one record for each result line that the check prints to standard output or standard error. The format is the one that Rust's test harness prints, so `cargo test` works with no change. Any other program can print the same lines.
+
+| Line | Record |
+|---|---|
+| `test <name> ... ok` | A passed test called `<name>`. |
+| `test <name> ... FAILED` | A failed test. |
+| `test <name> ... ignored` or `test <name> ... ignored, <reason>` | An ignored test. |
+
+The reader skips every other line, such as headers, summaries and log output. It drops a ` - should panic` suffix from a name. It also skips the lines between a line that reads `failures:` and the next line that starts with `test result:`, because a failed test prints its captured output there.
+
+The exit code and the records are independent: a check that exits non-zero and prints `ok` lines for some tests still gives passed records for those tests.
+
+What the records prove, such as which plan criterion a test covers, is defined in [Coverage and the carry rule](/reference/kinds#coverage-and-the-carry-rule) and [Red proof](/reference/kinds#red-proof).
+
+To use a test runner that prints another format, choose another contract, or wrap the runner in a script that prints the lines above. This script is illustrative. It runs each test file under `tests/`, prints one result line for it and exits non-zero if any test failed. A test file name carries the criterion id, for example `tests/c1-expired-token.sh`.
+
+```sh
+#!/bin/sh
+# check.sh: print one libtest-style line per test file.
+status=0
+for t in tests/*.sh; do
+  name=$(basename "$t" .sh)
+  if sh "$t" >/dev/null 2>&1; then
+    echo "test $name ... ok"
+  else
+    echo "test $name ... FAILED"
+    status=1
+  fi
+done
+exit $status
+```
 
 ### verification
 
@@ -189,32 +299,19 @@ A preview gives the agent fast feedback, for example the lint findings before it
 
 Every check is available to the factory. A check with `expose: agent` can also be the canonical check: the agent previews it, and the factory measures it.
 
-### scope
-
-The areas of the repository. An area is a named group of paths. A factory orients by areas and can limit a run to some of them.
-
-| Key | Type | Required | Meaning |
-|---|---|---|---|
-| `scope.areas` | map from an area name to an array of globs | no | The areas. A name follows the rule for a check name. Each glob is non-empty. |
-
-The project only names its areas. The tenant decides whether a run is limited to some of them, in `projects[].areas` of the [Tenant config](/reference/tenant-config#projects). A step's own `scope` applies inside that limit, with the meanings in [Scope](/reference/workflow-schema#scope). A path that no area holds is outside every limit that names areas.
-
 ### protect
 
-Paths that no step may write, in addition to the always-protected set in [Protected paths](/reference/protected-paths).
+The paths this project adds to the protected set. The always-protected paths, the default protection of the scripts a check runs and the boundary check that enforces all of it are defined in [Protected paths](/reference/protected-paths). This section defines only the project's own additions.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
-| `protect.paths` | array of glob strings | no | Each non-empty. Added to the protected set for every run on this repository. |
+| `protect.paths` | array of entries | no | Each entry is a glob or an area reference, `area:<name>`. Added to the protected set for every run on this repository. |
 
-Two things are protected by default, with no entry in `protect.paths`:
+Rules:
 
-- **The config file itself.** `.daggry/**` is always protected, so no step writes `.daggry/project.yaml`.
-- **The scripts a check runs.** Every string in a command of `checks`, `project.setup` or `project.build` that is the path of a file in the base commit is a protected path. With `run: scripts/lint-docs.sh` the script is protected, and with `run: [node, scripts/verify.mjs]` so is `scripts/verify.mjs`.
-
-The default covers the files a command names, not the files those programs read. A command such as `[npm, run, lint]` runs a script that `package.json` defines, and `package.json` is not protected by default. Either list such a file in `protect.paths`, or name the tool and its arguments in `run`.
-
-This section only adds. No key removes a path from the protected set.
+- **An entry that starts with `area:` is an area reference.** It protects every path the area holds. A name that [`areas`](#areas) lacks is refused. Every other entry is a glob.
+- **This section only adds.** No key removes a path from the protected set.
+- **A protected path is in no scope.** A step whose scope names an area does not change the area's protected paths.
 
 ### Extension keys
 
@@ -244,28 +341,22 @@ The file uses the same strict subset of YAML as a workflow file: no anchors, ali
 | Folder | `.daggry/` in the repository. |
 | Path | `.daggry/project.yaml`. |
 | Read from | The base commit: the commit a run starts from. Never the head or the working tree. |
-| Protected | `.daggry/**` is a protected path, so no step and no grant writes the file. |
+| Protected | `.daggry/**` is always protected, so no step and no grant changes the file. See [Protected paths](/reference/protected-paths). |
 | Changed by | A pull request that a person merges. The change takes effect in the next run after the merge. |
 
-An agent's edit to the file changes nothing for its own run, for the reasons in [Where it is read from](/reference/profile#where-it-is-read-from).
+A step that edits the file changes nothing for its own run: the edit is put back and recorded, and the checks come from the base commit. The red proof uses the base commit's canonical check too. See [Red proof](/reference/kinds#red-proof).
 
 ### Precedence
 
-Three documents set rules for a run: the tenant config, the project config and the workflow. The tenant's rule wins over the project's, and the project's wins over the workflow's.
+Three documents set rules for a run: the tenant config, the project config and the workflow. The tenant's rule wins over the project's, and the project's wins over the workflow's. The full table is in [Precedence](/reference/tenant-config#precedence).
 
-| Document | May | May not |
-|---|---|---|
-| [Tenant config](/reference/tenant-config) | Set every limit, and decide which workflows run on which repository. | - |
-| Project config | Describe the repository: its checks, its canonical check, its areas and its protected paths. | Choose a workflow, an engine or an approval rule. Widen a tenant rule. |
-| [Workflow](/reference/workflow-schema) | Narrow further: a step's scope inside the limit, and a check called by name. | Replace the canonical check. Widen a project or tenant rule. |
-
-Only a person widens a rule: by changing the tenant config, by merging a change to the project config, or by a grant such as [unfreeze](/reference/protected-paths#unfreeze-grant).
+The project config describes the repository: its areas, its checks, its canonical check and the paths it protects. It never chooses a workflow, an engine, an approval rule or the scope of a run, and it never widens a tenant rule.
 
 ## Worked examples
 
 ### A Node project with vitest
 
-The canonical check runs vitest and writes a JUnit XML report. The linter runs through an npm script, so the file protects `package.json`.
+The canonical check runs vitest and writes a JUnit XML report. The linter runs through an npm script that `package.json` defines. The [default protection](/reference/protected-paths#what-a-project-adds) covers the files a command names and not the files those programs read, so the file protects `package.json` itself, through an area.
 
 ```yaml
 format: daggry/project@1
@@ -274,14 +365,26 @@ project:
   name: shop-web
   languages: [typescript]
   toolchains: [node-22]
-  layout:
-    source: ["src/**"]
-    tests: ["src/**/*.test.ts"]
   setup:
     - [npm, ci]
   build:
     - [npm, run, build]
   entry_points: [src/main.ts]
+
+areas:
+  app:
+    paths: ["src/**"]
+    role: source
+    description: The storefront. Pages are under src/pages and shared code under src/lib.
+  tests:
+    paths: ["src/**/*.test.ts"]
+    role: tests
+  docs:
+    paths: ["docs/**"]
+    role: docs
+  tooling:
+    paths: ["package.json", "vitest.config.ts"]
+    role: config
 
 checks:
   test:
@@ -306,20 +409,20 @@ verification:
   canonical: test
   also: [lint, types]
 
-scope:
-  areas:
-    app: ["src/**"]
-    docs: ["docs/**"]
-
 protect:
   paths:
-    - "package.json"
-    - "vitest.config.ts"
+    - "area:tooling"
 ```
+
+| Value | Meaning |
+|---|---|
+| `app`, `tests` | Two areas that overlap: a test file under `src/` is in both. |
+| `tooling` | An area for the files the checks read. |
+| `area:tooling` | An area reference. No step changes `package.json` or `vitest.config.ts`. |
 
 ### A Rust project
 
-`cargo test` prints libtest lines, so the canonical check needs no report file. This is the shape that matches a profile of today.
+`cargo test` prints libtest lines, so the canonical check needs no report file. One entry of `protect.paths` is a glob.
 
 ```yaml
 format: daggry/project@1
@@ -355,10 +458,13 @@ verification:
       read: ignored
       max: 0
 
-scope:
-  areas:
-    crates: ["crates/**", "Cargo.*"]
-    docs: ["docs/**"]
+areas:
+  crates:
+    paths: ["crates/**", "Cargo.*"]
+    role: source
+  docs:
+    paths: ["docs/**"]
+    role: docs
 
 protect:
   paths:
@@ -411,10 +517,13 @@ verification:
       read: /total/lines/pct
       min: 80
 
-scope:
-  areas:
-    api: ["src/Shop.Api/**"]
-    tests: ["tests/**"]
+areas:
+  api:
+    paths: ["src/Shop.Api/**"]
+    role: source
+  tests:
+    paths: ["tests/**"]
+    role: tests
 ```
 
 ### A custom lint script and a custom verifier
@@ -426,8 +535,6 @@ format: daggry/project@1
 
 project:
   name: handbook
-  layout:
-    docs: ["handbook/**"]
 
 checks:
   verify:
@@ -454,9 +561,11 @@ verification:
   canonical: verify
   also: [prose]
 
-scope:
-  areas:
-    handbook: ["handbook/**"]
+areas:
+  handbook:
+    paths: ["handbook/**"]
+    role: docs
+    description: One page for each policy. Each page is one Markdown file.
 
 acme/review:
   owner: docs-team
@@ -464,7 +573,7 @@ acme/review:
 
 | Value | Meaning |
 |---|---|
-| `verify` | The canonical check. `scripts/verify-handbook.sh` is protected by default. |
+| `verify` | The canonical check. `scripts/verify-handbook.sh` is protected by default. See [What a project adds](/reference/protected-paths#what-a-project-adds). |
 | `prose` | A custom lint script, given as a script path. The agent may run it as a preview. |
 | `links` | An optional run. It is in neither `canonical` nor `also`, so it runs only when a workflow step calls it by name. |
 | `LINK_CHECK_TOKEN` | The name of a variable the factory may pass. The file holds no value. |
@@ -489,7 +598,7 @@ verification:
 
 ## Validation
 
-Every YAML example on this page was checked against [daggry-project-v1.json](/schemas/daggry-project-v1.json) with a draft 2020-12 validator, and each one is valid. The rules that a schema cannot state were checked too: every name in `canonical`, `also` and a threshold is a check in the same file.
+Every YAML example on this page was checked against [daggry-project-v1.json](/schemas/daggry-project-v1.json) with a draft 2020-12 validator, and each one is valid. The rules that a schema cannot state were checked too: every name in `canonical`, `also` and a threshold is a check in the same file, and every area reference in `protect.paths` names an area in the same file.
 
 To check a file of your own, give the schema and the file to any validator that supports draft 2020-12.
 
@@ -501,6 +610,12 @@ To check a file of your own, give the schema and the file to any validator that 
 | `format: daggry/project@2` | Unknown major. |
 | `cheks:` at the top level | Unknown key without a namespace: a misspelt `checks`. |
 | `workflows:` at the top level | Unknown key without a namespace. A project does not choose workflows. |
+| `layout:` in `project` | Unknown key. A path group is an area, in the top-level `areas` section. |
+| `scope:` at the top level | Unknown key without a namespace. A project names its areas, and a workflow or the tenant chooses a scope. |
+| `areas:` with `app: ["src/**"]` | Not an object. The globs go in `paths`. |
+| An area with no `paths`, or with `paths: []` | An area holds at least one glob. |
+| `protect.paths` with `area:web` where `areas` holds no `web` | No such area. |
+| `protect.paths` with `area:Web App` | Not an area name. |
 | `run: cargo test --workspace` | A shell line. A command is an argument list or one script path. |
 | `run: /usr/local/bin/check` | An absolute path. |
 | A check with no `kind` | Missing `kind`. |
@@ -520,25 +635,11 @@ The standard leaves these points open. Each one is listed on the [Roadmap](/road
 - **Records for contracts other than tests.** A [measurement](/reference/kinds#evidence-measurement-1) holds an exit code and per-test records. The record that carries the findings of `sarif` or the document of `json` is not defined yet.
 - **Records for supporting checks and thresholds.** How the results of `verification.also` and of each threshold are sealed beside the canonical measurement is not defined yet.
 - **Facts for a gate.** Which derived facts a gate reads from a check other than the canonical one is not defined yet.
-
-## Relation to the profile
-
-The profile is one check with the `libtest-lines` contract, made canonical, in a file of its own.
-
-| Point | Profile | Project config |
-|---|---|---|
-| Path | `.daggry/profile.yaml` | `.daggry/project.yaml` |
-| Header | None. | `format: daggry/project@1` |
-| The command | `verify.test`, a shell line. | `checks.test.run`, an argument list or a script path. |
-| How output is read | [Output contract](/reference/profile#output-contract) | `result.contract: libtest-lines`, the same contract. |
-| Which check is the evidence | The one command. | `verification.canonical: test` |
-| Other top-level keys | Skipped. | Refused, unless a section of this page or an extension key. |
-| Read from | The base commit. | The base commit. |
-
-To move from a profile to a project config, write the command as an argument list. A profile with `test: sh check.sh` becomes the file in [Smallest file](#smallest-file). A command that uses shell syntax moves into a script in the repository.
+- **Areas in a run request.** The key by which a run request names areas is not defined yet.
+- **Areas in the run lock.** How an area reference and the scope of a run are written into the boundary rules of a [run lock](/reference/kinds#daggry-run-lock-1) is not defined yet.
 
 ## Next steps
 
 - For the tenant's side, including which workflows run on a repository, see [Tenant config](/reference/tenant-config).
-- For the lines of the `libtest-lines` contract, see [Project profile](/reference/profile).
+- For the always-protected paths and the boundary check, see [Protected paths](/reference/protected-paths).
 - For what another factory implements to read this file, see [Conformance](/reference/conformance).
