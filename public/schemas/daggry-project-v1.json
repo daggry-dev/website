@@ -14,19 +14,146 @@
     "format": {
       "const": "daggry/project@1"
     },
-    "verify": {
+    "project": {
       "type": "object",
-      "required": [
-        "test"
-      ],
       "additionalProperties": false,
       "patternProperties": {
         "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
       },
       "properties": {
-        "test": {
-          "type": "string",
-          "minLength": 1
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/label"
+          }
+        },
+        "toolchains": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/label"
+          }
+        },
+        "layout": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[a-z][a-z0-9_-]*$": {
+              "$ref": "#/$defs/globs"
+            },
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          }
+        },
+        "setup": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/command"
+          }
+        },
+        "build": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/command"
+          }
+        },
+        "entry_points": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/path"
+          }
+        }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[a-z][a-z0-9_-]*$": {
+          "$ref": "#/$defs/check"
+        },
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "canonical": {
+          "$ref": "#/$defs/checkName"
+        },
+        "also": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/checkName"
+          },
+          "uniqueItems": true
+        },
+        "thresholds": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "check": {
+                "$ref": "#/$defs/checkName"
+              },
+              "read": {
+                "$ref": "#/$defs/name"
+              },
+              "min": {
+                "type": "number"
+              },
+              "max": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "check",
+              "read"
+            ],
+            "anyOf": [
+              {
+                "required": [
+                  "min"
+                ]
+              },
+              {
+                "required": [
+                  "max"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "canonical"
+      ]
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "areas": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[a-z][a-z0-9_-]*$": {
+              "$ref": "#/$defs/globs"
+            },
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          }
         }
       }
     },
@@ -41,80 +168,6 @@
           "$ref": "#/$defs/globs"
         }
       }
-    },
-    "scope": {
-      "type": "object",
-      "additionalProperties": false,
-      "patternProperties": {
-        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-      },
-      "properties": {
-        "limit": {
-          "anyOf": [
-            {
-              "enum": [
-                "nothing",
-                "anywhere"
-              ]
-            },
-            {
-              "$ref": "#/$defs/globs"
-            }
-          ]
-        }
-      }
-    },
-    "workflows": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": [
-          "use"
-        ],
-        "additionalProperties": false,
-        "patternProperties": {
-          "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-        },
-        "properties": {
-          "use": {
-            "$ref": "#/$defs/name"
-          }
-        }
-      }
-    },
-    "runner": {
-      "type": "object",
-      "additionalProperties": false,
-      "patternProperties": {
-        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-      },
-      "properties": {
-        "image": {
-          "$ref": "#/$defs/name"
-        },
-        "toolchain": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": [
-              "name",
-              "version"
-            ],
-            "additionalProperties": false,
-            "patternProperties": {
-              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-            },
-            "properties": {
-              "name": {
-                "$ref": "#/$defs/name"
-              },
-              "version": {
-                "$ref": "#/$defs/name"
-              }
-            }
-          }
-        }
-      }
     }
   },
   "$defs": {
@@ -122,12 +175,165 @@
       "type": "string",
       "minLength": 1
     },
+    "label": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "checkName": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$"
+    },
+    "path": {
+      "type": "string",
+      "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))\\S+$"
+    },
     "globs": {
       "type": "array",
       "items": {
         "type": "string",
         "minLength": 1
       }
+    },
+    "command": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        {
+          "$ref": "#/$defs/path"
+        }
+      ]
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "run": {
+          "$ref": "#/$defs/command"
+        },
+        "kind": {
+          "$ref": "#/$defs/name"
+        },
+        "result": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          },
+          "properties": {
+            "contract": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "exit-code",
+                    "libtest-lines",
+                    "junit-xml",
+                    "tap",
+                    "sarif",
+                    "json"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$"
+                }
+              ]
+            },
+            "path": {
+              "$ref": "#/$defs/path"
+            },
+            "schema": {
+              "$ref": "#/$defs/name"
+            }
+          },
+          "required": [
+            "contract"
+          ],
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "contract": {
+                    "const": "junit-xml"
+                  }
+                },
+                "required": [
+                  "contract"
+                ]
+              },
+              "then": {
+                "required": [
+                  "path"
+                ]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "contract": {
+                    "const": "json"
+                  }
+                },
+                "required": [
+                  "contract"
+                ]
+              },
+              "then": {
+                "required": [
+                  "schema"
+                ]
+              }
+            }
+          ]
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "env": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          }
+        },
+        "needs": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          },
+          "properties": {
+            "toolchains": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/label"
+              }
+            },
+            "runner": {
+              "$ref": "#/$defs/name"
+            }
+          }
+        },
+        "expose": {
+          "enum": [
+            "factory",
+            "agent"
+          ]
+        }
+      },
+      "required": [
+        "run",
+        "kind"
+      ]
     }
   }
 }
