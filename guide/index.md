@@ -22,7 +22,7 @@ The trail shows one night in four entries: the plan you approved, the test that 
 
 Nothing in that night is built into Daggry. The plan, the test that fails first, the approval and the pull request are steps in a workflow, a file you can read and change. Another file describes other work: a report, a migration, a release check.
 
-The same holds for the rest of the factory. Which agents work, on which engine, how many jobs run at a time and where a person must decide are data in the tenant config. What is true of one repository, such as how to run its tests, is in its project config.
+The same holds for the rest of the factory. Which agents work, on which engine, how many jobs run at a time and where a person must decide are data in the tenant config. What is true of one repository, such as how to check it, is in its project config.
 
 ## Built from modules and open standards
 

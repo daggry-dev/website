@@ -10,12 +10,16 @@ The table names each document, what it says, who writes it and who reads it.
 
 | Document | What it says | Who writes it | Who reads it |
 |---|---|---|---|
-| Workflow | How one kind of work goes: the steps, what each hands to the next, the gates, the loops and the human waits. | A person, as a file in a repository. | The conductor, and every person who wants to know what a run can do. |
+| Workflow | How one kind of work goes: the steps, what each hands to the next, the gates, the loops and the human waits. | A person, as a file. The tenant lists it in its catalogue. | The conductor, and every person who wants to know what a run can do. |
 | Evidence | What happened: one sealed record for each result, signed and linked to the record before it. | Code only. The control plane seals each record. | Gates, checks, the CLI and any tool of your own. |
-| Project config | What is true of one repository: how its work is measured, what no step may write, which workflows apply and what a runner needs. | The repository's owner, as a file in the repository. | The runners and the control plane. |
-| Tenant config | How the factory works: which workflows it offers, how work is orchestrated, which agents work and with what autonomy. | A person who runs the tenant. | The conductor and the control plane. |
+| Project config | What is true of one repository: what it is, which checks it has, which one check is the verification evidence, which areas it has and what no step may write. | The repository's owner, as a file in the repository. | The runners and the control plane. |
+| Tenant config | How the factory works: which workflows it offers, which of them run on which repository, how work is orchestrated, which agents work and with what autonomy. | A person who runs the tenant. | The conductor and the control plane. |
 
 For each document in detail, see the [Workflow schema](/reference/workflow-schema), the [Envelope](/reference/envelope) and [Kinds and schemas](/reference/kinds), [Project config](/reference/project-config) and [Tenant config](/reference/tenant-config).
+
+## Why the project does not choose workflows
+
+A project describes itself and how to check it. It does not know that it runs in a factory, and the same repository can be worked on by two factories that do different work on it. The project config therefore holds only what is true of the repository: its checks, the one canonical check that is the verification evidence, its areas and its protected paths. What work is done on the repository is the tenant's decision: the tenant config assigns workflows, agents and approval points to each repository. The split gives a workflow a fixed interface. It says `verify` and the project supplies the check, whether that is `cargo test`, vitest, `dotnet test` or a script. See [Project config](/reference/project-config) and [Tenant config](/reference/tenant-config#projects).
 
 ## What every standard has
 
@@ -44,7 +48,7 @@ A verifier that follows these five rules can check any trail, whoever produced i
 
 ## Any factory can implement it
 
-The claim is this: a factory that writes these four documents by the same specification, and seals evidence by the same signing and chaining, is interoperable with Daggry. Its trail verifies with any tool that follows the five rules above, and so does a Daggry trail. A workflow file written for one is a valid workflow file for the other.
+The claim is this: a factory that writes these four documents by the same specification, and seals evidence by the same signing and chaining, is interoperable with Daggry. Its trail verifies with any tool that follows the five rules above, and so does a Daggry trail. A workflow file written for one is a valid workflow file for the other, and a project config written for one tells the other how to check the same repository.
 
 The claim is tested, not asserted. A conformance suite states what an implementation must accept, refuse and produce. See [Conformance](/reference/conformance).
 

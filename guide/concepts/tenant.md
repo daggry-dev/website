@@ -12,6 +12,8 @@ The tenant config answers three questions. It also names the runner images the t
 
 The tenant config holds a catalogue: the workflows the factory offers, each with a name and the repository, path and commit its file is read from. A workflow is still a file of steps. A run uses only a workflow from the catalogue, and the commit pins exactly one content of the file. See [Work graphs](/guide/concepts/workflows).
 
+The tenant config also assigns the workflows. For each repository the factory serves, it lists the workflows that may run there and the one that runs by default. A repository never assigns a workflow to itself. See [Why the project does not choose workflows](/guide/concepts/standards#why-the-project-does-not-choose-workflows).
+
 ### How they are orchestrated
 
 The conductor schedules by the tenant's rules, not by its own. The tenant config sets four things.
@@ -36,11 +38,11 @@ The tenant config is one of three documents that shape a run. Each answers a dif
 
 | Document | The question it answers | Example |
 |---|---|---|
-| Tenant config | How does this factory work? | At most four job attempts at a time. Plans need approval. |
-| Project config | What is true of this repository? | Its tests run with this command. These paths are protected. |
+| Tenant config | How does this factory work? | At most four job attempts at a time. Plans need approval. This repository gets the delivery workflow. |
+| Project config | What is true of this repository? | This check is the verification evidence. These paths are protected. |
 | Workflow | What is this piece of work? | Write a plan, wait for approval, then a test and a fix for each item. |
 
-A setting that holds for every repository belongs to the tenant. A setting that holds for one repository whatever the work belongs to the project. A setting that holds for one kind of work belongs to the workflow. See [Project config](/reference/project-config) and the [Workflow schema](/reference/workflow-schema).
+A setting that holds for every repository belongs to the tenant. A setting that is true of one repository whatever the work, and whichever factory works on it, belongs to the project. A decision about one repository, such as which workflows run on it, belongs to the tenant. A setting that holds for one kind of work belongs to the workflow. See [Project config](/reference/project-config) and the [Workflow schema](/reference/workflow-schema).
 
 ## Precedence: narrow freely, widen by a person
 
@@ -48,8 +50,8 @@ The three documents are layered. The tenant config is the outer layer, the proje
 
 The rule has two halves.
 
-- **An inner layer can narrow.** A project can protect more paths, limit the scope of every step, and pick workflows and a runner image from what the tenant offers. A workflow can give a step a smaller scope inside the project's limit.
-- **An inner layer never widens.** A project cannot pick a workflow the tenant's catalogue lacks, and a workflow cannot open a path the project protects. Where two layers disagree, the outer one wins: the tenant's rule over the project's, and the project's over the workflow's.
+- **An inner layer can narrow.** A project can protect more paths and name the areas a run can be limited to. A workflow can give a step a smaller scope inside that limit.
+- **An inner layer never widens.** A project cannot choose a workflow, an engine or an approval rule, and a workflow cannot open a path the project protects or replace the project's canonical check. Where two layers disagree, the outer one wins: the tenant's rule over the project's, and the project's over the workflow's.
 
 An extension key follows the same rule. It narrows or adds, and never widens.
 

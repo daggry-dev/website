@@ -2,7 +2,7 @@
 
 A platform built as one piece can do one thing. If the scheduler, the agent and the checks are welded together, a new kind of work, a new agent or a new cluster means a new platform. Daggry is built as modules instead. Each module has one job, one open interface and a stated list of what it never does.
 
-A workflow (also called a pipeline) is the unit all the modules serve: one file that describes a piece of work as steps.
+A workflow (also called a pipeline) is the unit all the modules serve: one document that describes a piece of work as steps.
 
 <Modules />
 
@@ -43,7 +43,7 @@ Its interfaces are the [HTTP API](/reference/api) and the evidence standard. See
 
 Deterministic work and agentic work run by different mechanisms, because they deserve different trust.
 
-The **deterministic runner** runs code that gives the same result for the same input: a shell command, a measurement of the tests, a check. It never starts a model. A measurement runs on a clean copy of the code, after any agent process has ended.
+The **deterministic runner** runs code that gives the same result for the same input: a shell command, a test run, a linter, a build or a script of the project's own. It never starts a model. A measurement runs on a clean copy of the code, after any agent process has ended.
 
 The **agent runner** runs work whose result a model produces. It starts a coding agent through an engine adapter. The engine (the coding-agent CLI that does the work) is replaceable: the adapter gives every engine the same prompt, the same tools and the same way to hand in a result. Whatever the agent hands in is a claim.
 
@@ -55,8 +55,8 @@ The running modules never call each other through private formats. They read and
 
 - **Workflow.** The work, as steps. The conductor reads it. See [Work graphs](/guide/concepts/workflows).
 - **Evidence.** The sealed records. The control plane writes them, and anyone can verify them. See [Why you can trust a run](/guide/concepts/trust).
-- **Project config.** What is true of one repository, such as how to run its tests. The runners read it.
-- **Tenant config.** How the factory works: which workflows, how they are orchestrated, which agents work and under which rules. The conductor and the control plane read it. See [The tenant defines the factory](/guide/concepts/tenant).
+- **Project config.** What is true of one repository: its checks, and the one canonical check whose result is the verification evidence. The runners read it. See [Project config](/reference/project-config).
+- **Tenant config.** How the factory works: which workflows run on which repository, how they are orchestrated, which agents work and under which rules. The conductor and the control plane read it. See [The tenant defines the factory](/guide/concepts/tenant).
 
 Each document has a published schema, a version and an extension mechanism. See [Open standards](/guide/concepts/standards).
 
