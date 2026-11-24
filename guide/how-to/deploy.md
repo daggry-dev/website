@@ -17,18 +17,19 @@ The commands and outputs on this page are illustrative. Placeholders in angle br
 
 ## What runs on your cluster
 
-Four pieces run on your cluster. Each has one job and a narrow set of rights.
+Five pieces run on your cluster. Each has one job and a narrow set of rights.
 
-- **Control plane.** Takes in work, schedules steps, seals results and serves the API. It holds the signing key, the GitHub App key and the record.
-- **Launcher.** Turns each job attempt into a pod, watches it and deletes it when it ends. It can manage pods and their Secrets in the release namespace only. It cannot read Secrets and never reads the workflow.
+- **Control plane.** Takes in work, seals results and serves the API. It holds the signing key, the GitHub App key and the record.
+- **Conductor.** Orders the steps of a run and schedules job attempts. It holds no key and seals nothing. In a default install it runs inside the control plane process.
+- **Launcher.** Turns each job attempt into a pod, watches it and deletes it when it ends. It runs in the control plane process by default. It can manage pods and their Secrets in the release namespace only. It cannot read Secrets and never reads the workflow.
 - **Runner.** Runs inside the pod. It runs the steps, the engine, the checks and git, with a token for one job attempt, a GitHub token for one repository and your model credential.
 - **Engine.** The coding-agent CLI that does an agent step's work. Each agent step names it with `engine: <engine>`. It reaches Daggry only through a small tool server inside the pod, which offers the step's inputs and takes the agent's claims.
 
-A pod holds a lease that its runner keeps alive. If the lease lapses, for example because the pod was killed, the launcher deletes the pod and a new attempt starts from the last sealed commit.
+A pod holds a lease that its runner keeps alive. If the lease lapses, for example because the pod was killed, the launcher deletes the pod and the conductor starts a new attempt from the last sealed commit.
 
 ## How the pieces connect
 
-The CLI on your machine talks to the control plane's API. The control plane talks to GitHub as your GitHub App. The launcher creates a job pod, and the runner in that pod connects out to the control plane with a token for that one attempt. The control plane holds the data volume, which stores the log and the blobs it references.
+The CLI on your machine talks to the control plane's API. The control plane talks to GitHub as your GitHub App. The conductor asks for a job pod, the launcher creates it, and the runner in that pod connects out to the control plane with a token for that one attempt. The control plane holds the data volume, which stores the log and the blobs it references.
 
 ## Install Daggry
 
@@ -77,7 +78,7 @@ The Daggry chart takes these values. Set only the ones you need to change.
 | `storage.className` | `local-path` | Storage class of the data volume |
 | `storage.size` | `1Gi` | Size of the data volume |
 | `launcher.separatePod` | `false` | `true` runs the launcher as its own pod |
-| `tokens.tenantToken` | `""` | Token for your team. Empty means generate one on first install |
+| `tokens.tenantToken` | `""` | The tenant token. Empty means generate one on first install |
 | `tokens.launcherToken` | `""` | Launcher token. Empty means generate one on first install |
 | `modelSecret` | a Secret name | Secret that holds the model credential |
 | `github.secret` | a Secret name | Secret that holds the GitHub App ID and key |
@@ -136,7 +137,7 @@ The control plane listens on plain HTTP on the API port and is not exposed outsi
    Forwarding from 127.0.0.1:<port> -> 8080
    ```
 
-2. Set the CLI variables. Read the team token from the token Secret the chart created. Its name ends in `tenant-token`.
+2. Set the CLI variables. Read the tenant token from the token Secret the chart created. Its name ends in `tenant-token`.
 
    ```sh
    export DAGGRY_URL=http://127.0.0.1:<port>

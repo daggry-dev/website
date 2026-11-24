@@ -100,7 +100,7 @@ A factory runs work and seals what the work produced.
 - Reads a [Tenant config](/reference/tenant-config), and refuses an unknown major.
 - Applies the precedence tenant, then project, then workflow, and lets only a person widen a rule.
 - Follows the extension rule in all three documents: ignores and preserves a namespaced key it does not know, and refuses an unknown key without a namespace.
-- Runs each step in the module its kind names, and refuses a kind that is not registered.
+- Runs each step in what its kind names, the deterministic runner, the agent runner or the control plane, and refuses a kind that is not registered.
 - Takes a credential by reference only.
 - Seals a record only after code has checked it.
 

@@ -1,8 +1,8 @@
 # The tenant defines the factory
 
-Two teams rarely work the same way. One lets agents open pull requests all night, and another wants a person to approve every plan. If those choices are compiled into the platform, each team needs its own platform. In Daggry they are data: the tenant config says how a factory works, and the modules read it.
+Two tenants rarely work the same way. One lets agents open pull requests all night, and another wants a person to approve every plan. If those choices are compiled into the platform, each tenant needs its own platform. In Daggry they are data: the tenant config says how a factory works, and the modules read it.
 
-A tenant is a party whose runs an installation hosts, such as a team. A factory is what the tenant gets: a system that takes in work, puts agents on it and hands back checked results.
+A tenant is a party whose runs an installation hosts. A factory is what the tenant gets: a system that takes in work, puts agents on it and hands back checked results.
 
 ## Three things the tenant config captures
 

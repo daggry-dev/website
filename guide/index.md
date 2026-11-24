@@ -26,7 +26,7 @@ The same holds for the rest of the factory. Which agents work, on which engine, 
 
 ## Built from modules and open standards
 
-**Modules.** A conductor orders the steps and schedules them across runners. A control plane holds the keys, seals and judges. A deterministic runner runs commands and checks, and never starts a model. An agent runner runs a coding agent through an adapter, so the agent is replaceable. See [The modules](/guide/concepts/modules).
+**Modules.** A conductor orders the steps and schedules them across runners. A control plane holds the keys, seals and judges. A runner runs the steps in the pod in two ways: as the deterministic runner it runs commands and checks and never starts a model, and as the agent runner it runs a coding agent through an adapter, so the agent is replaceable. See [The modules](/guide/concepts/modules).
 
 **Open standards.** Four documents connect the modules: the workflow, the evidence, the project config and the tenant config. Each has a published schema, a version and a way to extend it. Any factory can implement the same specification and the same signing and chaining of evidence. See [Open standards](/guide/concepts/standards).
 

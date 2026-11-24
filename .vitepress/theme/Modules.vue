@@ -1,7 +1,7 @@
 <template>
   <figure class="dgm">
     <ScrollFrame label="Module diagram">
-    <svg viewBox="0 0 960 420" role="img" aria-label="Modules: four open standards on top, four running modules below. The conductor reads the tenant config and the workflow, and hands each job attempt to a runner under a lease. The deterministic runner and the agent runner read the project config and send claims to the control plane. The control plane checks the claims and seals them as evidence.">
+    <svg viewBox="0 0 960 420" role="img" aria-label="Modules: four open standards on top, three running modules below. The conductor reads the tenant config and the workflow, and hands each job attempt to a runner under a lease. The runner, drawn as the deterministic runner and the agent runner, reads the project config and sends claims to the control plane. The control plane checks the claims and seals them as evidence.">
       <defs>
         <marker id="mod-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="arrow"/></marker>
         <marker id="mod-ah-hot" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="arrow hot"/></marker>
@@ -74,7 +74,7 @@
     </svg>
     </ScrollFrame>
     <figcaption class="cap">
-      Four running modules and four open standards. The conductor hands a job attempt to a runner, the runner sends back
+      Three running modules and four open standards. The runner is drawn as its two kinds of step execution. The conductor hands a job attempt to a runner, the runner sends back
       claims, and the control plane checks each claim and seals it as evidence. Every arrow is a published interface, so a
       module on one side can be replaced without changing the other.
     </figcaption>

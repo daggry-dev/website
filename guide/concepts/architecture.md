@@ -14,7 +14,7 @@ The control plane is the one backend. It takes in work, checks and seals the res
 
 ## The conductor orders and schedules
 
-The conductor decides which step comes next and asks for a pod for each job attempt. The launcher, a separate small part that runs in process by default, creates the pod. It reads the order from the workflow and the limits from the tenant config, such as how many job attempts run at a time. It holds no key and seals nothing.
+The conductor decides which step comes next and asks for a pod for each job attempt. In a default install it runs inside the control plane process. The launcher, a separate small part that runs in process by default, creates the pod. The conductor reads the order from the workflow and the limits from the tenant config, such as how many job attempts run at a time. It holds no key and seals nothing.
 
 Liveness is decided by lease. The runner in a pod keeps its lease alive, and a lapsed lease is the one sign that a pod is gone.
 
@@ -26,7 +26,7 @@ Each job runs in its own throwaway pod. It holds a token for one repository and 
 - A short-lived GitHub token for one repository. It never carries permission to change workflow files.
 - Your model credential, passed to the coding-agent engine only.
 
-The pod starts from the commit the conductor names, then runs the steps one after another in the same workspace. There are two kinds of runner, and a tenant config may name more than one runner class (see the [Tenant config reference](/reference/tenant-config)). The deterministic runner runs commands and checks and never starts a model. The agent runner starts the coding agent through an engine adapter, so the engine is replaceable. A check measures a clean copy of the code after the agent process has ended. A step that waits for you releases the pod, and the job continues in a new pod when you approve.
+The pod starts from the commit the conductor names, then runs the steps one after another in the same workspace. The runner in the pod provides two kinds of step execution, and a tenant config may name more than one runner class (see the [Tenant config reference](/reference/tenant-config)). As the deterministic runner it runs commands and checks and never starts a model. As the agent runner it starts the coding agent through an engine adapter, so the engine is replaceable. A check measures a clean copy of the code after the agent process has ended. A step that waits for you releases the pod, and the job continues in a new pod when you approve.
 
 Pods never restart. If a machine dies at 3 a.m., its lease lapses, and the conductor asks for a new pod from the last sealed commit, and the launcher creates it, to repeat the step that was interrupted. A shell in a step cannot write the record or a [protected path](/guide/concepts/protection).
 
@@ -36,7 +36,7 @@ A step in the pod can reach the internet and your cluster's network, because out
 
 ## The CLI is how you talk to it
 
-The `daggry` command starts runs and shows status and logs. It approves a wait and verifies the record on your machine. It holds one token for your team.
+The `daggry` command starts runs and shows status and logs. It approves a wait and verifies the record on your machine. It holds your tenant token.
 
 For example, `daggry verify` recomputes every fingerprint and signature itself. See [Verify a run](/guide/how-to/verify-a-run).
 
