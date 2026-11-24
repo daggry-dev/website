@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "daggry/project@1",
+  "title": "daggry/project@1: the project configuration",
+  "type": "object",
+  "required": [
+    "format"
+  ],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+  },
+  "properties": {
+    "format": {
+      "const": "daggry/project@1"
+    },
+    "verify": {
+      "type": "object",
+      "required": [
+        "test"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "test": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "protect": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "paths": {
+          "$ref": "#/$defs/globs"
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "limit": {
+          "anyOf": [
+            {
+              "enum": [
+                "nothing",
+                "anywhere"
+              ]
+            },
+            {
+              "$ref": "#/$defs/globs"
+            }
+          ]
+        }
+      }
+    },
+    "workflows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "use"
+        ],
+        "additionalProperties": false,
+        "patternProperties": {
+          "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+        },
+        "properties": {
+          "use": {
+            "$ref": "#/$defs/name"
+          }
+        }
+      }
+    },
+    "runner": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "image": {
+          "$ref": "#/$defs/name"
+        },
+        "toolchain": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "version"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^x-[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "name": {
+                "$ref": "#/$defs/name"
+              },
+              "version": {
+                "$ref": "#/$defs/name"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "globs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}
