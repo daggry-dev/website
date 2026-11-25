@@ -25,6 +25,12 @@ import HumanWait from './HumanWait.vue'
 import Boundary from './Boundary.vue'
 import Notice from './Notice.vue'
 import Signup from './Signup.vue'
+import KitDiagram from './KitDiagram.vue'
+import ExampleGallery from './ExampleGallery.vue'
+import FeatureGrid from './FeatureGrid.vue'
+import ConfigFiles from './ConfigFiles.vue'
+import FileTree from './FileTree.vue'
+import SealedRecord from './SealedRecord.vue'
 
 export default {
   extends: DefaultTheme,
@@ -45,5 +51,11 @@ export default {
     app.component('HumanWait', HumanWait)
     app.component('Boundary', Boundary)
     app.component('Signup', Signup)
+    app.component('KitDiagram', KitDiagram)
+    app.component('ExampleGallery', ExampleGallery)
+    app.component('FeatureGrid', FeatureGrid)
+    app.component('ConfigFiles', ConfigFiles)
+    app.component('FileTree', FileTree)
+    app.component('SealedRecord', SealedRecord)
   },
 } satisfies Theme
