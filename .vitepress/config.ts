@@ -6,7 +6,7 @@ const base = process.env.SITE_BASE ?? '/'
 export default defineConfig({
   base,
   title: 'Daggry',
-  description: 'A factory kit: modules and open standards for factories where coding agents do the work, code runs every check, and the result is a signed, tamper-evident trail anyone can verify.',
+  description: 'A factory kit: modules you set up as your own factory, where agents do the work, code checks every step, and each result is signed in an evidence trail you can verify yourself.',
   cleanUrls: true,
   srcExclude: ['research/**', 'README.md'],
   // Light and dark, following the OS preference until the reader picks one.
@@ -26,51 +26,58 @@ export default defineConfig({
     ],
     sidebar: {
       '/guide/': [
-        { text: 'Overview', items: [
-          { text: 'How Daggry works', link: '/guide/' },
-        ] },
-        { text: 'Concepts', items: [
-          { text: 'The modules', link: '/guide/concepts/modules' },
-          { text: 'Open standards', link: '/guide/concepts/standards' },
-          { text: 'The tenant defines the factory', link: '/guide/concepts/tenant' },
-          { text: 'Why you can trust a run', link: '/guide/concepts/trust' },
-          { text: 'Validators: the extension point', link: '/guide/concepts/validators' },
-          { text: 'Work graphs', link: '/guide/concepts/workflows' },
-          { text: 'What an agent cannot change', link: '/guide/concepts/protection' },
-          { text: 'Where it runs', link: '/guide/concepts/architecture' },
-        ] },
-        { text: 'Try it', items: [
-          { text: 'Getting started', link: '/guide/getting-started' },
+        { text: 'Start here', items: [
+          { text: '1. What is Daggry?', link: '/guide/' },
+          { text: '2. What you can use it for', link: '/guide/use-cases' },
+          { text: '3. Why use it', link: '/guide/why' },
+          { text: '4. What it does', link: '/guide/features' },
+          { text: '5. Run your first workflow', link: '/guide/getting-started' },
+          { text: '6. Configure Daggry', link: '/guide/configure' },
+          { text: '7. How it works', link: '/guide/how-it-works' },
         ] },
         { text: 'How-to', items: [
-          { text: 'Workflow patterns', link: '/guide/how-to/workflow-patterns' },
-          { text: 'Design a workflow', link: '/guide/how-to/design-a-workflow' },
+          { text: 'Install Daggry', link: '/guide/how-to/deploy' },
+          { text: 'Set up a project', link: '/guide/how-to/set-up-a-project' },
+          { text: 'Set up a tenant', link: '/guide/how-to/set-up-a-tenant' },
           { text: 'Write a workflow', link: '/guide/how-to/write-a-workflow' },
+          { text: 'Add a loop', link: '/guide/how-to/add-a-loop' },
+          { text: 'Add a validator', link: '/guide/how-to/add-a-validator' },
+          { text: 'Design a workflow', link: '/guide/how-to/design-a-workflow' },
           { text: 'Verify a run', link: '/guide/how-to/verify-a-run' },
-          { text: 'Deploy Daggry', link: '/guide/how-to/deploy' },
+          { text: 'Workflow examples', link: '/guide/how-to/workflow-patterns' },
+        ] },
+        { text: 'Go deeper', items: [
+          { text: 'Workflows', link: '/guide/concepts/workflows' },
+          { text: 'Why you can trust a run', link: '/guide/concepts/trust' },
+          { text: 'What an agent cannot change', link: '/guide/concepts/protection' },
+          { text: 'The modules and where they run', link: '/guide/concepts/modules' },
         ] },
       ],
       '/reference/': [
         { text: 'Overview', items: [
           { text: 'Reference', link: '/reference/' },
         ] },
-        { text: 'Interfaces', items: [
+        { text: 'Commands and API', items: [
           { text: 'CLI', link: '/reference/cli' },
           { text: 'HTTP API', link: '/reference/api' },
         ] },
-        { text: 'Formats', items: [
-          { text: 'Envelope', link: '/reference/envelope' },
-          { text: 'Kinds and schemas', link: '/reference/kinds' },
-          { text: 'Validators', link: '/reference/validators' },
-          { text: 'Workflow schema', link: '/reference/workflow-schema' },
+        { text: 'Files you write', items: [
+          { text: 'Workflow file', link: '/reference/workflow-schema' },
           { text: 'Gate expressions', link: '/reference/gates' },
           { text: 'Project config', link: '/reference/project-config' },
           { text: 'Tenant config', link: '/reference/tenant-config' },
+        ] },
+        { text: 'Rules', items: [
+          { text: 'Validators', link: '/reference/validators' },
           { text: 'Protected paths', link: '/reference/protected-paths' },
           { text: 'Bindings', link: '/reference/bindings' },
+          { text: 'Helm chart values', link: '/reference/helm-chart' },
         ] },
-        { text: 'Standards', items: [
-          { text: 'Contracts', link: '/reference/contracts' },
+        { text: 'Specification', items: [
+          { text: 'Open formats', link: '/reference/open-formats' },
+          { text: 'Evidence record format (Envelope)', link: '/reference/envelope' },
+          { text: 'Record kinds', link: '/reference/kinds' },
+          { text: 'Module contracts', link: '/reference/contracts' },
           { text: 'Conformance', link: '/reference/conformance' },
         ] },
         { text: 'Terms', items: [
