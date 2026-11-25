@@ -35,7 +35,7 @@ steps.zzz.measurement.exit_code == 0
 | Context | Reads |
 |---|---|
 | `inputs` | The artifacts handed to the loop, by kind. |
-| `needs` | The artifacts of named earlier work, by id. |
+| `needs` | The artifacts of named previous work, by id. |
 | `steps` | The artifacts of a named step. |
 | `verdict` | The verdict facts sealed so far. |
 
@@ -74,7 +74,7 @@ A schema marks a field's class with the keyword `x-fact-class` on the property.
 | Kind | Field | Class |
 |---|---|---|
 | `evidence/plan@1` | `criteria` | claimed |
-| `evidence/measurement@1` | `label`, `criterion`, `exit_code`, `tests` | derived |
+| `evidence/measurement@1` | `label`, `criterion`, `exit_code`, `tests`, `check`, `contract`, `outcome`, `findings` | derived |
 | | `revision` | claimed |
 | `evidence/verdict@1` | `status`, `facts`, and every fact name | derived |
 | | `validator`, `version`, `findings` | none |
@@ -89,7 +89,7 @@ Only a top-level property of a body is readable. A fact value is a boolean, an i
 
 ### Verdict facts
 
-A `verdict.<name>` read takes the value from the verdicts sealed for the run, newest first. Each verdict contributes `status` (a string) and each of its facts. A later value of the same name replaces an earlier one, so `verdict.status` is the status of the latest verdict.
+A `verdict.<name>` read takes the value from the verdicts sealed for the run, newest first. Each verdict contributes `status` (a string) and each of its facts. A newer value of the same name replaces an older one, so `verdict.status` is the status of the latest verdict.
 
 | Name | Type | From | Meaning |
 |---|---|---|---|
@@ -224,6 +224,7 @@ A representative set. Offsets count characters from the start of the expression.
 |---|---|
 | `verdict.status == 'pass'` | `status` is a derived verdict property. |
 | `inputs.measurement.exit_code == 0` | `exit_code` is derived. |
+| `inputs.measurement.outcome == 'pass'` | `outcome` is derived. |
 | `verdict.all_covered && verdict.status == 'pass'` | Both reads are derived. |
 | `steps.v.measurement.exit_code == 0` | Step `v` exists. |
 | `needs.anything.measurement.exit_code == 0` | `needs` ids are not checked against the workflow. |

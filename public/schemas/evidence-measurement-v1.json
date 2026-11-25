@@ -54,6 +54,57 @@
           }
         }
       }
+    },
+    "check": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$",
+      "x-fact-class": "derived"
+    },
+    "contract": {
+      "type": "string",
+      "minLength": 1,
+      "x-fact-class": "derived"
+    },
+    "outcome": {
+      "enum": [
+        "pass",
+        "fail",
+        "error"
+      ],
+      "x-fact-class": "derived"
+    },
+    "findings": {
+      "x-fact-class": "derived",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "outcome",
+          "message"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "outcome": {
+            "enum": [
+              "pass",
+              "fail",
+              "error"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
     }
   }
 }
