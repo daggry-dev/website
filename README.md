@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://daggry-website.thinkability.workers.dev"><strong>daggry-website.thinkability.workers.dev</strong></a>
+  <a href="https://daggry.dev"><strong>daggry.dev</strong></a>
 </p>
 
 ---

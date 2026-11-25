@@ -68,7 +68,7 @@ Yes. Every record format has a published JSON Schema, and any tool that supports
 2. Download the schema for the kind of record, here a plan.
 
    ```sh
-   curl -sO https://thinkability.github.io/daggry-website/schemas/evidence-plan-v1.json
+   curl -sO https://daggry.dev/schemas/evidence-plan-v1.json
    ```
 
 3. Save a plan to check as `plan.json`. This one is illustrative.
