@@ -1,8 +1,20 @@
 # Roadmap
 
-Every other page of this site describes the complete platform. This page is the one place that states build status: what is built, what is not built, the three waves with their exit tests, the points the design leaves open and the specification choices that are not confirmed.
+Every other page of this site describes Daggry as designed, so you cannot tell from them what works today. This page is the one place that states build status: what is built, what is not built, the three waves with their exit tests and the points the design leaves open. Read it before you plan to depend on a feature.
 
 Daggry is not publicly released. Installation is from source, for early users.
+
+## What you can do today
+
+The list names what an early user can do with what is built.
+
+- Install Daggry on your Kubernetes cluster from source, with the Helm charts.
+- Start a run from a workflow file, a Git repository and an issue, with `daggry run`.
+- Follow the run with `daggry status` and `daggry logs`, and approve its plan with `daggry approve`.
+- Verify the evidence trail on your own machine with `daggry verify`.
+- Work on software only: an issue becomes a pull request.
+
+To try it, follow [Run your first workflow](/guide/getting-started).
 
 ## Build status
 
@@ -22,13 +34,11 @@ Status as of 2026-11-25. No wave exit test has passed, and the shapes of the sch
 | Gates | The gate grammar and the reads of derived fields. | Reads of `meta` in a gate. |
 | Project config | A file in the workspace that holds one verification command. | `.daggry/project.yaml`: the `format` header, `project`, `areas`, named script validators, the canonical validator, supporting validators, thresholds, `protect.paths`, validators exposed to the agent and extension keys. |
 | Tenant config | The cluster admin sets the lease length, the concurrency cap, the job image and the model credential once for the whole installation. A workflow reaches the control plane as a file given to `daggry run --workflow <file>`. | The tenant config document: the workflow catalogue, orchestration limits for each tenant, the roster, runner images and classes, the `validators` section, project entries and the extension registry. |
-| Protection | The always-protected paths, the scope of a step, frozen paths, restore in the pod and a recheck in the control plane. The platform's own instructions are read-only in the pod. A project's own agent config is read from the working copy and protected by the boundary check. | The paths a project adds, the default protection of the files a script validator runs, the scope of a run, and a human grant for protected paths other than `.daggry/**`. |
-| Modules and contracts | The control plane holds the keys, seals, judges and serves the API. It also decides the next step and manages leases, and a launcher turns each job attempt into a pod. A lapsed lease starts a new attempt from the last sealed version. One runner in one pod runs commands, validators and the engine. | The conductor as its own module behind the conductor interface. Separate runner classes for the deterministic runner and the agent runner. Runners other than Kubernetes pods. A forge other than a git host. Published tests for each contract. |
+| Protection | The always-protected paths, the scope of a step, frozen paths, restore in the pod and a recheck in the control plane. Daggry's own instructions are read-only in the pod. A project's own agent config is read from the working copy and protected by the boundary check. | The paths a project adds, the default protection of the files a script validator runs, the scope of a run, and a human grant for protected paths other than `.daggry/**`. |
+| Modules | The control plane holds the keys, seals, judges and serves the API. It also decides the next step and manages leases, and a launcher turns each job attempt into a pod. A lapsed lease starts a new attempt from the last sealed version. One runner in one pod runs commands, validators and the engine. | The conductor as its own module behind the conductor interface. Separate runner classes for the deterministic runner and the agent runner. Runners other than Kubernetes pods. A forge other than a git host. Published tests for each contract. |
 | Engine | The engine adapter, the replay engine, one live agent adapter and the tool server that offers `submit` and `validate`. Two live smoke runs passed on 2026-11-16. | `ask_human` and `delegate`. |
 | Conformance | The published test vectors. | A conformance suite, with tests for each row of the contracts table. |
 | Interfaces and deployment | The CLI commands `run`, `status`, `logs`, `verify` and `approve`. `run` takes `--repo <owner>/<name>` and an issue URL. Helm charts with a SQLite log and filesystem blobs. | `--workspace` on `run`. `stop`, `retry`, `doctor` and `update`. Postgres and S3 storage. |
-
-To try the parts that are built, follow [Getting started](/guide/getting-started).
 
 ## The three waves
 
@@ -48,22 +58,21 @@ A wave is accepted when its exit test passes.
 - **Wave 2.** A real work item runs with a lead and one delegate, a project specialist is admitted as a delegate only, and a plan dialogue of several turns ends in an approval bound to the plan's digest.
 - **Wave 3.** An approved plan with a `judged` criterion gates a delivered change, and a review of a finished run opens a work item whose citations code confirms.
 
-### Beyond the waves
-
+::: details What does the design hold beyond the three waves?
 The design holds more than the three waves build. No item in the table belongs to a wave.
 
 | Area | Design |
 |---|---|
-| Modules and open standards | The project config, the tenant config, the workflow `format` header and its extensions, the result contracts, the conductor as its own module and the separate runner classes. See [The modules](/guide/concepts/modules), [Open standards](/guide/concepts/standards) and [The tenant defines the factory](/guide/concepts/tenant). |
-| Neutral core and bindings | The standards name no tool and no kind of work. The result document, adapters and bindings other than software. See [Bindings](/reference/bindings). |
-| Validators as the extension point | Validator references on a `verify` step, script validators from the tenant and the project, admission, and native validators in any language. See [Validators](/reference/validators). |
-| Replaceable parts | Each part behind a published contract with published tests. See [Contracts](/reference/contracts). |
+| Modules and open formats | The project config, the tenant config, the workflow `format` header and its extensions, the result contracts, the conductor as its own module and the separate runner classes. See [The modules and where they run](/guide/concepts/modules) and [Open formats](/reference/open-formats). |
+| Kinds of work other than software | The result document, adapters and bindings other than software. See [Bindings](/reference/bindings). |
+| Your own validators | Validator references on a `verify` step, script validators from the tenant and the project, admission, and native validators in any language. See [Validators](/reference/validators). |
+| Replaceable modules | Each module behind a published contract with published tests. See [Module contracts](/reference/contracts). |
 | Signed head | A signed chain head kept outside the cluster, so that dropping entries from the end of a chain is visible. |
 | Witness rule | A reviewer's finding gates work only when code confirms what it cites. |
 | Gate reads of `meta` | A gate reads the values that code stamps in an artifact's `meta`. |
 | Revocation and tombstoning | Revoking an approval as its own artifact. Removing a transcript blob without breaking the chain. |
 | Older-major decoding | A reader decodes an older major of a kind for audit only. |
-| Native validators | A validator from outside the platform, admitted when the tenant lists it by name, version and digest. |
+| Native validators | A validator from outside Daggry, admitted when the tenant lists it by name, version and digest. |
 | `stop` and `retry` | CLI commands to stop a run and to retry one. |
 | `doctor` and `update` | Commands to repair an installation and to update it with a health-gated rollback. |
 | `harness-change` workflow | The one path for changing agent instruction and tool-setting files. |
@@ -71,10 +80,11 @@ The design holds more than the three waves build. No item in the table belongs t
 | Parallel steps and join | Deferred until a workflow needs them. |
 
 The design lists these as non-goals: a web interface, a policy language, a code index, agent memory, evaluations and a plugin marketplace.
+:::
 
 ## Open points
 
-The design leaves three points undecided. The other pages state none of them.
+The design leaves three points undecided. The other pages state none of them. You need them if you build on the engine key, the run lock or areas.
 
 - **Engine of a step.** An `agent` step names an engine in its `engine` key, and each agent on the tenant's roster has an engine. Which of the two chooses the engine a step runs on is open. See [agent](/reference/workflow-schema#agent) and [agents](/reference/tenant-config#agents).
 - **Tenant config in the run lock.** The fields of a run lock are the validators, the boundary rules, the image digest and the workflow digest. Whether a run also pins the tenant config it started under is open. See [run lock](/reference/kinds#daggry-run-lock-1) and [Where it lives](/reference/tenant-config#where-it-lives).
@@ -86,16 +96,4 @@ Three more points follow from these and are not defined on the reference pages.
 - **A catalogue workflow in a run request.** The tenant config says a run uses a workflow from the catalogue, by name or by the workspace's default. `daggry run` and the run request take the workflow as a file. How a run request names a catalogue workflow is not defined.
 - **Gate reads of several measurements.** A `verify` step seals one measurement for each script validator it runs. Which of them a `steps.<id>.measurement` read in a gate takes is not defined.
 
-## Specification choices not confirmed
-
-The reference pages are complete, so they make a choice where the design gives a direction and no detail. The table lists those choices. Each one is inferred and not confirmed, and each can change before a wave builds it.
-
-| Choice | What the reference pages state | Where |
-|---|---|---|
-| The validator protocol and the native interface | Two operations, describe and validate, with JSON bodies, and the in-process form of the interface. | [Write a native validator](/reference/validators#write-a-native-validator) |
-| The facts of `daggry/result-gate` | `findings_fail`, `findings_error`, `findings_skip` and `thresholds_missed`. | [Built-in validators](/reference/validators#built-in-validators) |
-| The conductor, runner, forge and store contracts | The rules of each interface and the conformance test named for each. | [Contracts](/reference/contracts) |
-| `projects[].binding` | A project entry names its binding, and the key is optional when the tenant registers one binding. | [projects](/reference/tenant-config#projects) |
-| The version of a script validator | A project's script is versioned by the baseline, and a tenant's by `source.revision`. | [Versioning](/reference/validators#versioning) |
-| The forms of a finding id | `threshold:<read>` for a threshold, and `uncovered: <id>`, `removed: <id>` and `newly skipped: <id>` in a verdict. | [Threshold findings](/reference/kinds#threshold-findings) |
-| The outcomes of the SARIF adapter | A result at level `error` is a `fail`, and every other level is a `pass`. | [Adapters](/reference/bindings#adapters) |
+Where the design gives a direction and no detail, the reference pages make a choice. For those choices, see [Specification choices not confirmed](/reference/conformance#specification-choices-not-confirmed).

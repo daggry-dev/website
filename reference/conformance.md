@@ -2,19 +2,17 @@
 
 *Reference*
 
-For the idea, read [Open standards](/guide/concepts/standards).
+A tool of your own is useful only if it reads Daggry's files and its trail the same way Daggry does. This page says what a tool must do to conform, at three levels, with a checklist for each. It also says which of Daggry's choices are its own policy, and which choices on the reference pages are not confirmed. Read it if you build a verifier, a signer, a factory or a module of your own. If you only use Daggry, you can skip it.
 
-Daggry is defined by open documents, so another factory can implement them. This page says what an implementation must do to conform, at three levels, with a checklist for each. It also says what is one platform's policy and no part of the standard. It is for people who build a verifier, a signer, a factory or a part of a factory of their own.
+An implementation conforms when it accepts, refuses and produces what the rules on this page say, and passes the published test vectors. The work can be of any kind. For the four formats, see [Open formats](/reference/open-formats).
 
-A factory is a system that takes in work, puts agents on it and hands back checked results. The work can be of any kind: the standards name no tool and no kind of work. An implementation conforms when it accepts, refuses and produces what the rules on this page say, and passes the published test vectors.
+## The one rule
 
-## The invariant
-
-Every level and every contract keeps one invariant: code runs every check and judges every result, and no agent and no model grades its own work. A model produces a validator's input only when a person or a check that code derives bounds what the model can say. The `judged` fact class is admitted by a person's approval only. See [Validators](/reference/validators#the-invariant).
+Every level and every contract keeps one rule: code runs every validator and judges every result, and no agent and no model grades its own work. A model produces a validator's input only when a person or a rule that code derives bounds what the model can say. The `judged` fact class is admitted by a person's approval only. See [Validators](/reference/validators#the-one-rule).
 
 ## The rules an implementation follows
 
-Every level rests on the same five rules of the evidence standard. Each is defined in full in [Envelope](/reference/envelope).
+Every level rests on the same five rules of the evidence format. Each is defined in full in [Evidence record format](/reference/envelope).
 
 | Rule | What it fixes | Defined in |
 |---|---|---|
@@ -28,7 +26,7 @@ Kinds follow one naming rule: `<namespace>/<name>@<major>`. See [Kinds](#kinds).
 
 ## Test vectors
 
-An implementation proves the five rules against the published vectors. They are on the [Envelope](/reference/envelope) page.
+An implementation proves the five rules against the published vectors. They are on the [Evidence record format](/reference/envelope) page.
 
 | Vector | Proves | Where |
 |---|---|---|
@@ -49,7 +47,7 @@ The table lists the rules for kinds.
 | Schemas | Every kind an implementation seals has a published JSON Schema (draft 2020-12) for its `body`, with the kind as its `$id`. |
 | Unknown kinds | A reader that has no schema for a kind still verifies the envelope, the digest, the link and the signature. It does not judge the body. |
 
-The schemas of the standard's kinds and of Daggry's own are in [Kinds and schemas](/reference/kinds).
+The schemas of the standard's kinds and of Daggry's own are in [Record kinds](/reference/kinds).
 
 ## Conformance levels
 
@@ -97,7 +95,7 @@ A signer seals artifacts and appends them to a chain.
 A factory runs work and seals what the work produced.
 
 - Meets every item of level 2.
-- Reads a workflow by the [Workflow schema](/reference/workflow-schema): the same keys, the same refusals, the same strict YAML subset. Refuses a missing `format` and an unknown major.
+- Reads a workflow by the [Workflow file](/reference/workflow-schema) reference: the same keys, the same refusals, the same strict YAML subset. Refuses a missing `format` and an unknown major.
 - Reads a gate by the grammar in [Gate expressions](/reference/gates), and lets a gate read derived fields only.
 - Reads a [Project config](/reference/project-config) from the baseline, and refuses a missing `format` and an unknown major.
 - Looks up every area name that a step, the tenant config or a run request gives in the project config of the baseline, and refuses the run when a name is unknown.
@@ -113,30 +111,44 @@ A factory runs work and seals what the work produced.
 
 ## Contracts as conformance surfaces
 
-Every row of the table in [Contracts](/reference/contracts) is a conformance surface. A part of a factory is replaceable when it passes the published tests of each contract it implements: a conductor, a runner, an engine adapter, a validator, an adapter, a store or a forge. A replacement part changes no other contract.
+Every row of the table in [Module contracts](/reference/contracts#the-contracts) is a conformance surface. A module is replaceable when it passes the published tests of each contract it implements: a conductor, a runner, an engine adapter, a validator, an adapter, a store or a forge. A replacement changes no other contract.
 
 ## What is not standard
 
-The standard says how to write things down. It does not say what a factory must decide. Each row of the table is one platform's policy, and a factory conforms whatever it chooses.
+The standard says how to write things down. It does not say what a factory must decide. Each row of the table is one factory's policy, and a factory conforms whatever it chooses.
 
 | Policy | Daggry's choice | Read more |
 |---|---|---|
 | The always-protected paths | The always-protected set, such as `.daggry/**` and agent instruction files. | [Protected paths](/reference/protected-paths) |
-| The validators a platform ships and admits | The built-in validators. | [Validators](/reference/validators#built-in-validators) |
-| The bindings a platform offers | The software binding. | [Bindings](/reference/bindings) |
-| A platform's own kinds | The four kinds in the `daggry` namespace. | [Kinds and schemas](/reference/kinds) |
-| The values in a tenant config | The limits, the roster, the engines and the approval points. | [Tenant config](/reference/tenant-config) |
-| Where keys are kept and who holds them | The control plane holds the signing key. It never enters a pod. | [Where it runs](/guide/concepts/architecture) |
+| The validators a factory ships and admits | The built-in validators. | [Validators](/reference/validators#built-in-validators) |
+| The bindings a factory offers | The software binding. | [Bindings](/reference/bindings) |
+| A factory's own kinds | The four kinds in the `daggry` namespace. | [Record kinds](/reference/kinds) |
+| The values in a tenant config | The limits, the agents, the engines and the approval points. | [Tenant config](/reference/tenant-config) |
+| Where keys are kept and who holds them | The control plane holds the signing key. It never enters a pod. | [The modules and where they run](/guide/concepts/modules) |
 | How a verifier gets the public key | A route of the HTTP API. | [HTTP API](/reference/api) |
-| Where it runs and where it stores | The installation's choice of runners, log store and blob store. | [Deploy Daggry](/guide/how-to/deploy) |
+| Where it runs and where it stores | The installation's choice of runners, log store and blob store. | [Install Daggry](/guide/how-to/deploy) |
 | The interfaces | The `daggry` commands and the HTTP routes. | [CLI](/reference/cli) |
-| The text of an error message | The messages on the reference pages. The cases that are refused are standard. The wording is not. | [Envelope](/reference/envelope#verification-errors) |
+| The text of an error message | The messages on the reference pages. The cases that are refused are standard. The wording is not. | [Verification errors](/reference/envelope#verification-errors) |
+
+## Specification choices not confirmed
+
+The reference pages are complete, so they make a choice where the design gives a direction and no detail. The table lists those choices. Each one is inferred and not confirmed, and each can change before it is built. For build status, see the [Roadmap](/roadmap).
+
+| Choice | What the reference pages state | Where |
+|---|---|---|
+| The validator protocol and the native interface | Two operations, describe and validate, with JSON bodies, and the in-process form of the interface. | [Write a native validator](/reference/validators#write-a-native-validator) |
+| The facts of `daggry/result-gate` | `findings_fail`, `findings_error`, `findings_skip` and `thresholds_missed`. | [Built-in validators](/reference/validators#built-in-validators) |
+| The conductor, runner, forge and store contracts | The rules of each interface and the conformance test named for each. | [Module contracts](/reference/contracts) |
+| `projects[].binding` | A project entry names its binding, and the key is optional when the tenant registers one binding. | [projects](/reference/tenant-config#projects) |
+| The version of a script validator | A project's script is versioned by the baseline, and a tenant's by `source.revision`. | [Versioning](/reference/validators#versioning) |
+| The forms of a finding id | `threshold:<read>` for a threshold, and `uncovered: <id>`, `removed: <id>` and `newly skipped: <id>` in a verdict. | [Threshold findings](/reference/kinds#threshold-findings) |
+| The outcomes of the SARIF adapter | A result at level `error` is a `fail`, and every other level is a `pass`. | [Adapters](/reference/bindings#adapters) |
 
 ## Next steps
 
 The list names the pages to read next.
 
-- For every field and rule of the envelope, see [Envelope](/reference/envelope).
-- For the kinds and their schemas, see [Kinds and schemas](/reference/kinds).
-- For every contract and what can replace each part, see [Contracts](/reference/contracts).
-- For the two configuration documents, see [Project config](/reference/project-config) and [Tenant config](/reference/tenant-config).
+- For every field and rule of a record, see [Evidence record format](/reference/envelope).
+- For the kinds and their schemas, see [Record kinds](/reference/kinds).
+- For every contract and what can replace each module, see [Module contracts](/reference/contracts).
+- For the two configuration files, see [Project config](/reference/project-config) and [Tenant config](/reference/tenant-config).
