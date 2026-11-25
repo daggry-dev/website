@@ -4,9 +4,13 @@
 
 For the idea, read [Open standards](/guide/concepts/standards).
 
-Daggry is defined by open documents, so another factory can implement them. This page says what an implementation must do to conform, at three levels, with a checklist for each. It also says what is one platform's policy and no part of the standard. It is for people who build a verifier, a signer or a factory of their own.
+Daggry is defined by open documents, so another factory can implement them. This page says what an implementation must do to conform, at three levels, with a checklist for each. It also says what is one platform's policy and no part of the standard. It is for people who build a verifier, a signer, a factory or a part of a factory of their own.
 
-A factory is a system that takes in work, puts agents on it and hands back checked results. An implementation conforms when it accepts, refuses and produces what the rules below say, and passes the published test vectors.
+A factory is a system that takes in work, puts agents on it and hands back checked results. The work can be of any kind: the standards name no tool and no kind of work. An implementation conforms when it accepts, refuses and produces what the rules below say, and passes the published test vectors.
+
+## The invariant
+
+Every level and every contract keeps one invariant: code runs every check and judges every result, and no agent and no model grades its own work. A model produces a validator's input only when a person or a check that code derives bounds what the model can say. The `judged` fact class is admitted by a person's approval only. See [Validators](/reference/validators#the-invariant).
 
 ## The rules an implementation follows
 
@@ -93,15 +97,21 @@ A factory runs work and seals what the work produced.
 - Meets every item of level 2.
 - Reads a workflow by the [Workflow schema](/reference/workflow-schema): the same keys, the same refusals, the same strict YAML subset. Refuses a missing `format` and an unknown major.
 - Reads a gate by the grammar in [Gate expressions](/reference/gates), and lets a gate read derived fields only.
-- Reads a [Project config](/reference/project-config) from the base commit, and refuses a missing `format` and an unknown major.
-- Looks up every area name that a step, the tenant config or a run request gives in the project config of the base commit, and refuses the run when a name is unknown.
+- Reads a [Project config](/reference/project-config) from the baseline, and refuses a missing `format` and an unknown major.
+- Looks up every area name that a step, the tenant config or a run request gives in the project config of the baseline, and refuses the run when a name is unknown.
 - Reads a [Tenant config](/reference/tenant-config), and refuses a missing `format` and an unknown major.
-- Reads a check's output by its [result contract](/reference/project-config#result-contracts), refuses a contract it has no parser for, and seals each measured check as a [measurement](/reference/kinds#evidence-measurement-1).
+- Implements the [validator contract](/reference/validators#the-validator-contract): resolves every reference a `verify` step names, runs script validators on a clean copy of the workspace, runs built-in and native validators over sealed inputs only, and derives every verdict in code.
+- Admits a validator by name and version: a native validator by name, version and digest, and a project's script validator only when the tenant admits it.
+- Reads a script validator's output by its [result contract](/reference/project-config#result-contracts): `exit-code`, a [result document](/reference/project-config#result-document) or a registered adapter. Refuses any other contract, and seals each result as a [measurement](/reference/kinds#evidence-measurement-1).
 - Applies the precedence tenant, then project, then workflow, and lets only a person widen a rule.
 - Follows the extension rule in all three documents: ignores and preserves a namespaced key it does not know, and refuses an unknown key without a namespace.
 - Runs each step in what its kind names, the deterministic runner, the agent runner or the control plane, and refuses a kind that is not registered.
 - Takes a credential by reference only.
 - Seals a record only after code has checked it.
+
+## Contracts as conformance surfaces
+
+Every row of the table in [Contracts](/reference/contracts) is a conformance surface. A part of a factory is replaceable when it passes the published tests of each contract it implements: a conductor, a runner, an engine adapter, a validator, an adapter, a store or a forge. A replacement part changes no other contract.
 
 ## What is not standard
 
@@ -110,12 +120,13 @@ The standard says how to write things down. It does not say what a factory must 
 | Policy | Daggry's choice | Read more |
 |---|---|---|
 | The always-protected paths | The always-protected set, such as `.daggry/**` and agent instruction files. | [Protected paths](/reference/protected-paths) |
-| The validators a platform runs and admits | The built-in validators. | [Kinds and schemas](/reference/kinds#validators) |
+| The validators a platform ships and admits | The built-in validators. | [Validators](/reference/validators#built-in-validators) |
+| The bindings a platform offers | The software binding. | [Bindings](/reference/bindings) |
 | A platform's own kinds | The four kinds in the `daggry` namespace. | [Kinds and schemas](/reference/kinds) |
 | The values in a tenant config | The limits, the roster, the engines and the approval points. | [Tenant config](/reference/tenant-config) |
 | Where keys are kept and who holds them | The control plane holds the signing key. It never enters a pod. | [Where it runs](/guide/concepts/architecture) |
 | How a verifier gets the public key | A route of the HTTP API. | [HTTP API](/reference/api) |
-| Where it runs | Kubernetes pods, with a SQLite log and filesystem blobs. | [Deploy Daggry](/guide/how-to/deploy) |
+| Where it runs and where it stores | The installation's choice of runners, log store and blob store. | [Deploy Daggry](/guide/how-to/deploy) |
 | The interfaces | The `daggry` commands and the HTTP routes. | [CLI](/reference/cli) |
 | The text of an error message | The messages on the reference pages. The cases that are refused are standard. The wording is not. | [Envelope](/reference/envelope#verification-errors) |
 
@@ -123,4 +134,5 @@ The standard says how to write things down. It does not say what a factory must 
 
 - For every field and rule of the envelope, see [Envelope](/reference/envelope).
 - For the kinds and their schemas, see [Kinds and schemas](/reference/kinds).
+- For every contract and what can replace each part, see [Contracts](/reference/contracts).
 - For the two configuration documents, see [Project config](/reference/project-config) and [Tenant config](/reference/tenant-config).

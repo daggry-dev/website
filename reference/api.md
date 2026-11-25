@@ -57,7 +57,7 @@ These routes take the tenant token. The tables after the route list give each bo
 
 | Body | Fields |
 |---|---|
-| run request | `workflow` (string, the workflow text), `repo` (string), `item` (string, an issue URL) |
+| run request | `workflow` (string, the workflow text), `workspace` (string), `item` (string, what names the work item) |
 | run response | `run` (the run id) |
 | status request | `run` |
 | status report | `state` (a state), `attempts` (array of `{job, n, state}`, where `n` is a number), `waiting_for` (a reason or `null`) |

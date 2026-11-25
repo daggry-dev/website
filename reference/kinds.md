@@ -4,7 +4,7 @@
 
 For the idea, read [Why you can trust a run](/guide/concepts/trust).
 
-Daggry has eight kinds of sealed artifact. This page lists each kind's body fields, its constraints, a valid example, who seals it, and the validators that judge measurements and plans. It is for people who write workflows, gates or tools that read the log. The envelope around every body is in [Envelope](/reference/envelope).
+Daggry has eight kinds of sealed artifact. This page lists each kind's body fields, its constraints, a valid example and who seals it. It is for people who write workflows, gates or tools that read the log. The validators that judge these records are in [Validators](/reference/validators). The envelope around every body is in [Envelope](/reference/envelope).
 
 A kind's namespace says who defines it. The `evidence` namespace holds the kinds of the standard, and `daggry` holds this platform's own. Another factory adds kinds in a namespace of its own and leaves both of these unchanged, so a new kind of record never changes the standard. See [Conformance](/reference/conformance).
 
@@ -26,20 +26,24 @@ Every kind has a published JSON Schema (draft 2020-12) for its `body`, and so do
 | `daggry/run-lock@1` | [daggry-run-lock-v1.json](/schemas/daggry-run-lock-v1.json) |
 | `daggry/work-item@1` | [daggry-work-item-v1.json](/schemas/daggry-work-item-v1.json) |
 
+The result document a script validator writes is not a sealed kind. Its schema, `daggry/result@1`, is in [Project config](/reference/project-config#result-document).
+
 ## The eight kinds
 
-Four kinds belong to the evidence language and name nothing of git or GitHub. Four are Daggry's own.
+Four kinds belong to the evidence language. Four are Daggry's own. No kind names a tool or a kind of work. Where a field takes a form that depends on the workspace, the binding gives the form. See [Bindings](/reference/bindings).
+
+The table lists each kind, what it holds and who seals it.
 
 | Kind | Holds | Sealed by |
 |---|---|---|
 | `evidence/plan@1` | The acceptance criteria an agent plans. | Control plane, from an agent step's submitted record. |
-| `evidence/measurement@1` | What a measuring step recorded: the result of one check. | Control plane, from the runner's verify or red-proof record. |
+| `evidence/measurement@1` | The result of one check on one version of the workspace. | Control plane, from the runner's record of a script validator's run. |
 | `evidence/verdict@1` | What a validator produced. | Control plane, from a validator's output. |
 | `evidence/approval@1` | A human grant bound to one digest. | Control plane, on `daggry approve`. |
-| `daggry/change@1` | A commit, its paths and the frozen test set. | Control plane, after it accepts an agent or command step. |
+| `daggry/change@1` | A version of the workspace, the paths it changed and the frozen set. | Control plane, after it accepts an agent or command step. |
 | `daggry/observation@1` | A `protected-restored` or `step-failed` record. | Control plane, from the runner's report or its own failure record. |
 | `daggry/run-lock@1` | What a run pins. | Control plane, at run start. |
-| `daggry/work-item@1` | The repository and the issue a run is for. | Control plane, at run start. |
+| `daggry/work-item@1` | The workspace and the request a run is for. | Control plane, at run start. |
 
 Each kind is a JSON Schema (draft 2020-12) for the artifact's `body`. Every object in every schema refuses unknown fields. The schema's `$id` is the kind. Every kind is at major version `1`.
 
@@ -63,7 +67,7 @@ A body that does not fit its schema is refused with the JSON pointer of the offe
 | `run-lock` | `run-lock` | none, because it starts the run |
 | `work-item` | `work-item` | none, because it starts the run |
 | `plan` | `<step>-<n>` | the artifacts it builds on |
-| `measurement` | `<step>-head` for the canonical check, `<step>-head-<check>` for a supporting check, `<step>-red` | the change it measured |
+| `measurement` | `<step>-head` for the canonical validator, `<step>-head-<name>` for any other script validator, `<step>-red` | the change it measured |
 | `change` | `change-<n>` | the plan it implements |
 | `observation` | `<step>-restored-<n>`, `observation-<n>` | the artifacts it concerns |
 | `verdict` | `verdict-<n>` | the digests of the inputs judged |
@@ -135,48 +139,48 @@ Example:
 
 ## evidence/measurement@1
 
-What a measuring step recorded: the result of one check on one commit. A measurement names the check and its result contract, and holds the exit code, an outcome, one record per test and a list of findings.
+The result of one check on one version of the workspace. A measurement names the script validator that ran and its result contract, and holds the exit code, an outcome, the findings and the metrics.
 
-A `verify` step seals one measurement for each check it measures: one for the canonical check and one for each check in `verification.also`. See [verification](/reference/project-config#verification).
+A `verify` step seals one measurement for each script validator it runs. See [Validators](/reference/validators#result-and-verdict).
 
 | Field | Type | Req | Class | Constraints |
 |---|---|---|---|---|
 | `label` | string | yes | derived | Non-empty. Policy: `base`, `head` or `red`. |
-| `revision` | string | yes | claimed | Non-empty. Policy: exactly 40 lowercase hex digits. |
+| `revision` | string | yes | claimed | Non-empty. The version of the workspace that was measured, in the form the binding gives. |
 | `criterion` | string | no | derived | Non-empty when present. Policy: required for `red`, refused for `base` and `head`. |
 | `exit_code` | integer | yes | derived | Any integer. |
-| `tests` | array of objects | yes | derived | Can be empty. |
-| `tests[].name` | string | yes | - | Non-empty. |
-| `tests[].outcome` | string | yes | - | `passed`, `failed` or `ignored`. |
-| `check` | string | no | derived | The name of the check that ran, as the project config names it: a lowercase letter, then lowercase letters, digits, `-` or `_`. |
-| `contract` | string | no | derived | Non-empty. The check's result contract: `exit-code`, `libtest-lines`, `junit-xml`, `tap`, `sarif`, `json` or `<namespace>/<name>`. |
+| `check` | string | no | derived | The name of the script validator that ran, as its declaration names it: a lowercase letter, then lowercase letters, digits, `-` or `_`. |
+| `contract` | string | no | derived | Non-empty. The result contract: `exit-code`, `document` or `<namespace>/<adapter>`. |
 | `outcome` | string | no | derived | `pass`, `fail` or `error`. See [Outcome](#outcome). |
-| `findings` | array of objects | no | derived | Can be empty. See [Records by contract](#records-by-contract). |
+| `findings` | array of objects | no | derived | Can be empty. |
 | `findings[].id` | string | yes | - | Non-empty. |
-| `findings[].outcome` | string | yes | - | `pass`, `fail` or `error`. |
-| `findings[].path` | string | no | - | Non-empty when present. The file the finding is about, relative to the repository root. |
+| `findings[].outcome` | string | yes | - | `pass`, `fail`, `error` or `skip`. |
+| `findings[].locator` | string | no | - | Non-empty when present. Where the finding is, as the result document gives it. |
+| `findings[].path` | string | no | - | Non-empty when present. The path part of the locator, when the locator names a file of the workspace. |
 | `findings[].message` | string | yes | - | Any string, can be empty. |
+| `metrics` | map | no | derived | From a name to a number. A name starts with a lowercase letter and holds lowercase letters, digits and `_`. |
+| `tests` | array of objects | no | derived | A second form of the findings that the software binding's adapters write. See [Bindings](/reference/bindings#adapters). |
 
-The control plane fills `check`, `contract`, `outcome` and `findings` on every measurement it seals.
+The control plane fills `check`, `contract`, `outcome`, `findings` and `metrics` on every measurement it seals. The findings and the metrics come from the [result document](/reference/project-config#result-document) of the validator, unchanged.
 
-Policy rules that Daggry applies after the schema:
+The table lists the policy rules that Daggry applies after the schema.
 
 | Rule | Refusal |
 |---|---|
 | `label` is `base`, `head` or `red`. | `` `x` is not one of `base`, `head`, `red` `` at `/label`. |
-| `revision` is exactly 40 lowercase hex digits. | `a revision is 40 lower-case hexadecimal digits` at `/revision`. Uppercase is refused. |
+| `revision` has the form the binding gives a version of the workspace. | A refusal at `/revision`. |
 | `red` requires `criterion`. | ``a `red` measurement requires `criterion` `` at the root. |
 | `base` and `head` refuse `criterion`. | `` `criterion` is refused of a `base` or `head` measurement `` at `/criterion`. |
 
-The labels:
+The table lists the labels.
 
 | Label | What was measured |
 |---|---|
-| `base` | The base commit, by the canonical check. |
-| `head` | The sealed commit, by the canonical check or a supporting check. |
-| `red` | The red-proof run: the base commit with a test step's new test paths overlaid, by the canonical check. It carries the criterion id it proves. |
+| `base` | The baseline: the version of the workspace the run starts from. |
+| `head` | The last sealed version. |
+| `red` | The baseline with a proof step's new frozen paths overlaid, by the canonical validator. It carries the criterion id it proves. See [Baseline proof](/reference/validators#baseline-proof). |
 
-`revision` is `claimed`, so a gate cannot read it. The control plane separately checks that a `head` measurement's `revision` equals the last sealed commit. `inputs.measurement.exit_code == 0` and `inputs.measurement.outcome == 'pass'` are usable gate reads.
+`revision` is `claimed`, so a gate cannot read it. The control plane separately checks that a `head` measurement's `revision` equals the last sealed version. `inputs.measurement.exit_code == 0` and `inputs.measurement.outcome == 'pass'` are usable gate reads.
 
 ### Outcome
 
@@ -184,36 +188,13 @@ The labels:
 
 | Outcome | When |
 |---|---|
-| `pass` | The exit code is 0, the output follows the contract and every threshold on the check holds. |
-| `fail` | The exit code is not 0, or a threshold on the check is missed. |
-| `error` | The check gave no result that the contract can read: it ran past its `timeout`, or its report is missing or does not parse. An `error` counts as a failed check. |
+| `pass` | The exit code is 0, the result is readable by the contract, a result document says `pass` and every threshold on the validator holds. |
+| `fail` | The exit code is not 0, a result document says `fail`, or a threshold on the validator is missed. |
+| `error` | The contract can read no result: the validator ran past its `timeout`, its result document is missing or invalid, or the document says `error`. An `error` counts as a failed check. |
 
-The verification of a `verify` step is green when every measurement the step seals has the outcome `pass`.
+### Threshold findings
 
-### Records by contract
-
-The result contract of the check decides what `tests` and `findings` hold. The contracts are defined in [Result contracts](/reference/project-config#result-contracts).
-
-| Contract | `tests` | `findings` |
-|---|---|---|
-| `exit-code` | Empty. | Empty. |
-| `libtest-lines` | One record per result line: `passed` for `ok`, `failed` for `FAILED`, `ignored` for `ignored`. | Empty. |
-| `junit-xml` | One record per `testcase` element: `passed`, `failed`, or `ignored` when skipped. The name is the test's name in the report. | Empty. |
-| `tap` | One record per test point: `passed` for `ok`, `failed` for `not ok`, `ignored` for a `SKIP` directive. | Empty. |
-| `sarif` | Empty. | One finding per result. See the next table. |
-| `json` | Empty. | One finding with the id `schema`: `pass` when the document is valid against `result.schema`, `fail` when it is not, with the first violation as its `message`. |
-| `<namespace>/<name>` | Empty. | What the party that owns the namespace publishes, in the same finding form. |
-
-A finding of the `sarif` contract takes its fields from one SARIF result.
-
-| Field | Value |
-|---|---|
-| `id` | The result's rule id. |
-| `outcome` | `fail` when the result's level is `error`, `pass` otherwise. |
-| `path` | The URI of the result's first location, when the result has one. |
-| `message` | The text of the result's message. |
-
-Each threshold in `verification.thresholds` adds one finding to the measurement of the check it reads, whatever the contract.
+Each threshold in `verification.thresholds` adds one finding to the measurement of the validator it reads, whatever the contract.
 
 | Field | Value |
 |---|---|
@@ -223,74 +204,72 @@ Each threshold in `verification.thresholds` adds one finding to the measurement 
 
 A threshold finding with the outcome `fail` or `error` makes the measurement's `outcome` `fail`.
 
-Examples. The first is the canonical check of a Rust project, read as `libtest-lines`, with a threshold on ignored tests:
+### Examples
+
+The first measurement is of a canonical validator with the `document` contract. One finding failed, and a threshold on a metric holds:
 
 ```json
 {
   "label": "head",
-  "revision": "0123456789abcdef0123456789abcdef01234567",
+  "revision": "v-0042",
   "exit_code": 1,
-  "tests": [
-    {"name": "tests::ac_1_rejects_empty", "outcome": "passed"},
-    {"name": "tests::ac_2_rejects_long", "outcome": "failed"}
+  "check": "review",
+  "contract": "document",
+  "outcome": "fail",
+  "findings": [
+    {"id": "ac_1_summary_present", "outcome": "pass", "locator": "handbook/leave.md", "path": "handbook/leave.md", "message": ""},
+    {"id": "ac_2_sentence_length", "outcome": "fail", "locator": "handbook/pay.md:14", "path": "handbook/pay.md", "message": "The sentence has 41 words. The limit is 30."},
+    {"id": "threshold:metrics.reading_grade", "outcome": "pass", "message": "metrics.reading_grade is 8, max is 9"}
   ],
-  "check": "test",
-  "contract": "libtest-lines",
-  "outcome": "fail",
-  "findings": [
-    {"id": "threshold:ignored", "outcome": "pass", "message": "ignored is 0, max is 0"}
-  ]
+  "metrics": {"pages": 12, "reading_grade": 8}
 }
 ```
 
-The second is a supporting check read as `sarif`. The check exits with 0, and one of its two results is at level `error`:
+The second is of a validator with the `exit-code` contract:
 
 ```json
 {
   "label": "head",
-  "revision": "0123456789abcdef0123456789abcdef01234567",
+  "revision": "v-0042",
   "exit_code": 0,
-  "tests": [],
   "check": "links",
-  "contract": "sarif",
+  "contract": "exit-code",
   "outcome": "pass",
-  "findings": [
-    {"id": "dead-link", "outcome": "fail", "path": "handbook/leave.md", "message": "The link to handbook/holidays.md has no target."},
-    {"id": "redirect", "outcome": "pass", "path": "handbook/pay.md", "message": "The link is redirected once."}
-  ]
+  "findings": []
 }
 ```
 
-The third is a supporting check read as `json`, with a missed threshold on a number in the document:
+The third is read through an adapter, with a missed threshold on a metric:
 
 ```json
 {
   "label": "head",
-  "revision": "0123456789abcdef0123456789abcdef01234567",
+  "revision": "v-0042",
   "exit_code": 0,
-  "tests": [],
-  "check": "coverage",
-  "contract": "json",
+  "check": "citations",
+  "contract": "review/citations",
   "outcome": "fail",
   "findings": [
-    {"id": "schema", "outcome": "pass", "message": "The document is valid."},
-    {"id": "threshold:/total/lines/pct", "outcome": "fail", "message": "/total/lines/pct is 74, min is 80"}
-  ]
+    {"id": "source-resolves", "outcome": "pass", "locator": "handbook/pay.md:30", "path": "handbook/pay.md", "message": ""},
+    {"id": "threshold:metrics.unsourced_claims", "outcome": "fail", "message": "metrics.unsourced_claims is 3, max is 0"}
+  ],
+  "metrics": {"unsourced_claims": 3}
 }
 ```
+
+`v-0042` stands for a version id in the form the workspace's binding gives.
 
 ::: details Schema: evidence/measurement@1
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "evidence/measurement@1",
-  "title": "evidence/measurement@1: what a measuring step recorded",
+  "title": "evidence/measurement@1: the result of one check on one version of the workspace",
   "type": "object",
   "required": [
     "label",
     "revision",
-    "exit_code",
-    "tests"
+    "exit_code"
   ],
   "additionalProperties": false,
   "properties": {
@@ -376,8 +355,13 @@ The third is a supporting check read as `json`, with a missed threshold on a num
             "enum": [
               "pass",
               "fail",
-              "error"
+              "error",
+              "skip"
             ]
+          },
+          "locator": {
+            "type": "string",
+            "minLength": 1
           },
           "path": {
             "type": "string",
@@ -388,6 +372,16 @@ The third is a supporting check read as `json`, with a missed threshold on a num
           }
         }
       }
+    },
+    "metrics": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "type": "number"
+      },
+      "x-fact-class": "derived"
     }
   }
 }
@@ -396,7 +390,7 @@ The third is a supporting check read as `json`, with a missed threshold on a num
 
 ## evidence/verdict@1
 
-What a validator produced: a status, findings and derived facts. Only the control plane's verdicts open gates.
+What a validator produced: a status, findings and derived facts. Only the control plane's verdicts open gates. The validator contract is in [Validators](/reference/validators).
 
 | Field | Type | Req | Class | Constraints |
 |---|---|---|---|---|
@@ -405,7 +399,7 @@ What a validator produced: a status, findings and derived facts. Only the contro
 | `status` | string | yes | derived | `pass`, `fail` or `inconclusive`. |
 | `findings` | array of objects | yes | - | Each `{ "message": <string> }`. `message` is required and nothing else is allowed. |
 | `facts` | array of objects | yes | derived | See the next rows. |
-| `facts[].name` | string | yes | - | Non-empty. A stricter grammar applies (see [Validator output](#validator-output)). |
+| `facts[].name` | string | yes | - | Non-empty. A stricter grammar applies. See [Verdict rules](/reference/validators#verdict-rules). |
 | `facts[].class` | string | yes | - | Only `derived`. |
 | `facts[].value` | boolean, integer or string | yes | - | A float is refused. |
 
@@ -413,11 +407,11 @@ A gate reads `verdict.status` and `verdict.<fact name>`. `verdict.findings`, `ve
 
 The verdict's `parents` are the digests of the artifacts it judged.
 
-Example (the verdict of `criterion-coverage` over a plan with `AC-1` and `AC-2`, and a head measurement where only `AC-1` passed):
+Example: the verdict of `daggry/criterion-coverage` over a plan with `AC-1` and `AC-2`, and a head measurement where only a finding for `AC-1` passed.
 
 ```json
 {
-  "validator": "criterion-coverage",
+  "validator": "daggry/criterion-coverage",
   "version": "0.1.0",
   "status": "fail",
   "findings": [{"message": "uncovered: AC-2"}],
@@ -533,7 +527,7 @@ How the CLI path fills the body:
 | `daggry approve <run-id>` | The run id. | `null` | The hex digest of the artifact the `human` step waits on: the `plan` for `approval`, the latest `change` for `input-needed`. | That artifact. |
 | `daggry approve <run-id> --unfreeze <path>` | The run id. | The path. | The frozen file digest that the latest `change` records for the path. | That `change`. |
 
-`source_ref`, `cited_phrase` and `intent_read` are `null` on the CLI path. `author` is the identity of the caller. Approval by a verified comment carries the comment's id in `source_ref`, the cited phrase, and the intent an independent step read from the comment, which falls in a closed set of seven.
+`source_ref`, `cited_phrase` and `intent_read` are `null` on the CLI path. `author` is the identity of the caller. Approval by a verified comment on the work item carries the comment's id in `source_ref`, the cited phrase, and the intent an independent step read from the comment, which falls in a closed set of seven.
 
 Refusals: an `--unfreeze` of a path the change does not freeze (`` `<path>` is not a frozen path ``), and an approval when nothing is sealed to bind (`nothing to approve: no sealed plan` or `no sealed change`).
 
@@ -621,17 +615,17 @@ Example:
 
 ## daggry/change@1
 
-A commit, the paths it changed, and the run's frozen test set at that seal.
+A change is a set of differences made to the workspace. The record holds the version of the workspace the change ends at, the paths it changed and the run's frozen set at that seal.
 
 | Field | Type | Req | Class | Constraints |
 |---|---|---|---|---|
-| `revision` | string | yes | claimed | Exactly 40 lowercase hex digits (`^[0-9a-f]{40}$`). |
-| `paths` | array of strings | yes | claimed | Each non-empty. The paths the step changed against the last sealed commit. |
+| `revision` | string | yes | claimed | Non-empty. The version of the workspace, in the form the binding gives. |
+| `paths` | array of strings | yes | claimed | Each non-empty. The paths the step changed against the last sealed version. |
 | `frozen` | array of objects | yes | derived | Can be empty. |
 | `frozen[].path` | string | yes | - | Non-empty. |
-| `frozen[].digest` | string | yes | - | Non-empty. The file's git blob id. |
+| `frozen[].digest` | string | yes | - | Non-empty. The digest of the file's content, as the workspace store names it. |
 
-The frozen set holds each path of a test step's change that matches the step's `tests` globs, with its file digest. The set carries forward: each new `change` holds the previous frozen set plus new frozen paths. An unfrozen path is re-entered at its new digest, or dropped if the file is gone. The set is frozen for every later step of the run. See [Protected paths](/reference/protected-paths#frozen-tests).
+The frozen set holds each path of a proof step's change that matches the step's `freeze` globs, with its file digest. The set carries forward: each new `change` holds the previous frozen set plus new frozen paths. An unfrozen path is re-entered at its new digest, or dropped if the file is gone. The set is frozen for every later step of the run. See [Frozen paths](/reference/protected-paths#frozen-paths).
 
 The control plane seals a `change` after an accepted `agent` or `command` step. A `verify` step seals none.
 
@@ -639,9 +633,9 @@ Example:
 
 ```json
 {
-  "revision": "0123456789abcdef0123456789abcdef01234567",
-  "paths": ["src/greeting.rs", "tests/greeting.rs"],
-  "frozen": [{"path": "tests/greeting.rs", "digest": "5ba93c9db0cff93f52b521d7420e43f6eda2784f"}]
+  "revision": "v-0042",
+  "paths": ["handbook/pay.md", "checks/ac-2-sentence-length.rule"],
+  "frozen": [{"path": "checks/ac-2-sentence-length.rule", "digest": "5ba93c9db0cff93f52b521d7420e43f6eda2784f"}]
 }
 ```
 
@@ -650,7 +644,7 @@ Example:
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "daggry/change@1",
-  "title": "daggry/change@1: a commit, its paths and the frozen test set",
+  "title": "daggry/change@1: a version of the workspace, the paths it changed and the frozen set",
   "type": "object",
   "required": [
     "revision",
@@ -661,7 +655,7 @@ Example:
   "properties": {
     "revision": {
       "type": "string",
-      "pattern": "^[0-9a-f]{40}$",
+      "minLength": 1,
       "x-fact-class": "claimed"
     },
     "paths": {
@@ -721,7 +715,7 @@ The two records:
 Examples:
 
 ```json
-{"record": "protected-restored", "path": "tests/greeting.rs", "reason": "protected"}
+{"record": "protected-restored", "path": "checks/ac-2-sentence-length.rule", "reason": "protected"}
 ```
 
 ```json
@@ -824,7 +818,7 @@ What a run pins at start. It is the first entry of a run.
 | Field | Type | Req | Class | Constraints |
 |---|---|---|---|---|
 | `validators` | array of objects | yes | derived | |
-| `validators[].name` | string | yes | - | Non-empty. |
+| `validators[].name` | string | yes | - | Non-empty. The validator's reference. See [Versioning](/reference/validators#versioning). |
 | `validators[].version` | string | yes | - | Non-empty. |
 | `boundary_rules` | array of strings | yes | derived | Each non-empty. |
 | `image_digest` | string | yes | derived | Non-empty. The digest of the job image. |
@@ -835,19 +829,20 @@ What a run pins at start. It is the first entry of a run.
 The workflow text is also held as a blob under `workflow_digest`, so `daggry verify` covers it by re-hashing.
 
 Example for a three-step workflow. The list of `always` rules is shortened here; a real lock lists every always-protected glob first.
-The workflow has three steps: `plan` with scope `nothing`, `build` with scope `src/**` and `tests/**`, and `run` with scope `anywhere`.
+The workflow has three steps: `plan` with scope `nothing`, `draft` with scope `handbook/**` and `checks/**`, and `render` with scope `anywhere`.
 
 ```json
 {
   "validators": [
-    {"name": "base-relative", "version": "0.1.0"},
-    {"name": "criterion-coverage", "version": "0.1.0"},
-    {"name": "red-proof", "version": "0.1.0"}
+    {"name": "daggry/base-relative", "version": "0.1.0"},
+    {"name": "daggry/baseline-proof", "version": "0.1.0"},
+    {"name": "daggry/criterion-coverage", "version": "0.1.0"},
+    {"name": "daggry/result-gate", "version": "0.1.0"}
   ],
   "boundary_rules": [
     "always .daggry/**", "always **/AGENTS.md", "always .agents/**", "always **/SKILL.md",
-    "always **/.mcp.json", "always **/.gitmodules", "always **/.gitattributes", "always **/.mailmap",
-    "scope plan: nothing", "scope build: src/**", "scope build: tests/**", "scope run: anywhere"
+    "always **/.mcp.json",
+    "scope plan: nothing", "scope draft: handbook/**", "scope draft: checks/**", "scope render: anywhere"
   ],
   "image_digest": "sha256:0f3c9a1d5e7b2468ace02468ace13579bdf02468ace13579bdf0246813579bdf",
   "workflow_digest": "c8618c0481c6ebedaee10fc75c0cc758a62cab3ddc8d62971ae9680fa73b3b55"
@@ -916,25 +911,33 @@ The workflow has three steps: `plan` with scope `nothing`, `build` with scope `s
 
 ## daggry/work-item@1
 
-The repository and the issue a run is for. The control plane seals it at run start from what it fetched about the issue. It accepts a work item only as the exact issue URL of the run's repository: `https://github.com/<owner>/<name>/issues/<n>`.
+A work item is the request the work answers. The record holds the workspace and the request a run is for. The control plane seals it at run start from what it fetched about the request.
+
+The record has two forms. A body holds exactly one of them.
+
+| Form | Fields | Used by |
+|---|---|---|
+| Neutral | `workspace` and `request`. | Every binding. |
+| Software | `repository` and `issue`. | The software binding. See [Bindings](/reference/bindings#conventions). |
 
 | Field | Type | Req | Class | Constraints |
 |---|---|---|---|---|
-| `repository` | string | yes | claimed | Pattern `^[^/\s]+/[^/\s]+$`, that is `<owner>/<name>`. |
-| `issue` | object | yes | claimed | Closed object. |
-| `issue.url` | string | yes | - | Non-empty. |
-| `issue.number` | integer | yes | - | 1 or more. |
-| `issue.title` | string | yes | - | Any string, can be empty. |
-| `issue.body` | string | yes | - | Any string, can be empty. |
+| `workspace` | string | neutral form | claimed | Non-empty. The workspace, as the tenant config names it. |
+| `request` | object | neutral form | claimed | Closed object. |
+| `request.ref` | string | yes | - | Non-empty. What names the request where it comes from, such as a URL or an id. |
+| `request.title` | string | yes | - | Any string, can be empty. |
+| `request.body` | string | yes | - | Any string, can be empty. |
+| `repository` | string | software form | claimed | Pattern `^[^/\s]+/[^/\s]+$`. |
+| `issue` | object | software form | claimed | Closed object: `url` (non-empty string), `number` (integer, 1 or more), `title` and `body` (strings). |
 
-Both top-level fields are `claimed` because they come from a person's issue text. No gate can read them.
+Every top-level field is `claimed` because it comes from a person's text. No gate can read them.
 
-Example, where `<owner>/<name>` is the repository:
+Example in the neutral form:
 
 ```json
 {
-  "repository": "<owner>/<name>",
-  "issue": {"url": "https://github.com/<owner>/<name>/issues/1", "number": 1, "title": "Reject an empty name", "body": "An empty name is accepted."}
+  "workspace": "handbook",
+  "request": {"ref": "review-118", "title": "Shorten the pay policy", "body": "Sentences in the pay policy are too long."}
 }
 ```
 
@@ -943,14 +946,37 @@ Example, where `<owner>/<name>` is the repository:
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "daggry/work-item@1",
-  "title": "daggry/work-item@1: the repository and the issue a run is for",
+  "title": "daggry/work-item@1: the workspace and the request a run is for",
   "type": "object",
-  "required": [
-    "repository",
-    "issue"
-  ],
   "additionalProperties": false,
   "properties": {
+    "workspace": {
+      "type": "string",
+      "minLength": 1,
+      "x-fact-class": "claimed"
+    },
+    "request": {
+      "x-fact-class": "claimed",
+      "type": "object",
+      "required": [
+        "ref",
+        "title",
+        "body"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        }
+      }
+    },
     "repository": {
       "type": "string",
       "pattern": "^[^/\\s]+/[^/\\s]+$",
@@ -983,7 +1009,29 @@ Example, where `<owner>/<name>` is the repository:
         }
       }
     }
-  }
+  },
+  "oneOf": [
+    {
+      "required": [
+        "workspace",
+        "request"
+      ],
+      "properties": {
+        "repository": false,
+        "issue": false
+      }
+    },
+    {
+      "required": [
+        "repository",
+        "issue"
+      ],
+      "properties": {
+        "workspace": false,
+        "request": false
+      }
+    }
+  ]
 }
 ```
 :::
@@ -992,68 +1040,4 @@ Example, where `<owner>/<name>` is the repository:
 
 Every field has one class, and a gate reads only `derived` fields. For the classes and the class of every field of every kind, see [Fact classes](/reference/gates#fact-classes). Every `meta` value is `derived`, because code stamps it. Any field a schema does not list has no class.
 
-## Validators
 
-A validator is code that turns sealed input artifacts into a verdict: a status, findings and derived facts. It reads nothing but those inputs, and the control plane seals the result as a `verdict`. The same code runs as a preview in the pod and as the judge in the control plane. Only the judge's verdicts open gates. See [Why you can trust a run](/guide/concepts/trust).
-
-### Validator output
-
-A verdict has a `status` of `pass`, `fail` or `inconclusive`. A validator always emits `derived` facts, never `claimed` ones. A fact value is a boolean, an integer or a string. A fact name starts with a letter or `_`, then letters, digits, `_` or `-`, and is unique within a verdict. The same inputs always give an equal verdict. If an input is missing or malformed, the verdict is `inconclusive` with no facts, and it is still sealed.
-
-### Built-in validators
-
-All three are version `0.1.0`.
-
-| Validator | Reads | Facts | Status |
-|---|---|---|---|
-| `criterion-coverage` | One `plan` and the `head` measurement of the canonical check. | `criteria_covered` (integer), `criteria_uncovered` (integer), `all_covered` (boolean) | `pass` when every criterion is covered, else `fail`. Uncovered ids go to findings as `uncovered: <id>`, sorted. |
-| `red-proof` | One `red` measurement. | `red` (boolean) | `pass` when red, else `fail` with the first reason as a finding. |
-| `base-relative` | One `base` measurement and the `head` measurement of the canonical check. | `tests_removed` (integer), `tests_newly_skipped` (integer) | `fail` when either count is not 0, else `pass`. Names go to findings as `removed: <name>` and `newly skipped: <name>`, sorted. |
-
-### Coverage and the carry rule
-
-A criterion is covered when a `passed` test in the canonical check's `head` measurement carries its id. A failed or ignored test covers nothing. One passing test among several that carry the id is enough. A repeated plan id counts once.
-
-A test carries an id when, after lowercasing the id and the test title and replacing every non-alphanumeric character with `_`, the id occurs in the title standing between characters that are not letters or digits, or at an end. So `AC-1` is carried by `tests::ac_1_rejects_empty` and is not carried by a test for `AC-10`. An id with no alphanumeric character carries nothing.
-
-### Red proof
-
-A `red` measurement is red when the exit code is not 0 and a test whose title carries the criterion id has the outcome `failed`. A run with no test records, such as a compile failure, is not red.
-
-| Finding | Meaning |
-|---|---|
-| `no test records` | The run recorded no tests. |
-| `exit code is zero` | The command passed. |
-| `no test carries <id>` | No test title carries the criterion id. |
-| `no test carrying <id> failed` | The tests that carry the id did not fail. |
-
-### Base-relative facts
-
-| Fact | Counts |
-|---|---|
-| `tests_removed` | Tests in the base measurement that are absent from the head. A rename counts. |
-| `tests_newly_skipped` | Tests not `ignored` in base and `ignored` in head. |
-
-A test name that appears twice in one measurement counts as its last record.
-
-### Malformed measurements
-
-One malformed measurement makes every validator that reads measurements return `inconclusive`. A measurement is malformed when:
-
-- `label` is not `base`, `head` or `red`.
-- `criterion` is missing on `red`, or present on `base` or `head`.
-- `revision` is not 40 lowercase hex digits.
-- `exit_code`, `tests`, or any test's `name` or `outcome` is missing or mistyped.
-- `check`, `contract`, `outcome` or `findings` is present and mistyped.
-
-### Measure, preview and judge
-
-| Part | Where | What | Counts as evidence |
-|---|---|---|---|
-| measure | The `verify` step, in the job's pod. | Runs the project's canonical check and each supporting check on a clean copy of the sealed commit, as a different unix user, after the agent process has ended. Reduces the output of each check to a measurement. | Yes, once the control plane seals it as a `measurement`. |
-| preview | The pod, through the `validate` tool or a check with `expose: agent`. | Runs the same validators, or the check on the working tree, for fast feedback. `validate` answers `status` and `findings` only. | No. Nothing is sealed. |
-| judge | The control plane. | Runs validators over the small sealed records and seals a `verdict` whose parents are the inputs. | Yes. The only verdicts that open gates. |
-
-For the checks that `measure` runs and how their output is read, see [Result contracts](/reference/project-config#result-contracts).
-
-The witness rule makes a reviewer's finding gate only when code can confirm what it cites: a quoted line inside a changed hunk of the head, or a failing test that code runs. Any other finding is advice. A finding that cannot be confirmed never accepts work.

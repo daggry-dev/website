@@ -4,7 +4,7 @@
 
 For the idea, read [Work graphs](/guide/concepts/workflows).
 
-A gate is an expression in a loop's `until` that reads facts from sealed evidence. This page defines the grammar, the contexts, every read form, the fact classes and the functions. It is for people who write loops in workflows. For where `until` sits, see [Workflow schema](/reference/workflow-schema). For the facts that validators emit, see [Kinds and schemas](/reference/kinds).
+A gate is an expression in a loop's `until` that reads facts from sealed evidence. This page defines the grammar, the contexts, every read form, the fact classes and the functions. It is for people who write loops in workflows. For where `until` sits, see [Workflow schema](/reference/workflow-schema). For the facts that validators emit, see [Validators](/reference/validators).
 
 The expressions on this page are illustrative. Where an example is refused, the page names the refusal.
 
@@ -64,7 +64,7 @@ Every envelope `meta` value is `derived`.
 |---|---|---|
 | `claimed` | An agent wrote it. | No. |
 | `derived` | Code computed it from sealed inputs. | Yes. |
-| `judged` | An LLM verdict under a rubric a person approved for that criterion. | Only once a person approves a rubric for that criterion. Until then the loader refuses a `judged` read. |
+| `judged` | A model's verdict under a rubric a person approved for that criterion. | Only once a person approves a rubric for that criterion. Until then the loader refuses a `judged` read. |
 | none | The schema gives the field no `x-fact-class`. | No. |
 
 A schema marks a field's class with the keyword `x-fact-class` on the property.
@@ -74,7 +74,7 @@ A schema marks a field's class with the keyword `x-fact-class` on the property.
 | Kind | Field | Class |
 |---|---|---|
 | `evidence/plan@1` | `criteria` | claimed |
-| `evidence/measurement@1` | `label`, `criterion`, `exit_code`, `tests`, `check`, `contract`, `outcome`, `findings` | derived |
+| `evidence/measurement@1` | `label`, `criterion`, `exit_code`, `check`, `contract`, `outcome`, `findings`, `metrics`, `tests` | derived |
 | | `revision` | claimed |
 | `evidence/verdict@1` | `status`, `facts`, and every fact name | derived |
 | | `validator`, `version`, `findings` | none |
@@ -83,7 +83,7 @@ A schema marks a field's class with the keyword `x-fact-class` on the property.
 | | `revision`, `paths` | claimed |
 | `daggry/observation@1` | `record`, `path`, `reason`, `step`, `attempt` | derived |
 | `daggry/run-lock@1` | `validators`, `boundary_rules`, `image_digest`, `workflow_digest` | derived |
-| `daggry/work-item@1` | `repository`, `issue` | claimed |
+| `daggry/work-item@1` | `workspace`, `request`, `repository`, `issue` | claimed |
 
 Only a top-level property of a body is readable. A fact value is a boolean, an integer or a string.
 
@@ -93,13 +93,17 @@ A `verdict.<name>` read takes the value from the verdicts sealed for the run, ne
 
 | Name | Type | From | Meaning |
 |---|---|---|---|
-| `all_covered` | boolean | `criterion-coverage` | No plan criterion is uncovered. |
-| `criteria_covered` | integer | `criterion-coverage` | Criteria covered by a passing head test. |
-| `criteria_uncovered` | integer | `criterion-coverage` | Criteria with no passing test. |
-| `red` | boolean | `red-proof` | The test step's test failed on the base commit with a non-zero exit. |
-| `tests_removed` | integer | `base-relative` | Tests in base that are absent from head. |
-| `tests_newly_skipped` | integer | `base-relative` | Tests that are ignored in head and not in base. |
+| `all_covered` | boolean | `daggry/criterion-coverage` | No plan criterion is uncovered. |
+| `criteria_covered` | integer | `daggry/criterion-coverage` | Criteria covered by a passing finding of the head measurement. |
+| `criteria_uncovered` | integer | `daggry/criterion-coverage` | Criteria with no passing finding. |
+| `red` | boolean | `daggry/baseline-proof` | The proof step's check failed on the baseline with a non-zero exit. |
+| `findings_removed` | integer | `daggry/base-relative` | Finding ids in base that are absent from head. Also emitted as `tests_removed`. |
+| `findings_newly_skipped` | integer | `daggry/base-relative` | Finding ids that are skipped in head and not in base. Also emitted as `tests_newly_skipped`. |
+| `findings_fail`, `findings_error`, `findings_skip` | integer | `daggry/result-gate` | The count of findings with that outcome in a measurement. |
+| `thresholds_missed` | integer | `daggry/result-gate` | Thresholds on the measurement that do not hold. |
 | `status` | string | any verdict | `pass`, `fail` or `inconclusive`. |
+
+A native validator the tenant admits emits facts of its own under the same rules. The built-in validators are defined in [Validators](/reference/validators#built-in-validators).
 
 `until` does not depend on whether the iteration was green. When it holds at the end of a red iteration, the loop still ends.
 

@@ -179,7 +179,7 @@ A log entry holds the previous link and one sealed artifact. The next block is t
     "format": "evidence/envelope@1",
     "kind": "evidence/measurement@1",
     "id": "<artifact id>",
-    "body": { "label": "head", "revision": "<commit SHA>", "exit_code": 0, "tests": [] },
+    "body": { "label": "head", "revision": "<version id>", "exit_code": 0, "check": "review", "contract": "exit-code", "outcome": "pass", "findings": [] },
     "parents": ["<digest of each artifact this one builds on>"],
     "producer": "<who produced it>",
     "time": "<unix milliseconds, a number>",
@@ -200,7 +200,7 @@ A log entry holds the previous link and one sealed artifact. The next block is t
 | Placeholder | Meaning |
 |---|---|
 | `<link of the entry before, or the genesis digest>` | 64 lowercase hex digits. |
-| `<commit SHA>` | The 40-digit commit the measurement is of. |
+| `<version id>` | The version of the workspace the measurement is of, in the form the binding gives. |
 | `<unix milliseconds, a number>` | An integer, not a string. |
 | `<tenant id>`, `<run id>`, `<job id>`, `<step id>` | Ids the control plane stamps. |
 

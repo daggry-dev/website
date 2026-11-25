@@ -9,7 +9,7 @@ The `daggry` command is the tenant CLI: a client for the control plane's [HTTP A
 ## Synopsis
 
 ```text
-daggry run --workflow <file> --repo <owner>/<name> --item <issue-url>
+daggry run --workflow <file> --workspace <workspace> --item <item>
 daggry status <run-id> --json
 daggry logs <run-id>
 daggry approve <run-id> [--unfreeze <path>]
@@ -53,19 +53,19 @@ The HTTP client uses a 10-second connect timeout and a 60-second timeout for eac
 Starts a run of a workflow for a work item.
 
 ```text
-daggry run --workflow <file> --repo <owner>/<name> --item <issue-url>
+daggry run --workflow <file> --workspace <workspace> --item <item>
 ```
 
 | Flag | Required | Meaning |
 |---|---|---|
 | `--workflow <file>` | yes | Path to the workflow file. |
-| `--repo <owner>/<name>` | yes | The repository the run works on. |
-| `--item <issue-url>` | yes | The issue, as `https://github.com/<owner>/<name>/issues/<n>`, in the same repository. |
+| `--workspace <workspace>` | yes | The workspace the run works on, named as the tenant config names it. |
+| `--item <item>` | yes | The work item: what names the request where it comes from. The workspace's binding gives the form. See [Bindings](/reference/bindings). |
 
 On success the command prints the run ID and a newline, and nothing else. A run ID has the form `run-` followed by 16 hexadecimal digits.
 
 ```sh
-daggry run --workflow flow.yaml --repo <owner>/<name> --item https://github.com/<owner>/<name>/issues/<n>
+daggry run --workflow flow.yaml --workspace handbook --item review-118
 ```
 
 ```text
@@ -76,10 +76,10 @@ The CLI reads the workflow file as UTF-8. If the file cannot be read, the comman
 
 The control plane refuses the run with a 400 and a reason when:
 
-- the repository is not of the form `<owner>/<name>`;
-- the item is not an issue URL of that same repository;
+- the workspace is not one the tenant config lists;
+- the item is not in the form the workspace's binding gives, or is not a work item of that workspace;
 - the workflow does not load (the reason starts with `workflow:`);
-- the repository or the issue is not found on GitHub.
+- the workspace or the work item is not found where the binding keeps it.
 
 ## daggry status
 
@@ -157,7 +157,7 @@ daggry approve <run-id> --unfreeze <path>
 | Argument or flag | Required | Meaning |
 |---|---|---|
 | `<run-id>` | yes | The run that waits. |
-| `--unfreeze <path>` | no | Opens one sealed test path for change. Valid only at the `human` step of an exhausted loop. |
+| `--unfreeze <path>` | no | Opens one frozen path for change. Valid only at the `human` step of an exhausted loop. |
 
 Both forms print nothing and exit with 0 on success. The control plane seals your approval, with your tenant token's identity as its author, and the job continues in a new attempt.
 
@@ -169,7 +169,7 @@ The control plane refuses the request, and seals nothing, when:
 |---|---|
 | `nothing waits for an approval` | The run is not waiting at a `human` step. |
 | `not this run` | The run is not yours. |
-| `` `<path>` is not a frozen path `` | The path is not in the latest sealed set of frozen test paths. |
+| `` `<path>` is not a frozen path `` | The path is not in the latest sealed set of frozen paths. |
 | `nothing to approve: no sealed plan` | An `approval` wait with no sealed plan. |
 | `nothing to approve: no sealed change` | An `input-needed` wait with no sealed change. |
 | `--unfreeze applies only at an exhausted loop's human step` | `--unfreeze` at any other wait. |
