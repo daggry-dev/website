@@ -3,10 +3,10 @@ import DgArrow from './DgArrow.vue'
 import DgIcon from './DgIcon.vue'
 
 const steps = [
-  { who: 'agent', t: 'Write a test', d: 'for the next item in the plan', c: 'cool' },
-  { who: 'code', t: 'Shown to fail', d: 'on the code as it was', c: '' },
-  { who: 'agent', t: 'Make it pass', d: 'change the code in scope', c: 'cool' },
-  { who: 'code', t: 'Re-run on a clean copy', d: 'every test, fresh checkout', c: 'warm' },
+  { who: 'agent', t: 'Write the proof', d: 'a check for the next item in the plan', c: 'cool' },
+  { who: 'code', t: 'Shown to fail', d: 'on the baseline, before the work', c: '' },
+  { who: 'agent', t: 'Do the work', d: 'change the paths in scope', c: 'cool' },
+  { who: 'code', t: 'Re-run on a clean copy', d: 'every validator, fresh copy', c: 'warm' },
 ]
 </script>
 
@@ -48,9 +48,10 @@ const steps = [
       </div>
     </div>
     <figcaption class="cap">
-      Each pass takes one planned item through four steps, two by the agent and two by code. The gate lets the run go on
-      only when every item is covered. If the tries run out, the run does not loop all night: it fails, or it waits for a
-      person at the human step the workflow names.
+      Each pass takes one planned item through four steps, two by the agent and two by code: the agent writes a check,
+      code shows that the check fails on the baseline, the agent does the work, and code runs every validator on a clean
+      copy. The gate lets the run go on only when every item is covered. If the tries run out, the run fails, or it
+      waits for a person at the human step the workflow names. In the software binding, the check is a test.
     </figcaption>
   </figure>
 </template>

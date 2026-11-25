@@ -3,7 +3,7 @@ import DgArrow from './DgArrow.vue'
 import DgIcon from './DgIcon.vue'
 
 const cmd = 'daggry approve <run-id>'
-const items = ['Limit each API key to 100 requests a minute', 'Return a clear error when the limit is hit', 'Show the limit in the response headers', 'Log every refused request', 'Document the limit']
+const items = ['State the daily limit for meals', 'Name who approves an exception', 'Link every rule to its source', 'Define each term once', 'Give the date the policy takes effect']
 </script>
 
 <template>
@@ -12,9 +12,9 @@ const items = ['Limit each API key to 100 requests a minute', 'Return a clear er
       <div class="card wait" role="group" aria-label="Before: waiting for your approval">
         <p class="state"><span class="dot" aria-hidden="true" />Waiting for you</p>
         <p class="ttl">Approve this plan</p>
-        <p class="reason"><b>Why it stopped:</b> this workflow asks a person to approve every plan before any code is written.</p>
+        <p class="reason"><b>Why it stopped:</b> this workflow asks a person to approve every plan before any work starts.</p>
         <div class="plan">
-          <p class="pt">Add rate limiting to the public API</p>
+          <p class="pt">Revise the travel expenses policy</p>
           <ol>
             <li v-for="i in items" :key="i">{{ i }}</li>
           </ol>
@@ -31,7 +31,7 @@ const items = ['Limit each API key to 100 requests a minute', 'Return a clear er
       <div class="card done" role="group" aria-label="After: approved and recorded">
         <p class="state ok"><DgIcon name="tick" />Approved</p>
         <p class="ttl">Approved by you at 22:04</p>
-        <p class="reason">Recorded against the plan you saw, not just the plan's name.</p>
+        <p class="reason">Recorded against the plan you saw, not only the plan's name.</p>
         <div class="rec">
           <span class="dg-chip ok"><DgIcon name="tick" />recorded by code</span>
           <span class="dg-chip"><DgIcon name="link" />approves plan 9c1e</span>

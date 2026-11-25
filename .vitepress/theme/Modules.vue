@@ -1,7 +1,7 @@
 <template>
   <figure class="dgm">
     <ScrollFrame label="Module diagram">
-    <svg viewBox="0 0 960 500" role="img" aria-label="Modules: four open standards on top, the running parts below. The conductor reads the tenant config and the workflow, and hands each job attempt to a runner under a lease. The runner, drawn as the deterministic runner and the agent runner, reads the project config, runs script validators and the engine, and sends claims to the control plane. The control plane has validators judge the claims, seals them as evidence and keeps them in the store. The forge sends work in and takes the result. Each box is a contract; any part can be replaced.">
+    <svg viewBox="0 0 960 500" role="img" aria-label="Modules: four open standards on top, the running parts below. The conductor reads the tenant config and the workflow, and hands each job attempt to a runner under a lease. The runner, drawn as the deterministic runner and the agent runner, reads the project config, runs script validators and the engine, and sends claims to the control plane. The control plane has validators judge the claims, seals them as evidence and keeps them in the store. The forge sends work in and takes the result. The boxes are the kit's parts.">
       <defs>
         <marker id="mod-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="arrow"/></marker>
         <marker id="mod-ah-hot" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="arrow hot"/></marker>
@@ -57,7 +57,7 @@
       <text x="840" y="474" text-anchor="middle" class="sm">work in · result out</text>
       <path d="M840 432 V400" class="edge" marker-end="url(#mod-ah)"/>
       <!-- legend -->
-      <text x="20" y="464" class="lbl">Each box is a contract; any part can be replaced</text>
+      <text x="20" y="464" class="lbl">The kit's parts: modules you assemble into a factory</text>
       <!-- edges: standards into modules -->
       <path d="M85 104 V170" class="edge" marker-end="url(#mod-ah)"/>
       <text x="95" y="142" class="sm">limits · roster</text>
@@ -81,9 +81,9 @@
     </svg>
     </ScrollFrame>
     <figcaption class="cap">
-      The running parts and four open standards. The runner is drawn as its two kinds of step execution. The conductor hands a job attempt to a runner, the runner sends back
+      The kit's parts: the modules and the four open standards that connect them. The runner is drawn as its two kinds of step execution. The conductor hands a job attempt to a runner, the runner sends back
       claims, validators judge each claim in code, and the control plane seals it as evidence in the store. The forge sends work in and takes the result.
-      Each box is a contract; any part can be replaced. Validators are the plug-in point: built in, a script of your own, or a native validator in any language.
+      Validators are the plug-in point: built in, a script of your own, or a native validator in any language.
     </figcaption>
   </figure>
 </template>

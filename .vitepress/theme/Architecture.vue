@@ -1,7 +1,7 @@
 <template>
   <figure class="dgm">
     <ScrollFrame label="Architecture diagram">
-    <svg viewBox="0 0 960 440" role="img" aria-label="Architecture: on your cluster, the control plane holds the store and the keys, and the conductor orders the steps and starts a throwaway runner for each job. The runner holds the engine and the script validators, a token for one workspace and the model credential, never the signing key. The forge sends work in and takes the result. You use the CLI on your machine. Each box is a contract; any part can be replaced.">
+    <svg viewBox="0 0 960 440" role="img" aria-label="Architecture: on your cluster, the control plane holds the store and the keys, and the conductor orders the steps and starts a throwaway runner for each job. The runner holds the engine and the script validators, a token for one workspace and the model credential, never the signing key. The forge sends work in and takes the result. You use the CLI on your machine. The boxes are the kit's parts.">
       <defs>
         <marker id="arch-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="arrow"/></marker>
         <marker id="arch-ah-hot" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="arrow hot"/></marker>
@@ -58,13 +58,13 @@
       <path d="M325 356 V300" class="edge" marker-end="url(#arch-ah)"/>
       <text x="337" y="334" class="sm">start · approve · verify</text>
       <!-- legend -->
-      <text x="695" y="390" text-anchor="middle" class="lbl">Each box is a contract; any part can be replaced</text>
+      <text x="695" y="390" text-anchor="middle" class="lbl">The kit's parts, where each one runs</text>
     </svg>
     </ScrollFrame>
     <figcaption class="cap">
-      The parts by role: the forge, the control plane with its store, the conductor, a throwaway runner for each job, and the CLI. The control plane keeps the
+      The kit's parts by role: the forge, the control plane with its store, the conductor, a throwaway runner for each job, and the CLI. The control plane keeps the
       trail and the keys; the conductor orders the steps and starts the runners; the signing key never enters a runner. What the
-      runner sends back is only a claim until a validator judges it and the control plane seals it. Each box is a contract; any part can be replaced.
+      runner sends back is only a claim until a validator judges it and the control plane seals it.
     </figcaption>
   </figure>
 </template>

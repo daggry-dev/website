@@ -1,19 +1,27 @@
 <template>
+  <figure class="cmpf">
   <div class="cmp">
     <div class="side bad">
       <span class="tag">Without Daggry</span>
-      <div class="bub">“Done, all tests pass.”</div>
+      <div class="bub">“Done, all checks pass.”</div>
       <p>The agent’s own words are the only record. A reviewer must trust them or redo the work.</p>
     </div>
     <div class="side good">
       <span class="tag">With Daggry</span>
-      <div class="bub mono">tests re-run by code: 0 failures, sealed</div>
-      <p>Code re-ran the tests on a clean copy of the code, wrote down the result, and sealed it into the trail. <dfn>Sealed</dfn> means checked by code, then signed so it cannot be quietly changed.</p>
+      <div class="bub mono">checks re-run by code: 0 failed, sealed</div>
+      <p>Code re-ran the checks on a clean copy of the workspace, wrote down the result, and sealed it into the trail. <dfn>Sealed</dfn> means checked by code, then signed so it cannot be quietly changed.</p>
     </div>
   </div>
+  <figcaption class="cap">
+    Two records of the same work. Without Daggry, the agent's own report is the only record. With Daggry, code runs
+    the checks again and seals the result into a trail you can verify. In the software binding, the checks are tests.
+  </figcaption>
+  </figure>
 </template>
 <style scoped>
-.cmp { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin: 40px 0; }
+.cmpf { margin: 40px 0; }
+.cmpf .cap { margin: 14px 0 0; font-size: .85rem; color: var(--dg-muted); line-height: 1.6; }
+.cmp { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin: 0; }
 .side { min-width: 0; border-radius: 22px; padding: 26px; border: 1px solid var(--vp-c-divider); background: var(--dg-surface); }
 .side.good { background: linear-gradient(135deg, var(--dg-warm-fill), var(--dg-rose-fill)); border-color: var(--dg-warm-stroke); }
 .tag { font: 500 11px var(--vp-font-family-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--dg-muted); }

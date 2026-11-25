@@ -19,7 +19,7 @@ import DgIcon from './DgIcon.vue'
           <div class="dg-node cool check">
             <span class="dg-who">runs</span>
             <b>A check written as code</b>
-            <span>For example: every planned item has a test that failed first and passes now.</span>
+            <span>For example: every planned item has a check that failed before the work and passes after it.</span>
           </div>
           <DgArrow hot />
         </li>
@@ -49,7 +49,7 @@ import DgIcon from './DgIcon.vue'
       <div class="claim">
         <div class="bubble">
           <span class="dg-who">the agent says</span>
-          <q>Done, all tests pass.</q>
+          <q>Done, all checks pass.</q>
         </div>
         <div class="bounce">
           <DgIcon name="back" class="bi" />

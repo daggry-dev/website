@@ -2,14 +2,14 @@
 import DgIcon from './DgIcon.vue'
 
 const editable = [
-  { f: 'src/api/limits.ts', d: 'in this step\'s scope' },
-  { f: 'src/api/routes.ts', d: 'in this step\'s scope' },
-  { f: 'docs/api.md', d: 'in this step\'s scope' },
+  { f: 'handbook/leave.md', d: 'in this step\'s scope' },
+  { f: 'handbook/pay.md', d: 'in this step\'s scope' },
+  { f: 'handbook/index.md', d: 'in this step\'s scope' },
 ]
 const protectedItems = [
-  { t: 'Tests it must not weaken', d: 'tests sealed earlier in the run stay exactly as they were' },
+  { t: 'Checks it must not weaken', d: 'frozen paths: checks sealed earlier in the run stay exactly as they were' },
   { t: 'Its own instructions', d: 'the workflow and the files that tell agents what to do' },
-  { t: 'Check settings', d: 'which command counts as the check' },
+  { t: 'Check settings', d: 'which validators judge the work' },
 ]
 </script>
 
@@ -17,7 +17,7 @@ const protectedItems = [
   <figure class="dgm bd">
     <div class="dg-body">
       <div class="pod">
-        <p class="podl">Throwaway pod: one job, one repository</p>
+        <p class="podl">Throwaway pod: one job, one workspace</p>
         <div class="agent"><span class="av" aria-hidden="true">A</span>The agent</div>
         <span class="stem" aria-hidden="true" />
         <div class="zones">
@@ -41,12 +41,12 @@ const protectedItems = [
           </div>
         </div>
       </div>
-      <p class="outside">Never in the pod: the signing key and the GitHub App key. Its token works for this one repository only.</p>
+      <p class="outside">Never in the pod: the signing key and the key for the forge. The pod's token works for this one workspace only.</p>
     </div>
     <figcaption class="cap">
-      What an agent can change. Inside its pod it may edit the files its step is allowed to touch. Tests, its own
-      instructions and the check settings are protected: an edit there is restored, and the step fails if anything
-      protected changed. Code enforces this; nobody asks the agent nicely.
+      What an agent can change. Inside its pod it can edit the files its step is scoped to. The checks that judge
+      it, its own instructions and the check settings are protected: an edit there is restored, and the step fails
+      if anything protected changed. Code enforces the rule. In the software binding, the frozen checks are tests.
     </figcaption>
   </figure>
 </template>

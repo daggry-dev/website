@@ -5,13 +5,13 @@ const before = [
   { k: 'you', t: 'You approve', d: 'the exact plan', c: 'rose' },
 ]
 const loop = [
-  { k: 'agent', t: 'Write a test', d: 'for the next item', c: 'cool' },
-  { k: 'code', t: 'Test shown to fail', d: 'on the code as it was', c: 'box' },
-  { k: 'agent', t: 'Make it pass', d: 'change the code', c: 'cool' },
-  { k: 'code', t: 'Re-run on a clean copy', d: 'every test', c: 'warm' },
+  { k: 'agent', t: 'Write the proof', d: 'a check for the next item', c: 'cool' },
+  { k: 'code', t: 'Check shown to fail', d: 'on the baseline', c: 'box' },
+  { k: 'agent', t: 'Do the work', d: 'make the check pass', c: 'cool' },
+  { k: 'code', t: 'Re-run on a clean copy', d: 'every validator', c: 'warm' },
 ]
 const after = [
-  { k: 'code', t: 'Open pull request', d: 'for your review', c: 'warm' },
+  { k: 'code', t: 'Hand over the result', d: 'an effect, for your review', c: 'warm' },
 ]
 </script>
 
@@ -25,12 +25,12 @@ const after = [
           <div class="lrow">
             <template v-for="(s, i) in loop" :key="s.t"><div :class="['n', s.c]"><small>{{ s.k }}</small><b>{{ s.t }}</b><em>{{ s.d }}</em></div><span v-if="i < loop.length - 1" class="a" aria-hidden="true">→</span></template>
           </div>
-          <small class="back">↺ test still fails? try the item again · out of tries: the run fails or waits for you</small>
+          <small class="back">↺ check still fails? try the item again · out of tries: the run fails or waits for you</small>
         </div>
         <template v-for="s in after" :key="s.t"><span class="a" aria-hidden="true">→</span><div :class="['n', s.c]"><small>{{ s.k }}</small><b>{{ s.t }}</b><em>{{ s.d }}</em></div></template>
       </div>
     </ScrollFrame>
-    <figcaption class="cap">The shape of a delivery workflow: a plan, your approval, a loop that proves each item with a test that first fails and then passes, and a pull request. The loop has a fixed number of tries; when they run out, the run fails or waits for you.</figcaption>
+    <figcaption class="cap">The shape of a delivery workflow: a plan, your approval, a loop that proves each item with a check that first fails and then passes, and an effect that hands the result over. The loop has a fixed number of tries. When they run out, the run fails or waits for you. In the software binding, the check is a test and the effect opens a pull request.</figcaption>
   </figure>
 </template>
 

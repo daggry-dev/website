@@ -10,7 +10,7 @@ import DgArrow from './DgArrow.vue'
           <div class="dg-node">
             <span class="dg-who">1. record</span>
             <b>A step's result</b>
-            <span class="dg-mono sample">tests re-run: 0 failures</span>
+            <span class="dg-mono sample">checks re-run: 0 failed</span>
             <span>Written by code, not by the agent.</span>
           </div>
           <DgArrow />
