@@ -4,31 +4,43 @@
 
 For the idea, read [Work graphs](/guide/concepts/workflows).
 
-A workflow is one YAML file that lists steps and bounded loops. This page defines every key, every value a key accepts, and every case the loader refuses. It is for people who write or review workflow files. To write one, follow [Write a workflow](/guide/how-to/write-a-workflow).
+A workflow is one YAML file that lists steps and bounded loops. It is one of four open documents, with the evidence envelope, the [Project config](/reference/project-config) and the [Tenant config](/reference/tenant-config). This page defines every key, every value a key accepts, every case the loader refuses, and how a workflow is extended. It is for people who write or review workflow files. To write one, follow [Write a workflow](/guide/how-to/write-a-workflow).
 
-The example on this page is illustrative. It is valid under the schema and the loader checks.
+The examples on this page are illustrative. Each one is valid against the published schema. See [Validation](#validation).
 
-In examples, `engine: <engine>` stands for the coding-agent engine that the step uses. Write the identifier of an engine your installation provides in place of `<engine>`. The schema accepts any non-empty string for `engine`, and the loader checks it against the engines your installation provides. One engine, `replay`, plays back a recorded transcript for tests and takes a `transcript` path in place of `prompt`.
+In examples, `engine: <engine>` stands for the identifier of a coding-agent engine that the tenant registers. Write that identifier in place of `<engine>`. One engine, `replay`, plays back a recorded transcript for tests and takes a `transcript` path in place of `prompt`.
 
 ## Download
 
-The workflow file has a published JSON Schema. To download it, use the file below.
+The workflow file has a published JSON Schema (draft 2020-12).
 
 | Schema | File |
 |---|---|
-| Workflow file | [workflow.json](/schemas/workflow.json) |
+| `daggry/workflow@1` | [workflow.json](/schemas/workflow.json) |
 
 ## File shape
 
-| Key | Type | Required | Meaning |
-|---|---|---|---|
-| `steps` | array of entries | yes | The ordered entries of the workflow. `steps: []` is valid. |
+A workflow file has three parts.
 
-The top level has exactly one key. Any other top-level key is refused. The file has no name, no inputs section, no `needs` key and no step-level condition. A gate appears only in a loop's `until`. See [Gate expressions](/reference/gates).
+| Part | Keys | Rule |
+|---|---|---|
+| Header | `format` | Required. Always `daggry/workflow@1`. |
+| Body | `steps` | Required. The ordered entries of the workflow. `steps: []` is valid. |
+| Extension keys | `<namespace>/<key>` | Any number. See [Extension keys in a workflow](#extension-keys-in-a-workflow). |
 
-An entry is a step when it has a `kind` key. Otherwise it is a loop entry. Every object is closed: an unknown key is refused. Ids are non-empty strings. Loop entries and the steps inside loops share one id namespace.
+`format` follows the form `<namespace>/<name>@<major>`, the same form as an artifact kind. A reader refuses a missing `format`, a malformed one and a major version it does not know. A breaking change to the layout is a new major.
+
+Any other top-level key is refused. The file has no name, no inputs section, no `needs` key and no step-level condition. A gate appears only in a loop's `until`. See [Gate expressions](/reference/gates).
+
+An entry is a step when it has a `kind` key. Otherwise it is a loop entry. Every object is closed: a key that this page does not define and that is not an extension key is refused. Ids are non-empty strings. Loop entries and the steps inside loops share one id namespace.
 
 The workflow lives in the control plane. An agent cannot change it.
+
+### Where a workflow comes from
+
+A workflow is a document in the tenant's catalogue. Each catalogue entry names the repository, the path and the commit the file is read from, and the tenant chooses that repository. It can be the repository the work is done on, but that repository does not assign the workflow to itself. The tenant config decides which workflows run on which repository. See [workflows](/reference/tenant-config#workflows) and [projects](/reference/tenant-config#projects).
+
+`daggry run --workflow <file>` supplies a workflow as a file: the file is read from the machine that starts the run. See [CLI](/reference/cli).
 
 ### YAML subset
 
@@ -45,15 +57,15 @@ The loader reads a strict subset of YAML.
 
 ## Steps
 
-Every step requires `id` and `kind`. `kind` is one of five values: `command`, `agent`, `verify`, `human`, `effect`. Any other value is refused at `/steps/<n>/kind`.
+Every step requires `id` and `kind`. `kind` is one of the five values of the standard, `command`, `agent`, `verify`, `human` and `effect`, or an extension kind that the tenant registers. Any other value is refused at `/steps/<n>/kind`. See [Step kind registry](#step-kind-registry).
 
-| Kind | Runs in | What it does |
+| Kind | What runs the step | What it does |
 |---|---|---|
-| `agent` | the pod | A coding-agent session that must deliver named artifact kinds. |
-| `command` | the pod | A shell line, limited by a `scope` of paths it may write. |
-| `verify` | the pod | Runs your check on the sealed commit, in a clean copy of the code. |
-| `human` | nowhere | Releases the pod and waits. `daggry approve` completes it. |
-| `effect` | the control plane | An idempotent side effect, such as opening a pull request. |
+| `agent` | Agent runner | A coding-agent session that must deliver named artifact kinds. |
+| `command` | Deterministic runner | A shell line, limited by a `scope` of paths it may write. |
+| `verify` | Deterministic runner | Runs the project's check on the sealed commit, in a clean copy of the code. |
+| `human` | None. A person decides. | Releases the pod and waits. `daggry approve` completes it. |
+| `effect` | Control plane | An idempotent side effect, such as opening a pull request. |
 
 ### command
 
@@ -74,8 +86,9 @@ A session of a coding-agent engine.
 |---|---|---|---|
 | `id` | string | yes | Non-empty. |
 | `kind` | string | yes | `agent`. |
-| `engine` | string | yes | Non-empty. The coding-agent engine the step uses. The loader checks it against the engines your installation provides. |
+| `engine` | string | yes | Non-empty. The identifier of a coding-agent engine. See [Engine](#engine). |
 | `prompt` | string | no | The control plane writes it to a read-only instruction file named for the step id. |
+| `transcript` | string | no | Non-empty. The path of the recorded transcript that the `replay` engine plays back, in place of `prompt`. |
 | `outputs` | array of strings | yes | Each non-empty. The kinds the step must deliver. |
 | `tests` | array of strings | no | Each non-empty. Globs that mark which of the step's changed paths are tests. |
 | `scope` | scope | yes | See [Scope](#scope). |
@@ -94,8 +107,13 @@ Measures a clean copy of the last sealed commit.
 |---|---|---|---|
 | `id` | string | yes | Non-empty. |
 | `kind` | string | yes | `verify`. |
+| `check` | check name | no | The name of one check in the project config. See [Checks by name](#checks-by-name). |
 
-A `verify` step has no command and takes no other key. It runs the project's canonical check: the `verify.test` command from the base commit's profile, or the check that `verification.canonical` names in a project config. See [The profile](/reference/project-config#the-profile) and [Checks by name](#checks-by-name). It must submit exactly one `head` measurement of the last sealed commit. Inside a loop, a non-zero exit code is red: the iteration ends and the run does not fail. Outside a loop, a failed `verify` step fails the run.
+A `verify` step has no command. It runs the checks that the base commit's [Project config](/reference/project-config) names. See [Checks by name](#checks-by-name).
+
+- Without `check`, the step submits one `head` measurement of the last sealed commit for each check it measures: the canonical check and each check in `verification.also`. The step passes when the verification is green. See [verification](/reference/project-config#verification).
+- With `check`, the step passes when that check passes.
+- Inside a loop, a `verify` step that does not pass is red: the iteration ends and the run does not fail. Outside a loop, a failed `verify` step fails the run.
 
 ### human
 
@@ -121,19 +139,101 @@ Runs in the control plane, never in the pod.
 
 `open-pr` opens a pull request with head `daggry/<run-id>` and base `main`. The title and body come from the issue. The idempotency key is the run id plus the step id, so a retry returns the same pull request. A failing effect fails the run.
 
+### Step kind registry
+
+A step kind is an entry in a registry. Each entry names the kind, the keys a step of that kind takes and what runs it: the runner, as the deterministic runner or the agent runner, or the control plane. See [The modules](/guide/concepts/modules#the-runner-two-kinds-of-step-execution).
+
+| Kind | What runs the step | Registered by |
+|---|---|---|
+| `command` | Deterministic runner | The standard. |
+| `verify` | Deterministic runner | The standard. |
+| `agent` | Agent runner | The standard. |
+| `effect` | Control plane | The standard. |
+| `human` | None. A person decides, and the control plane seals the decision. | The standard. |
+| `<namespace>/<name>` | What its registration names: the deterministic runner, the agent runner or the control plane. | The tenant, in `extensions.step_kinds` of the [Tenant config](/reference/tenant-config#extensions). |
+
+Rules for the registry:
+
+- A kind without a namespace belongs to the standard. The five above are the whole set. A new one is a change to the standard.
+- An extension kind has the form `<namespace>/<name>`: exactly one `/`, with each part made of ASCII letters, digits, `-` or `_`. The namespace names the party that defines the kind.
+- An extension kind is registered with the URL of a JSON Schema for its keys. A step of that kind takes `id`, `kind` and the keys that schema allows.
+- A kind that is not one of the five and is not registered by the tenant is refused at `/steps/<n>/kind`.
+- A loop is not a step kind, and no extension kind is a loop.
+
+### Which module runs a step
+
+A workflow declares what runs a step through the step's `kind` and through nothing else. The conductor reads the kind, looks it up in the registry and hands the step to what the entry names.
+
+| What runs the step | Runs | Never |
+|---|---|---|
+| Deterministic runner | Code that a person wrote into the workflow or the project: a `command` step's `run` line and the project's checks. | Starts a model. |
+| Agent runner | A coding-agent engine, and whatever the engine generates. | Judges its own work. |
+| Control plane | Effects, seals and validators. | Runs a command or an agent. |
+| A person | The decision at a `human` step. | - |
+
+No key of a step changes what runs it. An `agent` step always runs in the agent runner, and a `command` step never does.
+
+### Checks by name
+
+A workflow never holds a project's verification command. It names a `verify` step, and the [Project config](/reference/project-config) of the repository supplies the check. A workflow therefore runs unchanged on projects in different languages.
+
+| Step | Runs |
+|---|---|
+| `verify` with no `check` key | The project's canonical check, `verification.canonical`, and each check in `verification.also`. The result is the verification evidence. |
+| `verify` with `check: <name>` | The one check of that name, as an optional run. The result decides the step and is not the verification evidence. |
+
+Rules:
+
+- The value of `check` is a check name: a lowercase letter, then lowercase letters, digits, `-` or `_`.
+- The name is looked up in the project config of the base commit when the run starts. A name the project config lacks refuses the run.
+- A `verify` step with no `check` key needs a project config with `verification.canonical`.
+- Every check a step runs is run by the deterministic runner, on a clean copy of the sealed commit.
+
+### Engine
+
+`engine` is an open string, not a closed list, so a new coding-agent engine needs no change to the schema. The loader checks the value against the engines the tenant registers in `agents.engines` of the [Tenant config](/reference/tenant-config#agents). A value no registered engine has is refused.
+
 ## Scope
 
-`scope` is what a step may write. It is required on `command` and `agent` steps and absent on the other kinds.
+`scope` is what a step may write. It is required on `command` and `agent` steps and absent on the other kinds of the standard.
 
 | Value | Meaning |
 |---|---|
 | `nothing` | The step may write no path. |
 | `anywhere` | Any path except protected paths and CI configuration folders such as `.github/**`. |
-| a list of glob strings | Only paths that match a glob. Each glob is non-empty. `[]` is valid and matches no path. |
+| a list of entries | Only paths that an entry holds. Each entry is non-empty: a glob, or an area reference, `area:<name>`. `[]` is valid and holds no path. |
 
-Any other word, such as `everywhere`, is refused. A glob that does not compile is refused at run time. In a file with a `format` header, a list entry can also name an area of the project. See [Areas by name](#areas-by-name).
+Any other word, such as `everywhere`, is refused. A glob that does not compile is refused at run time.
 
 How a scope is judged and enforced is in [Protected paths](/reference/protected-paths#scope).
+
+### Areas by name
+
+A workflow can name a part of a repository without knowing its paths. An entry of a `scope` list is a glob or an area reference, and the [Project config](/reference/project-config#areas) of the repository supplies the paths.
+
+| Entry | Stands for |
+|---|---|
+| `area:<name>` | Every path that the area of that name holds. |
+| Any other string | A glob. |
+
+Rules:
+
+- The name follows the rule for a check name. It is looked up in the project config of the base commit when the run starts. A name the project config lacks refuses the run.
+- A list can mix globs and area references. A path is in the scope of the step when one entry holds it.
+- An area reference never opens a protected path, and it applies inside the scope of the run. See [The scope of a run](/reference/protected-paths#the-scope-of-a-run).
+
+```yaml
+format: daggry/workflow@1
+steps:
+  - id: fix
+    kind: agent
+    engine: <engine>
+    prompt: Fix the failing page.
+    outputs: [change]
+    scope: ["area:app", "CHANGELOG.md"]
+```
+
+Illustrative. `app` is an area in the project config of the repository, and `<engine>` is the identifier of a registered coding-agent engine.
 
 ## Loop
 
@@ -168,13 +268,60 @@ A loop entry has an `id` and a `loop` object. A loop is not a sixth step kind.
 
 ### Red then green
 
-A red-then-green loop has three steps in an iteration: a test step (an `agent` step with `tests`) writes a test whose title carries the criterion id, an implementer (an `agent` step) makes it pass, and a `verify` step measures a clean copy of the code. The runner overlays the test step's new test paths on a clean copy of the base commit and runs the profile's test command there. A test step in a loop that does not prove red is rejected. Frozen tests and unfreeze are defined in [Protected paths](/reference/protected-paths#frozen-tests).
+A red-then-green loop has three steps in an iteration: a test step (an `agent` step with `tests`) writes a test whose title carries the criterion id, an implementer (an `agent` step) makes it pass, and a `verify` step measures a clean copy of the code. The runner overlays the test step's new test paths on a clean copy of the base commit and runs the base commit's canonical check there. A test step in a loop that does not prove red is rejected. See [Red proof](/reference/kinds#red-proof). Frozen tests and unfreeze are defined in [Protected paths](/reference/protected-paths#frozen-tests).
+
+## Extensibility
+
+A workflow grows without a change to the standard in two ways: a step kind that the tenant registers, and a namespaced extension key. The step kinds are in [Step kind registry](#step-kind-registry).
+
+### Extension keys in a workflow
+
+| Rule | Detail |
+|---|---|
+| Form | `<namespace>/<key>`. Pattern `^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$`. |
+| Place | At the top level, on a step and on a `loop` object. |
+| A reader that does not know the key | Ignores the value and preserves it. |
+| A key without a namespace | Refused, unless this page defines it. |
+| Limit | An extension key never widens a step's scope, a loop's `max` or any rule of the project or the tenant, and never changes the meaning of a key this page defines. |
+
+The full rules are in [Extension keys](/reference/project-config#extension-keys).
+
+### Example
+
+This workflow carries one extension key on the document, one on a step and one step of an extension kind.
+
+```yaml
+format: daggry/workflow@1
+acme/owner: platform-team
+steps:
+  - id: build
+    kind: command
+    run: make
+    scope: anywhere
+    acme/cost-centre: build
+  - id: scan
+    kind: acme/scan
+    level: strict
+  - id: fix
+    kind: agent
+    engine: <engine>
+    prompt: Fix what the scan found.
+    outputs: [change]
+    scope: ["src/**"]
+```
+
+| Value | Meaning |
+|---|---|
+| `acme/owner`, `acme/cost-centre` | Extension keys. A reader that does not know the `acme` namespace ignores them. |
+| `acme/scan` | An extension kind. The tenant registers it with the module that runs it and the schema that allows `level`. |
+| `<engine>` | The identifier of a registered coding-agent engine. |
 
 ## A full valid example
 
 This workflow plans, waits for approval, then runs a red-then-green loop over the plan's criteria. It builds, then opens a pull request. The loop ends when every criterion is covered, or when 5 iterations are spent, at which point the run waits at `ask`.
 
 ```yaml
+format: daggry/workflow@1
 steps:
   - id: plan
     kind: agent
@@ -222,17 +369,24 @@ steps:
 
 | Placeholder | Meaning |
 |---|---|
-| `<engine>` | The coding-agent engine the step uses. |
+| `<engine>` | The identifier of a registered coding-agent engine. |
 
-The smallest valid workflow is one command step:
+The smallest valid workflow is the header and one command step:
 
 ```yaml
+format: daggry/workflow@1
 steps:
   - id: build
     kind: command
     run: make
     scope: anywhere
 ```
+
+## Validation
+
+Every YAML example on this page was checked against [workflow.json](/schemas/workflow.json) with a draft 2020-12 validator, and each one is valid.
+
+To check a file of your own, give the schema and the file to any validator that supports draft 2020-12. The schema does not check the rules that need another document: that an `engine` is registered, that an extension kind is registered, and that a check name and an area name are in the project config.
 
 ## Load errors
 
@@ -257,10 +411,14 @@ A short, representative set. The first column shows the cause. The second names 
 |---|---|
 | `steps:` followed by `- &a {id: v, kind: verify}` | Unsupported construct (anchor) |
 | `steps: [` | Not YAML |
+| No `format` key | Schema (missing `format`) |
+| `format: daggry/workflow@2` | Schema at `/format` (unknown major) |
 | `steps: 3` | Schema at `/steps` |
 | `kind: parallel` | Schema at `/steps/0/kind` |
+| `owner: platform-team` at the top level | Schema (a key without a namespace) |
 | A loop with `max: 0` | Schema at `/steps/0/loop/max` |
 | A `verify` step with `run: x` | Schema at `/steps/0` (extra key) |
+| `scope: ["area:Web App"]` | Schema at `/steps/0/scope` (not an area name) |
 | Two steps with `id: v` | Duplicate id `v` |
 | `on_exhausted: ask` with no `ask` step | Exhaust target `ask` |
 | `until: inputs.plan.criteria` (a claimed field) | Gate, class claimed |
@@ -274,179 +432,27 @@ The loader does not check these at load. Each fails later or does nothing:
 | That `tests` and `scope` globs compile. | A bad glob fails at the boundary check. |
 | A fact name after `verdict.` | A name no validator emits is not caught at load. |
 
-## Extensibility
-
-Proposed standard; see the [Roadmap](/roadmap) for status.
-
-The workflow file is one of four open documents, with the evidence envelope, the [Project config](/reference/project-config) and the [Tenant config](/reference/tenant-config). This section defines the standard layout that lets a workflow grow without a change to the standard: a versioned header, a registry of step kinds and namespaced extension keys.
-
-### A file without a header
-
-The sections above this one define a file with no `format` header, and [workflow.json](/schemas/workflow.json) is its schema. For which form the loader reads, see the [Roadmap](/roadmap).
-
-| Point | A file without a header |
-|---|---|
-| Header | None. The top level holds `steps` only. |
-| Step kinds | Five, closed: `command`, `agent`, `verify`, `human`, `effect`. |
-| Unknown keys | Refused everywhere. |
-| `engine` | An open string. The schema accepts any non-empty string, and the loader checks it against the engines your installation provides. |
-
-### Where a workflow comes from
-
-A workflow is a document in the tenant's catalogue. Each catalogue entry names the repository, the path and the commit the file is read from, and the tenant chooses that repository. It can be the repository the work is done on, but that repository does not assign the workflow to itself. The tenant config decides which workflows run on which repository. See [workflows](/reference/tenant-config#workflows) and [projects](/reference/tenant-config#projects).
-
-`daggry run --workflow <file>` supplies a workflow as a file: the file is read from the machine that starts the run. See [CLI](/reference/cli), and the [Roadmap](/roadmap) for which way is in use.
-
-### The standard layout
-
-A workflow document has three parts.
-
-| Part | Keys | Rule |
-|---|---|---|
-| Header | `format` | Always `daggry/workflow@1`. A reader refuses a malformed `format` and a major version it does not know. |
-| Body | `steps` | The ordered entries, as defined in [File shape](#file-shape). |
-| Extension keys | `<namespace>/<key>` | Any number. See [Extension keys in a workflow](#extension-keys-in-a-workflow). |
-
-A file with no `format` key is read by the rules of [A file without a header](#a-file-without-a-header): it holds `steps` only and takes no extension key and no extension kind.
-
-### Step kind registry
-
-A step kind is an entry in a registry. Each entry names the kind, the keys a step of that kind takes and what runs it: the runner, as the deterministic runner or the agent runner, or the control plane. See [The modules](/guide/concepts/modules#the-runner-two-kinds-of-step-execution).
-
-| Kind | What runs the step | Registered by |
-|---|---|---|
-| `command` | Deterministic runner | The standard. |
-| `verify` | Deterministic runner | The standard. |
-| `agent` | Agent runner | The standard. |
-| `effect` | Control plane | The standard. |
-| `human` | None. A person decides, and the control plane seals the decision. | The standard. |
-| `<namespace>/<name>` | What its registration names: the deterministic runner, the agent runner or the control plane. | The tenant, in `extensions.step_kinds` of the [Tenant config](/reference/tenant-config#extensions). |
-
-Rules for the registry:
-
-- A kind without a namespace belongs to the standard. The five above are the whole set. A new one is a change to the standard.
-- An extension kind has the form `<namespace>/<name>`: exactly one `/`, with each part made of ASCII letters, digits, `-` or `_`. The namespace names the party that defines the kind.
-- An extension kind is registered with the URL of a JSON Schema for its keys. A step of that kind takes `id`, `kind` and the keys that schema allows.
-- A kind that is not one of the five and is not registered by the tenant is refused at `/steps/<n>/kind`.
-- A loop is not a step kind, and no extension kind is a loop.
-
-### Which module runs a step
-
-A workflow declares what runs a step through the step's `kind` and through nothing else. The conductor reads the kind, looks it up in the registry and hands the step to what the entry names.
-
-| What runs the step | Runs | Never |
-|---|---|---|
-| Deterministic runner | Code that a person wrote into the workflow or the project: a `command` step's `run` line and the project's checks. | Starts a model. |
-| Agent runner | A coding-agent engine, and whatever the engine generates. | Judges its own work. |
-| Control plane | Effects, seals and validators. | Runs a command or an agent. |
-| A person | The decision at a `human` step. | - |
-
-No key of a step changes what runs it. An `agent` step always runs in the agent runner, and a `command` step never does.
-
-### Checks by name
-
-A workflow never holds a project's verification command. It names a `verify` step, and the [Project config](/reference/project-config) of the repository supplies the check. A workflow therefore runs unchanged on projects in different languages.
-
-| Step | Runs |
-|---|---|
-| `verify` with no `check` key | The project's canonical check, `verification.canonical`, and each check in `verification.also`. The result is the verification evidence. |
-| `verify` with `check: <name>` | The one check of that name, as an optional run. The result decides the step and is not the verification evidence. |
-
-Rules:
-
-- `check` is read only in a file with a `format` header. Its value is a check name: a lowercase letter, then lowercase letters, digits, `-` or `_`.
-- The name is looked up in the project config of the base commit when the run starts. A name the project config lacks refuses the run.
-- A `verify` step with no `check` key needs a project config with `verification.canonical`.
-- Every check a step runs is run by the deterministic runner, on a clean copy of the sealed commit.
-
-### Areas by name
-
-A workflow can name a part of a repository without knowing its paths. An entry of a `scope` list is a glob or an area reference, `area:<name>`, and the [Project config](/reference/project-config#areas) of the repository supplies the paths.
-
-| Entry | Stands for |
-|---|---|
-| `area:<name>` | Every path that the area of that name holds. |
-| Any other string | A glob. |
-
-Rules:
-
-- An area reference is read only in a file with a `format` header. In a file without one, every entry is a glob.
-- The name follows the rule for a check name. It is looked up in the project config of the base commit when the run starts. A name the project config lacks refuses the run.
-- A list can mix globs and area references. A path is in the scope of the step when one entry holds it.
-- An area reference never opens a protected path, and it applies inside the scope of the run. See [The scope of a run](/reference/protected-paths#the-scope-of-a-run).
-
-```yaml
-format: daggry/workflow@1
-steps:
-  - id: fix
-    kind: agent
-    engine: <engine>
-    prompt: Fix the failing page.
-    outputs: [change]
-    scope: ["area:app", "CHANGELOG.md"]
-```
-
-Illustrative. `app` is an area in the project config of the repository, and `<engine>` is the coding-agent engine the step uses.
-
-### Engine
-
-`engine` is an open string, not a closed list, so a new coding-agent engine needs no change to the schema. The standard checks the value against the engines the tenant registers in `agents.engines` of the [Tenant config](/reference/tenant-config#agents). A value no registered engine has is refused.
-
-### Extension keys in a workflow
-
-| Rule | Detail |
-|---|---|
-| Form | `<namespace>/<key>`. Pattern `^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$`. |
-| Place | At the top level, on a step and on a `loop` object. |
-| A reader that does not know the key | Ignores the value and preserves it. |
-| A key without a namespace | Refused, unless this page defines it. |
-| Limit | An extension key never widens a step's scope, a loop's `max` or any rule of the project or the tenant, and never changes the meaning of a key this page defines. |
-
-The full rules are in [Extension keys](/reference/project-config#extension-keys).
-
-### Example
-
-This workflow carries the header, one extension key on the document, one on a step and one step of an extension kind. The file is illustrative.
-
-```yaml
-format: daggry/workflow@1
-acme/owner: platform-team
-steps:
-  - id: build
-    kind: command
-    run: make
-    scope: anywhere
-    acme/cost-centre: build
-  - id: scan
-    kind: acme/scan
-    profile: strict
-  - id: fix
-    kind: agent
-    engine: <engine>
-    prompt: Fix what the scan found.
-    outputs: [change]
-    scope: ["src/**"]
-```
-
-| Value | Meaning |
-|---|---|
-| `acme/owner`, `acme/cost-centre` | Extension keys. A reader that does not know the `acme` namespace ignores them. |
-| `acme/scan` | An extension kind. The tenant registers it with the module that runs it and the schema that allows `profile`. |
-| `<engine>` | The coding-agent engine the step uses, by a name the tenant registers. |
-
 ::: details Schema: workflow file
 This is the content of [workflow.json](/schemas/workflow.json).
 
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "A Daggry workflow file",
+  "$id": "daggry/workflow@1",
+  "title": "daggry/workflow@1: the workflow file",
   "type": "object",
   "required": [
+    "format",
     "steps"
   ],
   "additionalProperties": false,
+  "patternProperties": {
+    "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+  },
   "properties": {
+    "format": {
+      "const": "daggry/workflow@1"
+    },
     "steps": {
       "type": "array",
       "items": {
@@ -459,6 +465,25 @@ This is the content of [workflow.json](/schemas/workflow.json).
       "type": "string",
       "minLength": 1
     },
+    "checkName": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$"
+    },
+    "scopeEntry": {
+      "type": "string",
+      "minLength": 1,
+      "description": "A glob, or an area reference of the form area:<name>.",
+      "anyOf": [
+        {
+          "pattern": "^area:[a-z][a-z0-9_-]*$"
+        },
+        {
+          "not": {
+            "pattern": "^area:"
+          }
+        }
+      ]
+    },
     "scope": {
       "anyOf": [
         {
@@ -470,8 +495,7 @@ This is the content of [workflow.json](/schemas/workflow.json).
         {
           "type": "array",
           "items": {
-            "type": "string",
-            "minLength": 1
+            "$ref": "#/$defs/scopeEntry"
           }
         }
       ]
@@ -497,13 +521,25 @@ This is the content of [workflow.json](/schemas/workflow.json).
         "kind"
       ],
       "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
         "kind": {
-          "enum": [
-            "command",
-            "agent",
-            "verify",
-            "human",
-            "effect"
+          "anyOf": [
+            {
+              "enum": [
+                "command",
+                "agent",
+                "verify",
+                "human",
+                "effect"
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$",
+              "description": "An extension kind that the tenant registers. Its registered schema defines the step's other keys."
+            }
           ]
         }
       },
@@ -578,6 +614,9 @@ This is the content of [workflow.json](/schemas/workflow.json).
         "scope"
       ],
       "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
       "properties": {
         "id": {
           "$ref": "#/$defs/id"
@@ -601,6 +640,9 @@ This is the content of [workflow.json](/schemas/workflow.json).
         "scope"
       ],
       "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
       "properties": {
         "id": {
           "$ref": "#/$defs/id"
@@ -609,7 +651,7 @@ This is the content of [workflow.json](/schemas/workflow.json).
         "engine": {
           "type": "string",
           "minLength": 1,
-          "description": "The coding-agent engine the step uses."
+          "description": "The identifier of a coding-agent engine that the tenant registers."
         },
         "prompt": {
           "type": "string"
@@ -643,11 +685,17 @@ This is the content of [workflow.json](/schemas/workflow.json).
         "kind"
       ],
       "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
       "properties": {
         "id": {
           "$ref": "#/$defs/id"
         },
-        "kind": true
+        "kind": true,
+        "check": {
+          "$ref": "#/$defs/checkName"
+        }
       }
     },
     "human": {
@@ -657,6 +705,9 @@ This is the content of [workflow.json](/schemas/workflow.json).
         "waiting_for"
       ],
       "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
       "properties": {
         "id": {
           "$ref": "#/$defs/id"
@@ -677,6 +728,9 @@ This is the content of [workflow.json](/schemas/workflow.json).
         "do"
       ],
       "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
       "properties": {
         "id": {
           "$ref": "#/$defs/id"
@@ -711,6 +765,9 @@ This is the content of [workflow.json](/schemas/workflow.json).
             "steps"
           ],
           "additionalProperties": false,
+          "patternProperties": {
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          },
           "properties": {
             "over": {
               "$ref": "#/$defs/id"

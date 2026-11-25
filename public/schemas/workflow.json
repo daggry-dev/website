@@ -1,12 +1,20 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "A Daggry workflow file",
+  "$id": "daggry/workflow@1",
+  "title": "daggry/workflow@1: the workflow file",
   "type": "object",
   "required": [
+    "format",
     "steps"
   ],
   "additionalProperties": false,
+  "patternProperties": {
+    "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+  },
   "properties": {
+    "format": {
+      "const": "daggry/workflow@1"
+    },
     "steps": {
       "type": "array",
       "items": {
@@ -19,6 +27,25 @@
       "type": "string",
       "minLength": 1
     },
+    "checkName": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$"
+    },
+    "scopeEntry": {
+      "type": "string",
+      "minLength": 1,
+      "description": "A glob, or an area reference of the form area:<name>.",
+      "anyOf": [
+        {
+          "pattern": "^area:[a-z][a-z0-9_-]*$"
+        },
+        {
+          "not": {
+            "pattern": "^area:"
+          }
+        }
+      ]
+    },
     "scope": {
       "anyOf": [
         {
@@ -30,8 +57,7 @@
         {
           "type": "array",
           "items": {
-            "type": "string",
-            "minLength": 1
+            "$ref": "#/$defs/scopeEntry"
           }
         }
       ]
@@ -57,13 +83,25 @@
         "kind"
       ],
       "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
         "kind": {
-          "enum": [
-            "command",
-            "agent",
-            "verify",
-            "human",
-            "effect"
+          "anyOf": [
+            {
+              "enum": [
+                "command",
+                "agent",
+                "verify",
+                "human",
+                "effect"
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$",
+              "description": "An extension kind that the tenant registers. Its registered schema defines the step's other keys."
+            }
           ]
         }
       },
@@ -138,6 +176,9 @@
         "scope"
       ],
       "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
       "properties": {
         "id": {
           "$ref": "#/$defs/id"
@@ -161,6 +202,9 @@
         "scope"
       ],
       "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
       "properties": {
         "id": {
           "$ref": "#/$defs/id"
@@ -169,7 +213,7 @@
         "engine": {
           "type": "string",
           "minLength": 1,
-          "description": "The coding-agent engine the step uses."
+          "description": "The identifier of a coding-agent engine that the tenant registers."
         },
         "prompt": {
           "type": "string"
@@ -203,11 +247,17 @@
         "kind"
       ],
       "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
       "properties": {
         "id": {
           "$ref": "#/$defs/id"
         },
-        "kind": true
+        "kind": true,
+        "check": {
+          "$ref": "#/$defs/checkName"
+        }
       }
     },
     "human": {
@@ -217,6 +267,9 @@
         "waiting_for"
       ],
       "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
       "properties": {
         "id": {
           "$ref": "#/$defs/id"
@@ -237,6 +290,9 @@
         "do"
       ],
       "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
       "properties": {
         "id": {
           "$ref": "#/$defs/id"
@@ -271,6 +327,9 @@
             "steps"
           ],
           "additionalProperties": false,
+          "patternProperties": {
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          },
           "properties": {
             "over": {
               "$ref": "#/$defs/id"
