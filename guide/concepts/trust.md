@@ -54,7 +54,9 @@ The output says entry for a record and digest for a fingerprint. Every record fo
 
 ## What a seal does not prove
 
-A seal is not a quality stamp. It proves that a validator ran and that the record is unchanged. It does not prove that your validators are the right ones: a result is only as good as the validator that produced it.
+A seal is not a quality stamp: a result is only as good as the validator that produced it.
+
+<SealedRecord />
 
 The trail is tamper-evident, not tamper-proof. `daggry verify` takes the public key from the same control plane that serves the trail. So it proves this: nobody without the signing key changed, reordered or removed a record in the middle of the trail. Two cases need a signed copy of the newest link, kept outside the cluster: someone drops the newest records, or someone with the signing key rewrites everything. For every field of a record, see the [Evidence record format](/reference/envelope).
 

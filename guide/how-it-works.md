@@ -8,9 +8,9 @@ Read it once you have run a workflow. Skip it if you only want to follow a how-t
 
 Whatever an agent can reach, it can misuse. So agents work in a throwaway runner, and the keys stay in the control plane.
 
-<Architecture />
+<Architecture run />
 
-A run goes through five stages.
+A run goes through five stages. The diagram numbers them.
 
 1. **Work comes in.** You start a run with the CLI, for one work item in the forge.
 2. **The conductor picks the next step.** It reads the order from the workflow and the limits from the tenant config, and starts a runner for the job.
