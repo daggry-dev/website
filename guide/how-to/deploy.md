@@ -2,6 +2,8 @@
 
 For the person who runs the cluster. This page lists what Daggry needs, what runs on your cluster, how the pieces connect, and the steps to install it. Everyone else can skip to [Getting started](/guide/getting-started).
 
+This page installs the reference implementation, which is one implementation of the contracts ([Contracts](/reference/contracts)), with the software binding, where the workspace host is GitHub. The GitHub App, the repository and the issue on this page belong to that binding. See [Bindings](/reference/bindings).
+
 Daggry runs on Kubernetes as ordinary pods. Job pods run in the same namespace as the release. Every connection is outbound from the pod or the launcher, and nothing dials into a pod. For how the parts fit, see [Where it runs](/guide/concepts/architecture).
 
 The commands and outputs on this page are illustrative. Placeholders in angle brackets, such as `<namespace>`, stand for values you choose.
@@ -12,18 +14,18 @@ The commands and outputs on this page are illustrative. Placeholders in angle br
 - `kubectl` and `helm` on the machine you work from.
 - A container registry your cluster can pull from.
 - A GitHub account or organization where you can create a GitHub App.
-- A credential for the coding-agent engine, if your workflows have agent steps.
+- A credential for the agent engine, if your workflows have agent steps.
 - A scratch repository with one open issue, to try a first run.
 
 ## What runs on your cluster
 
 Five pieces run on your cluster. Each has one job and a narrow set of rights.
 
-- **Control plane.** Takes in work, seals results and serves the API. It holds the signing key, the GitHub App key and the record.
+- **Control plane.** Takes in work, seals results and serves the API. It holds the signing key, the GitHub App key and the record. It runs the built-in validators and the native validators loaded in-process.
 - **Conductor.** Orders the steps of a run and schedules job attempts. It holds no key and seals nothing. In a default install it runs inside the control plane process.
 - **Launcher.** Turns each job attempt into a pod, watches it and deletes it when it ends. It runs in the control plane process by default. It can manage pods and their Secrets in the release namespace only. It cannot read Secrets and never reads the workflow.
-- **Runner.** Runs inside the pod. It runs the steps, the engine, the checks and git, with a token for one job attempt, a GitHub token for one repository and your model credential.
-- **Engine.** The coding-agent CLI that does an agent step's work. Each agent step names it with `engine: <engine>`. It reaches Daggry only through a small tool server inside the pod, which offers the step's inputs and takes the agent's claims.
+- **Runner.** Runs inside the pod. It runs the steps, the engine, the script validators and git, with a token for one job attempt, a GitHub token for one repository and your model credential.
+- **Engine.** The agent program that does an agent step's work. Each agent step names it with `engine: <engine>`. It reaches Daggry only through a small tool server inside the pod, which offers the step's inputs and takes the agent's claims.
 
 A pod holds a lease that its runner keeps alive. If the lease lapses, for example because the pod was killed, the launcher deletes the pod and the conductor starts a new attempt from the last sealed commit.
 
@@ -109,7 +111,7 @@ Without the Secret, the control plane starts but cannot fetch issues or mint tok
 
 ## Provide the model credential
 
-Agent steps need a credential for the coding-agent engine. You store it in a Kubernetes Secret under the key `key`, in the release namespace. The tenant config names the Secret in the engine's `credential.ref` and never holds its value. Each job pod references the Secret and passes the value to the engine process only. A job with no agent step starts without it.
+Agent steps need a credential for the agent engine. You store it in a Kubernetes Secret under the key `key`, in the release namespace. The tenant config names the Secret in the engine's `credential.ref` and never holds its value. Each job pod references the Secret and passes the value to the engine process only. A job with no agent step starts without it.
 
 ```sh
 kubectl --namespace <namespace> create secret generic <model-secret> \
@@ -120,9 +122,13 @@ A pod never renews a credential. Replace the Secret before the credential expire
 
 ## Write the tenant config
 
-The tenant config says how the factory works: the workflow catalogue, the orchestration limits, the engines and agents, the job images and the repositories the factory serves, with the workflows that run on each. It opens with `format: daggry/tenant@1`. The control plane holds it outside every job pod, and only a person changes it. A run records the configuration it started under, so a change applies to new runs only.
+The tenant config says how the factory works: the workflow catalogue, the orchestration limits, the engines and agents, the job images, the validators it admits and the projects the factory serves, with the workflows that run on each. It opens with `format: daggry/tenant@1`. The control plane holds it outside every job pod, and only a person changes it. A run records the configuration it started under, so a change applies to new runs only.
 
 For every key and a worked example, see the [Tenant config reference](/reference/tenant-config). For the idea, see [The tenant defines the factory](/guide/concepts/tenant).
+
+## Load native validators
+
+A native validator is loaded in-process or run as a service that speaks the validator protocol, in any language. Only the person who runs the cluster installs one, and the tenant config admits it by name, version and digest. Script validators need no step here: the tenant config and each project config declare them. See the [Validators reference](/reference/validators).
 
 ## Reach the API
 

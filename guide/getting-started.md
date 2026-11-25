@@ -1,6 +1,8 @@
 # Getting started
 
-On this page you run a small workflow on a scratch repository, approve a wait, and check the sealed record on your own machine. It shows how Daggry stops for a person, seals a result and lets you verify it.
+On this page you run a small workflow, approve a wait, and check the sealed record on your own machine. It shows how Daggry stops for a person, seals a result and lets you verify it.
+
+The page is a worked example in the software binding: the workspace is a scratch repository on GitHub and the work item is an issue. The same steps hold for any work that has a deterministic check. See [Bindings](/reference/bindings).
 
 Daggry is built from modules and four open standards. On this page you touch two of the standards: you write a workflow, and you verify evidence. The file you write follows the published [Workflow schema](/reference/workflow-schema), and the records you verify follow the published [envelope](/reference/envelope). See [Open standards](/guide/concepts/standards).
 
@@ -10,9 +12,9 @@ The commands and outputs on this page are illustrative. Placeholders in angle br
 
 ## Before you start
 
-You need a running Daggry on a Kubernetes cluster, the `daggry` CLI, and two environment variables that point the CLI at it. The person who runs the cluster can follow [Deploy Daggry](/guide/how-to/deploy) to set these up. If that is you, do that page first, including its CLI section.
+You need a running Daggry, the `daggry` CLI, and two environment variables that point the CLI at it. The person who runs the cluster can follow [Deploy Daggry](/guide/how-to/deploy) to set these up. If that is you, do that page first, including its CLI section.
 
-You also need a scratch repository with one open issue. A run pushes a branch named `daggry/<run-id>` to its repository, so do not use a repository you care about. The GitHub App from the deploy page must be installed on it.
+For the software binding you also need a scratch repository with one open issue. A run pushes a branch named `daggry/<run-id>` to its repository, so do not use a repository you care about. The GitHub App from the deploy page must be installed on it.
 
 Check that the CLI is ready.
 
@@ -22,7 +24,7 @@ daggry --help
 
 ## 1. Write a workflow
 
-A workflow is a file of steps in a standard layout. You supply it to `daggry run` as a file on your own machine, so it does not have to be in the repository the work is done on. Its first line is the header, which names the workflow standard and its major version. This one runs a command, waits for you, and runs a second command. Save it as `first.yaml`.
+A workflow is a file of steps in a standard layout. You supply it to `daggry run` as a file on your own machine, so it does not have to be in the workspace the work is done on. Its first line is the header, which names the workflow standard and its major version. This one runs a command, waits for you, and runs a second command. Save it as `first.yaml`.
 
 ```yaml
 format: daggry/workflow@1
@@ -44,7 +46,7 @@ The `scope` key says what a step may write. `anywhere` allows every path except 
 
 ## 2. Start a run
 
-To start a run, pass the workflow, the repository and the issue.
+To start a run, pass the workflow, the workspace and the work item. In the software binding they are a repository and an issue.
 
 ```sh
 daggry run --workflow first.yaml --repo <owner>/<name> --item https://github.com/<owner>/<name>/issues/<n>
@@ -90,7 +92,7 @@ daggry/work-item@1 work-item control c94c24f1751a
 daggry/change@1 change-1 control 2019b48c668e
 ```
 
-The first two lines open every run. The `build` step sealed `change-1`, which records the commit and the paths the step changed.
+The first two lines open every run. The `build` step sealed `change-1`, which records the change the step made: in the software binding, the commit and the paths it changed.
 
 ## 5. Approve the wait
 
@@ -102,7 +104,7 @@ daggry approve run-0123456789abcdef
 
 The command prints nothing and exits with 0. Daggry seals your approval and the job continues in a new pod. Run `daggry status run-0123456789abcdef --json` again. The `state` becomes `succeeded`.
 
-The run also pushed its commits to the branch `daggry/run-0123456789abcdef` on your repository.
+In the software binding, the run also pushed its commits to the branch `daggry/run-0123456789abcdef` on your repository.
 
 ## 6. Verify the record
 
@@ -122,7 +124,7 @@ The command recomputes every fingerprint and signature on your machine. If anyth
 
 ## Next steps
 
-- To add an agent step, a check and a bounded loop, read [Write a workflow](/guide/how-to/write-a-workflow).
+- To add an agent step, a `verify` step with its validators and a bounded loop, read [Write a workflow](/guide/how-to/write-a-workflow).
 - To understand what you just ran, read [Why you can trust a run](/guide/concepts/trust) and [Where it runs](/guide/concepts/architecture).
 - To see the parts Daggry is built from, read [The modules](/guide/concepts/modules) and [Open standards](/guide/concepts/standards).
 - To look up a flag or an exit code, read the [CLI reference](/reference/cli).

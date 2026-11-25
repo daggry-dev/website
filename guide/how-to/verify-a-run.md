@@ -55,8 +55,8 @@ To check the shape of one record without Daggry, you need a JSON Schema tool. Th
    ```json
    {
      "criteria": [
-       { "id": "C1", "text": "An expired token is rejected with 401." },
-       { "id": "C2", "text": "A valid token still passes." }
+       { "id": "C1", "text": "Every section cites a source." },
+       { "id": "C2", "text": "Every link resolves." }
      ]
    }
    ```
@@ -95,9 +95,9 @@ For how sealing works, see [Why you can trust a run](/guide/concepts/trust).
 
 ## Know what the command is not
 
-The `verify` command is not the `verify` step of a workflow. The step measures a clean copy of the code with the project's canonical check while a run is in progress. The command checks the sealed record after the fact. For the step, see [Write a workflow](/guide/how-to/write-a-workflow).
+The `verify` command is not the `verify` step of a workflow. The step runs the validators it names on the sealed work while a run is in progress. The command checks the sealed record after the fact. For the step, see [Write a workflow](/guide/how-to/write-a-workflow).
 
-The check proves that the record is intact and was signed by the key. It does not prove that the work in a run was good. For that, read the gates and the measurements in the log with `daggry logs <run-id>`.
+The check proves that the record is intact and was signed by the key. It does not prove that the work in a run was good. For that, read the gates, the verdicts and the measurements in the log with `daggry logs <run-id>`.
 
 ## Next steps
 

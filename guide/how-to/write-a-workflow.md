@@ -1,18 +1,18 @@
 # Write a workflow
 
-An agent follows the workflow file and cannot change it, so the file is where you decide what gets checked. Start with one step and add a check, an approval and a loop.
+An agent follows the workflow file and cannot change it, so the file is where you decide what gets checked. Start with one step and add a verification, an approval and a loop.
 
 This page is for anyone who starts runs with `daggry run`. The snippets are illustrative. Each one is valid against the [workflow schema](/reference/workflow-schema).
 
 <WorkflowGraph />
 
-The diagram shows the delivery workflow that the section [Add a bounded loop](#add-a-bounded-loop) builds: a plan, your approval, a bounded loop of test, fix and check, and a pull request. Other kinds of work use the same parts in a different order.
+The diagram shows the software binding's delivery workflow, which the section [Add a bounded loop](#add-a-bounded-loop) builds: a plan, your approval, a bounded loop of test, fix and verification, and a pull request. Other kinds of work use the same parts in a different order. See [Bindings](/reference/bindings).
 
-A workflow is one YAML file with a `format` header and one body key, `steps`: an ordered list of steps and loops. A workflow is a document in the tenant's catalogue, and the tenant decides which repositories it runs on. `daggry run --workflow <file>` supplies one as a file from your machine. See [The tenant defines the factory](/guide/concepts/tenant). Workflows use strict-subset YAML, with no anchors, tags or merge keys. For the ideas behind it, see [Work graphs](/guide/concepts/workflows). To decide what the workflow should contain before you write it, see [Design a workflow](/guide/how-to/design-a-workflow). To start from a complete file for a kind of work, see [Workflow patterns](/guide/how-to/workflow-patterns).
+A workflow is one YAML file with a `format` header and one body key, `steps`: an ordered list of steps and loops. A workflow is a document in the tenant's catalogue, and the tenant decides which projects it runs on. `daggry run --workflow <file>` supplies one as a file from your machine. See [The tenant defines the factory](/guide/concepts/tenant). Workflows use strict-subset YAML, with no anchors, tags or merge keys. For the ideas behind it, see [Work graphs](/guide/concepts/workflows). To decide what the workflow should contain before you write it, see [Design a workflow](/guide/how-to/design-a-workflow). To start from a complete file for a kind of work, see [Workflow patterns](/guide/how-to/workflow-patterns).
 
 ## Step kinds at a glance
 
-The standard defines five kinds: `agent`, `command`, `verify`, `human` and `effect`. A tenant can register more, each named `<namespace>/<name>`; see [Step kind registry](/reference/workflow-schema#step-kind-registry). A step does one thing, and you combine steps to describe the work. Nothing in the kinds is specific to code: an `agent` step can draft a report or a triage note, and a `command` step can run any script. For where each kind runs and what it does, see [Steps](/reference/workflow-schema#steps).
+The standard defines five kinds: `agent`, `command`, `verify`, `human` and `effect`. A tenant can register more, each named `<namespace>/<name>`; see [Step kind registry](/reference/workflow-schema#step-kind-registry). A step does one thing, and you combine steps to describe the work. Nothing in the kinds is specific to one kind of work: an `agent` step can draft a report or a triage note, a `command` step can run any script, and a `verify` step can run any validator. For where each kind runs and what it does, see [Steps](/reference/workflow-schema#steps).
 
 ## Write a one-step workflow
 
@@ -21,21 +21,21 @@ The standard defines five kinds: `agent`, `command`, `verify`, `human` and `effe
    ```yaml
    format: daggry/workflow@1
    steps:
-     - id: build
+     - id: prepare
        kind: command
        scope: anywhere
-       run: make
+       run: sh scripts/prepare.sh
    ```
 
    The first line is the header. Every workflow file has it, and it is always `format: daggry/workflow@1`. Each step needs an `id` that is unique in the file. A `command` step needs `run`, the shell line, and `scope`, the paths it may write.
 
-2. Choose a `scope`: `nothing`, `anywhere`, or a list of globs such as `["src/**"]` and area references such as `area:app`, which name an area of the project config. For what each value allows, see [Scope](/reference/workflow-schema#scope).
+2. Choose a `scope`: `nothing`, `anywhere`, or a list of globs such as `["drafts/**"]` and area references such as `area:app`, which name an area of the project config. For what each value allows, see [Scope](/reference/workflow-schema#scope).
 
    No scope can include a [protected path](/guide/concepts/protection).
 
 ## Add an agent step
 
-An `agent` step runs a coding-agent session. It must deliver the artifact kinds you list in `outputs`.
+An `agent` step runs an agent session. It must deliver the artifact kinds you list in `outputs`.
 
 1. Add the step before the command.
 
@@ -45,51 +45,73 @@ An `agent` step runs a coding-agent session. It must deliver the artifact kinds 
      - id: plan
        kind: agent
        engine: <engine>
-       prompt: Read the issue and write a plan with testable criteria.
+       prompt: Read the work item and write a plan with checkable criteria.
        outputs: [plan]
        scope: nothing
-     - id: build
+     - id: prepare
        kind: command
        scope: anywhere
-       run: make
+       run: sh scripts/prepare.sh
    ```
 
-   `<engine>` is the coding-agent engine the step uses, by a name the tenant config registers. The control plane writes the `prompt` to a read-only instruction file for the engine. The step succeeds when every kind in `outputs` is accepted.
+   `<engine>` is the agent engine the step uses, by a name the tenant config registers. The control plane writes the `prompt` to a read-only instruction file for the engine. The step succeeds when every kind in `outputs` is accepted.
 
 2. Limit the scope to what the step needs. This step only reads, so its scope is `nothing`.
 
 ## Add a verify step
 
-A `verify` step measures the last sealed commit in a clean copy of the code. It has no command of its own. It runs the project's canonical check, which is the check that `verification.canonical` names in the base commit's `.daggry/project.yaml`, so a step cannot weaken its own check. The check does not have to run tests: any deterministic program the project can run can be a check.
+A `verify` step judges the last sealed change. It has no command of its own. It names one or more validators in `validators`, and the platform runs them. A validator is a check written as code: it takes sealed inputs and yields a result and a verdict. See [Validators: the extension point](/guide/concepts/validators).
+
+A validator name says where the validator comes from.
+
+| Name | The validator |
+|---|---|
+| `project` | The project's verification: the validator that `verification.canonical` names in `.daggry/project.yaml`, with the supporting validators and thresholds that file lists. |
+| `project/<name>` | A script validator that the project config declares. |
+| `tenant/<name>` | A script validator that the tenant config declares. |
+| `daggry/<name>` | A built-in validator, shipped with the platform. |
+| `<namespace>/<name>` | A native validator that the tenant admits. |
+
+A native validator is loaded in-process or run as a service that speaks the validator protocol, in any language. The cluster admin installs it, the tenant admits it by name, version and digest, and a `verify` step names it like any other, for example `acme/contract-clauses`. For every built-in validator, see the [Validators reference](/reference/validators).
+
+A script validator is any deterministic procedure that inspects the workspace and reports a result. It can check a program, a document, a dataset, a configuration or a design file. It runs on a clean copy of the workspace, and a run takes a project's validators from the baseline, the version of the workspace the run started from, so a step cannot weaken what judges it.
 
 1. Add the step after the work it checks.
 
    ```yaml
    format: daggry/workflow@1
    steps:
-     - id: build
+     - id: prepare
        kind: command
-       scope: ["src/**"]
-       run: make
+       scope: ["drafts/**"]
+       run: sh scripts/prepare.sh
      - id: check
        kind: verify
+       validators: [project, tenant/house-style]
    ```
 
-2. Make sure the repository's base commit holds `.daggry/project.yaml` with a canonical check. This one names one check, a script that prints one result line for each test, and makes it canonical. For the file format, see [Project config](/reference/project-config).
+   This step runs the project's verification and one script validator of the tenant's.
+
+2. Declare the script validator behind `project`. The workspace holds `.daggry/project.yaml` before the run starts. This one declares one script validator, a script that writes a result document, and makes it canonical. For the file format, see [Project config](/reference/project-config).
 
    ```yaml
    format: daggry/project@1
-   checks:
-     test:
+   validators:
+     review:
        run: [sh, check.sh]
-       kind: tests
+       kind: custom
        result:
-         contract: libtest-lines
+         contract: document
+         path: reports/review.json
    verification:
-     canonical: test
+     canonical: review
    ```
 
-A `verify` step is green when the canonical check passes, every check in `verification.also` passes and every threshold holds. Outside a loop, a failed `verify` step fails the run.
+   The `document` contract says the script writes a result document at `path`: an outcome and a list of findings, each with an id and an outcome. Without `result`, the exit code alone is the result. A format that belongs to one toolset is read by an adapter. See [Bindings](/reference/bindings).
+
+3. Check with the person who runs the tenant that the project's validators count as evidence. The tenant decides this, and by default they do not. `tenant/house-style` is declared in the tenant config. See [The tenant defines the factory](/guide/concepts/tenant).
+
+A `verify` step is green when every validator it names passes. Outside a loop, a failed `verify` step fails the run.
 
 ## Add a human approval
 
@@ -103,16 +125,16 @@ A `human` step releases the pod and waits. The run reads `waiting` until someone
      - id: plan
        kind: agent
        engine: <engine>
-       prompt: Write a plan with testable criteria.
+       prompt: Write a plan with checkable criteria.
        outputs: [plan]
        scope: nothing
      - id: approve-plan
        kind: human
        waiting_for: approval
-     - id: build
+     - id: prepare
        kind: command
        scope: anywhere
-       run: make
+       run: sh scripts/prepare.sh
    ```
 
 2. Choose `waiting_for`. The value decides what the approval binds to.
@@ -128,7 +150,7 @@ A `human` step releases the pod and waits. The run reads `waiting` until someone
 
 ## Add a bounded loop
 
-A loop repeats steps for each criterion of an approved plan, and it always ends. Use it for the test-first pattern: write a failing test, make it pass, verify.
+A loop repeats steps for each criterion of an approved plan, and it always ends. The example on this page is the software binding's delivery loop: write a failing test, make it pass, verify. A loop for other work has the same keys and other steps. See [Workflow patterns](/guide/how-to/workflow-patterns).
 
 1. Add a loop entry after the approval. A loop entry has an `id` and a `loop` key, and no `kind`.
 
@@ -138,7 +160,7 @@ A loop repeats steps for each criterion of an approved plan, and it always ends.
      - id: plan
        kind: agent
        engine: <engine>
-       prompt: Write a plan with testable criteria.
+       prompt: Write a plan with checkable criteria.
        outputs: [plan]
        scope: nothing
      - id: approve-plan
@@ -167,6 +189,7 @@ A loop repeats steps for each criterion of an approved plan, and it always ends.
              scope: ["src/**", "tests/**"]
            - id: check
              kind: verify
+             validators: [project, daggry/criterion-coverage]
      - id: ask
        kind: human
        waiting_for: input-needed
@@ -175,7 +198,7 @@ A loop repeats steps for each criterion of an approved plan, and it always ends.
        do: open-pr
    ```
 
-   The `max` of 10 assumes a plan of fewer than 10 criteria.
+   The `max` of 10 assumes a plan of fewer than 10 criteria. The `verify` step names `daggry/criterion-coverage`, the built-in validator that derives the fact `all_covered` the gate reads.
 
 2. Read the loop keys. Every key is required.
 
@@ -193,21 +216,23 @@ A loop repeats steps for each criterion of an approved plan, and it always ends.
    - Red: the `verify` step failed. The same criterion repeats, and the `tests` step does not run again.
    - Any other failed step inside a loop fails the run.
 
-4. Know what `tests` does. The paths a `tests` step changes, matched by its globs, are sealed with their digests and frozen. No later step can change them, whatever its scope.
+4. Know what `tests` does. The key belongs to the software binding. The paths a `tests` step changes, matched by its globs, are sealed with their digests and frozen. No later step can change them, whatever its scope.
 
-5. Plan for exhaustion. When `max` iterations are spent, `on_exhausted` applies. With `fail`, the run fails. With a `human` step, the run waits there. Run `daggry approve <run-id>` to give up the unfinished item, or `daggry approve <run-id> --unfreeze <path>` to retry it with one frozen test path open to change.
+5. Plan for exhaustion. When `max` iterations are spent, `on_exhausted` applies. With `fail`, the run fails. With a `human` step, the run waits there. Run `daggry approve <run-id>` to give up the unfinished item, or, in the software binding, `daggry approve <run-id> --unfreeze <path>` to retry it with one frozen test path open to change.
 
 The `on_exhausted` step is skipped in normal flow and runs only when the loop is exhausted. For the `until` syntax, see [Gate expressions](/reference/gates).
 
 ### Red, then green
 
-In a delivery loop, each iteration follows this order. A loop that does not write tests, such as a batch migration, leaves the `tests` step out and keeps the rest.
+Red, then green is the software binding's case of a general idea: a criterion's check fails before the work and passes after. A check that already passes says nothing about the work.
+
+In the software binding's delivery loop, each iteration follows this order. A loop that does not write tests, such as a document review, leaves the `tests` step out and keeps the rest.
 
 1. An agent writes a test for the next criterion.
 2. Daggry shows that the test fails on the commit the run started from. A test that already passes says nothing about the change.
 3. The control plane seals the test commit and freezes the tests. The agent cannot change them.
 4. The agent makes the test green.
-5. A clean copy of the code measures the result.
+5. The validators measure the result on a clean copy of the repository.
 
 A criterion counts as covered only when a test that carries its id passed on the head commit. For how frozen tests and unfreeze grants work, see [What an agent cannot change](/guide/concepts/protection).
 
@@ -220,6 +245,8 @@ The control plane loads the file when you start a run. A file that does not load
    ```sh
    daggry run --workflow flow.yaml --repo <owner>/<name> --item https://github.com/<owner>/<name>/issues/<n>
    ```
+
+   The command is shown for the software binding: `--repo` names a repository as the workspace, and `--item` names an issue as the work item.
 
 2. On success, the command prints a run ID.
 
