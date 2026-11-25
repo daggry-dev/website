@@ -12,7 +12,7 @@ The hand-written values on this page are illustrative. The test vector in [Worke
 
 ## Download
 
-The envelope has a published JSON Schema (draft 2020-12). To download it, use the file below. It is the same schema as in [Envelope JSON Schema](#envelope-json-schema).
+The envelope has a published JSON Schema (draft 2020-12). The table links the file. It is the same schema as in [Envelope JSON Schema](#envelope-json-schema).
 
 | Schema | File |
 |---|---|
@@ -70,7 +70,7 @@ A kind has three parts.
 | Size | The canonical JSON of the whole map is at most 4096 bytes. 4096 is accepted. 4097 is refused. |
 | Empty map | The same as no `meta`. It is absent from the canonical JSON and from the stored envelope. |
 
-Scalar values keep every `meta` value comparable in a gate. Do not put secrets, personal data, free text, or nested or large data in `meta`: the log is append-only and the digest covers `meta`, so nothing can be redacted.
+Do not put secrets, personal data, free text, or nested or large data in `meta`: the log is append-only and the digest covers `meta`, so nothing can be redacted.
 
 ### Stamped keys
 
@@ -84,7 +84,7 @@ The control plane stamps the `daggry/*` keys from its own state. It never takes 
 | `daggry/attempt` | integer, 1 or more | an artifact sealed for an attempt |
 | `daggry/step` | string, the step id | an artifact sealed in a step |
 
-Which kinds carry which keys:
+The table lists which kinds carry which keys.
 
 | Kinds | Keys |
 |---|---|
@@ -96,7 +96,7 @@ Trace ids and a retention class are not stamped.
 
 ## Canonical JSON
 
-The digest is taken over canonical JSON. The rules are:
+The digest is taken over canonical JSON. The table lists its rules.
 
 | Rule | Detail |
 |---|---|
@@ -152,7 +152,12 @@ A signed head kept outside the cluster lets a reader see that entries were dropp
 
 ### Lineage and log
 
-Two chains run side by side. The lineage chain answers "what did this record build on?": a verdict names the measurement it judged, the measurement names the change, and the change names the plan. The log chain answers "has anything been changed, reordered or removed?"
+An artifact sits in two chains. The table names each one.
+
+| Chain | Made of | Answers |
+|---|---|---|
+| Lineage | `parents`: a verdict names the measurement it judged, the measurement names the change, and the change names the plan. | What did this record build on? |
+| Log | `prev` and the link of each entry. | Has anything been changed, reordered or removed? |
 
 <ChainDiagram />
 
@@ -170,7 +175,7 @@ One Ed25519 key, held by the control plane, signs every artifact. The signature 
 
 ## Log entry
 
-A log entry holds the previous link and one sealed artifact. The next block is the shape with placeholders: `<...>` marks a value you replace.
+A log entry holds the previous link and one sealed artifact. This block is the shape with placeholders: `<...>` marks a value you replace.
 
 ```json
 {
@@ -179,7 +184,7 @@ A log entry holds the previous link and one sealed artifact. The next block is t
     "format": "evidence/envelope@1",
     "kind": "evidence/measurement@1",
     "id": "<artifact id>",
-    "body": { "label": "head", "revision": "<version id>", "exit_code": 0, "check": "review", "contract": "exit-code", "outcome": "pass", "findings": [] },
+    "body": { "label": "head", "revision": "<version id>", "exit_code": 0, "check": "links", "contract": "exit-code", "outcome": "pass", "findings": [] },
     "parents": ["<digest of each artifact this one builds on>"],
     "producer": "<who produced it>",
     "time": "<unix milliseconds, a number>",
@@ -196,6 +201,8 @@ A log entry holds the previous link and one sealed artifact. The next block is t
   }
 }
 ```
+
+The table explains the placeholders.
 
 | Placeholder | Meaning |
 |---|---|
@@ -219,7 +226,7 @@ A log entry holds the previous link and one sealed artifact. The next block is t
 
 `<i>` is the position of the entry in the chain, counted from 0.
 
-Error text for the `meta`, number and format rules:
+The table lists the error text for the `meta`, number and format rules.
 
 | Message | Cause |
 |---|---|
@@ -245,7 +252,7 @@ To recompute the digest and the link of the first entry, and then the second:
 4. Hash the 32 bytes of `prev` followed by the 32 bytes of the digest. The result is the link.
 5. Use that link as `prev` of the next entry.
 
-The next script does steps 1 to 5 for both entries. Save it as `recompute.py` and run `python3 recompute.py`.
+This script does steps 1 to 5 for both entries. Save it as `recompute.py` and run `python3 recompute.py`.
 
 ```python
 import hashlib
@@ -324,7 +331,7 @@ link 2   3a77b48ce8bbf8438cb83e1ec3ec53072b7f16a17ac1f17aa9dd649bfc04bd3e
 }
 ```
 
-`secret_hex` is the test-only signing key described above. Do not reuse it.
+`secret_hex` is the test-only signing key of this vector. Do not reuse it.
 :::
 
 ## Envelope JSON Schema

@@ -8,6 +8,8 @@ This page lists the tenant API: the routes that a tenant client calls, their req
 
 ## Conventions
 
+Every call follows these conventions.
+
 - Every call is `POST <base-url><path>` with the request as a JSON body and `content-type: application/json`.
 - A 2xx answer carries the response as JSON.
 - A request refuses unknown fields. A response can gain fields, so a client ignores the ones it does not know.
@@ -32,6 +34,8 @@ content-type: application/json
 
 ## Status codes
 
+The table lists the status codes.
+
 | Status | Meaning |
 |---|---|
 | 200 | The call succeeded. The body is the response. |
@@ -43,7 +47,7 @@ A client treats any 4xx as a refusal. It treats a 5xx as a failure that it can r
 
 ## Routes
 
-These routes take the tenant token. The tables after the route list give each body.
+The first table lists the routes, which all take the tenant token. The second table lists the fields of each body.
 
 | Path | Request body | Response body | Used by |
 |---|---|---|---|
@@ -54,6 +58,8 @@ These routes take the tenant token. The tables after the route list give each bo
 | `/v1/chain` | none | log entries | `daggry verify` |
 | `/v1/blob` | blob request | blob response | `daggry verify` |
 | `/v1/seal-key` | seal-key request | seal-key response | `daggry verify` |
+
+Each body has these fields.
 
 | Body | Fields |
 |---|---|
@@ -86,12 +92,16 @@ A run and an attempt share one set of seven states, written in lowercase.
 | `failed` | Terminal. The run failed. |
 | `stopped` | Terminal. A person stopped the run. |
 
+The table lists the values of `waiting_for`.
+
 | `waiting_for` | Meaning |
 |---|---|
 | `approval` | A person must approve the sealed plan. |
 | `input-needed` | A person must review the latest sealed change. |
 
 ## Next steps
+
+The list names the pages to read next.
 
 - For the commands built on these routes, see the [CLI reference](/reference/cli).
 - For the workflow that a run carries, see the [workflow schema](/reference/workflow-schema).

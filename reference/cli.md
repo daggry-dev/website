@@ -30,6 +30,8 @@ If a variable is missing or empty, the command prints `daggry: <NAME> is not set
 
 ## Exit codes
 
+The table lists the exit codes.
+
 | Code | Meaning |
 |---|---|
 | 0 | Success, or `--help`. |
@@ -38,7 +40,7 @@ If a variable is missing or empty, the command prints `daggry: <NAME> is not set
 
 ## Error output
 
-An error goes to stderr as one line that starts with `daggry:`.
+An error goes to stderr as one line that starts with `daggry:`. The table lists the forms.
 
 | Form | Meaning |
 |---|---|
@@ -55,6 +57,8 @@ Starts a run of a workflow for a work item.
 ```text
 daggry run --workflow <file> --workspace <workspace> --item <item>
 ```
+
+The table lists the flags.
 
 | Flag | Required | Meaning |
 |---|---|---|
@@ -89,6 +93,8 @@ Prints the state of a run as one line of JSON.
 daggry status <run-id> --json
 ```
 
+The table lists the argument and the flag.
+
 | Argument or flag | Required | Meaning |
 |---|---|---|
 | `<run-id>` | yes | The run to read. |
@@ -101,6 +107,8 @@ daggry status run-0123456789abcdef --json
 ```json
 {"state":"waiting","attempts":[{"job":"main","n":1,"state":"waiting"}],"waiting_for":"approval"}
 ```
+
+The table lists the fields of the output.
 
 | Field | Type | Meaning |
 |---|---|---|
@@ -123,6 +131,8 @@ Each line has this form:
 ```text
 <kind> <id> <producer> <digest-prefix> [<summary> [<summary>]]
 ```
+
+The table explains each part of a line.
 
 | Part | Meaning |
 |---|---|
@@ -154,6 +164,8 @@ daggry approve <run-id>
 daggry approve <run-id> --unfreeze <path>
 ```
 
+The table lists the argument and the flag.
+
 | Argument or flag | Required | Meaning |
 |---|---|---|
 | `<run-id>` | yes | The run that waits. |
@@ -163,7 +175,7 @@ Both forms print nothing and exit with 0 on success. The control plane seals you
 
 Without `--unfreeze`, the command approves the wait. At an exhausted loop it gives up the unfinished item. With `--unfreeze <path>`, the loop re-enters the same item with a fresh `max`, and the path can change for that one iteration.
 
-The control plane refuses the request, and seals nothing, when:
+The control plane refuses the request, and seals nothing, in the cases the table lists.
 
 | Refusal | Cause |
 |---|---|

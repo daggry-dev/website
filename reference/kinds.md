@@ -12,7 +12,7 @@ The example bodies on this page are illustrative. Each is valid under the schema
 
 ## Download
 
-Every kind has a published JSON Schema (draft 2020-12) for its `body`, and so does the envelope. To download one, use the files below.
+Every kind has a published JSON Schema (draft 2020-12) for its `body`, and so does the envelope. The table links each file.
 
 | Schema | File |
 |---|---|
@@ -55,12 +55,16 @@ A body that does not fit its schema is refused with the JSON pointer of the offe
 
 ### Reading the field tables
 
+Each field table has these two columns besides the name, the type and the constraints.
+
 | Column | Meaning |
 |---|---|
 | Req | Whether the schema requires the field. |
 | Class | The field's fact class: `claimed` (an agent wrote it), `derived` (code computed it from sealed inputs) or `-` (no class). A gate reads only `derived` fields. See [Gate expressions](/reference/gates). |
 
 ### Who seals what
+
+The control plane seals every kind. The table lists the artifact id and the `parents` of each.
 
 | Kind | Artifact id | `parents` |
 |---|---|---|
@@ -239,25 +243,30 @@ The second is of a validator with the `exit-code` contract:
 }
 ```
 
-The third is read through an adapter, with a missed threshold on a metric:
+The third is read through an adapter of the software binding. One test is skipped, so a threshold on the count of skipped findings is missed:
 
 ```json
 {
   "label": "head",
-  "revision": "v-0042",
+  "revision": "2f6c1e0b9a7d4c3e8f5a1b2c3d4e5f6a7b8c9d0e",
   "exit_code": 0,
-  "check": "citations",
-  "contract": "review/citations",
+  "check": "test",
+  "contract": "software/libtest",
   "outcome": "fail",
   "findings": [
-    {"id": "source-resolves", "outcome": "pass", "locator": "handbook/pay.md:30", "path": "handbook/pay.md", "message": ""},
-    {"id": "threshold:metrics.unsourced_claims", "outcome": "fail", "message": "metrics.unsourced_claims is 3, max is 0"}
+    {"id": "cart::tests::ac_1_rejects_empty", "outcome": "pass", "message": ""},
+    {"id": "cart::tests::ac_2_rejects_long_name", "outcome": "skip", "message": ""},
+    {"id": "threshold:findings.skip", "outcome": "fail", "message": "findings.skip is 1, max is 0"}
   ],
-  "metrics": {"unsourced_claims": 3}
+  "metrics": {"passed": 1, "failed": 0, "skipped": 1},
+  "tests": [
+    {"name": "cart::tests::ac_1_rejects_empty", "outcome": "passed"},
+    {"name": "cart::tests::ac_2_rejects_long_name", "outcome": "ignored"}
+  ]
 }
 ```
 
-`v-0042` stands for a version id in the form the workspace's binding gives.
+`v-0042` stands for a version id in the form the workspace's binding gives. Under the software binding a version id is a commit, as in the third example. The first two validators are declared in [A set of documents](/reference/project-config#a-set-of-documents) and the third in [Software binding: a Rust project](/reference/project-config#software-binding-a-rust-project).
 
 ::: details Schema: evidence/measurement@1
 ```json
@@ -398,7 +407,7 @@ What a validator produced: a status, findings and derived facts. Only the contro
 | `version` | string | yes | - | Non-empty. |
 | `status` | string | yes | derived | `pass`, `fail` or `inconclusive`. |
 | `findings` | array of objects | yes | - | Each `{ "message": <string> }`. `message` is required and nothing else is allowed. |
-| `facts` | array of objects | yes | derived | See the next rows. |
+| `facts` | array of objects | yes | derived | Each fact has a `name`, a `class` and a `value`. |
 | `facts[].name` | string | yes | - | Non-empty. A stricter grammar applies. See [Verdict rules](/reference/validators#verdict-rules). |
 | `facts[].class` | string | yes | - | Only `derived`. |
 | `facts[].value` | boolean, integer or string | yes | - | A float is refused. |
@@ -520,7 +529,7 @@ A human grant bound to one artifact digest.
 
 All seven fields are required. Write an absent value as `null`; do not omit the field. A `source_ref` that is neither `null` nor decimal digits is refused at `/source_ref` with `` `source_ref` is null or the decimal id of a comment ``.
 
-How the CLI path fills the body:
+The table lists how the CLI path fills the body.
 
 | Command | `subject` | `path` | `digest` | Parent |
 |---|---|---|---|---|
@@ -705,7 +714,7 @@ A record the platform keeps and no gate uses. One schema admits two records, sel
 | `step` | string | by record | derived | Non-empty. Required for `step-failed`. Refused for `protected-restored`. |
 | `attempt` | integer | by record | derived | 1 or more. Required for `step-failed`. Refused for `protected-restored`. |
 
-The two records:
+The table lists the two records.
 
 | Record | Fields | Sealed when |
 |---|---|---|
@@ -919,6 +928,8 @@ The record has two forms. A body holds exactly one of them.
 |---|---|---|
 | Neutral | `workspace` and `request`. | Every binding. |
 | Software | `repository` and `issue`. | The software binding. See [Bindings](/reference/bindings#conventions). |
+
+The table lists the fields of both forms.
 
 | Field | Type | Req | Class | Constraints |
 |---|---|---|---|---|
