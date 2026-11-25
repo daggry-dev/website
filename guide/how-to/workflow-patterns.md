@@ -26,7 +26,7 @@ Examples combine. For example, add the `inventory` command from Migrate files in
 
 You need four things to read any example on this page.
 
-- A sketch shows the steps in order. `[agent]`, `[command]`, `[verify]` and `[effect]` are steps of that kind. `(human)` is an approval. `{ ... }` is a loop that repeats once for each plan item.
+- A sketch shows the steps in order. `[agent]`, `[command]`, `[verify]` and `[effect]` are steps of that kind. `(human)` is an approval. `{ ... }` is a loop that repeats once for each criterion.
 - `validators: [project]` runs the project's main validator. To name yours, see [Set up a project](/guide/how-to/set-up-a-project). To write one, see [Add a validator](/guide/how-to/add-a-validator).
 - A loop ends when its gate holds, and stops at its limit, `max`. Set `max` greater than the number of items you expect. See [Add a loop](/guide/how-to/add-a-loop).
 - `engine: <engine>` names the engine an agent step runs on. Paths such as `reports/**` and scripts such as `scripts/audit.sh` are examples. Replace them with yours.
@@ -37,9 +37,9 @@ Use these two when your work is not software. The workspace is a versioned colle
 
 ### Review a document
 
-**Use when** a document must meet a list of review rules before a person approves it, such as a contract, a policy or a specification. The plan turns the rules into plan items, and the loop revises the document until the validators pass each one.
+**Use when** a document must meet a list of review rules before a person approves it, such as a contract, a policy or a specification. The plan turns the rules into criteria, and the loop revises the document until the validators pass each one.
 
-**Code checks:** Two validators. `project` is the project's main validator, for example that every required section is present, every defined term is used and every cross-reference resolves. `tenant/house-style` is a script validator the tenant admin declares for every project, for example that no banned phrase appears.
+**Code checks:** Two validators. `project` is the project's main validator, for example that every required section is present, every defined term is used and every cross-reference resolves. `house-style` is a validator that every project in your tenant shares, declared in the tenant config, for example that no banned phrase appears.
 
 ```text
 [agent plan] -> (human approves plan)
@@ -47,7 +47,7 @@ Use these two when your work is not software. The workspace is a versioned colle
   -> (human, only if the loop runs out) -> (human approves)
 ```
 
-A revision that fails repeats the same plan item, up to the loop limit in `max`. The approval at `sign-off` covers the sealed change, so the person approves the exact document the validators passed. A person, not a validator, decides whether the document says the right thing.
+A revision that fails repeats the same criterion, up to the loop limit in `max`. The approval at `sign-off` covers the sealed change, so the person approves the exact document the validators measured and the `verify` step passed. A person, not a validator, decides whether the document says the right thing.
 
 ::: details Complete file
 ```yaml
@@ -80,7 +80,8 @@ steps:
           scope: ["documents/**"]
         - id: check-document
           kind: verify
-          validators: [project, tenant/house-style, daggry/criterion-coverage]
+          validators: [project, house-style]
+          judges: [coverage]
 
   - id: stuck
     kind: human
@@ -96,7 +97,7 @@ steps:
 
 **Use when** a dataset is rebuilt from its sources again and again, and a person must say yes before each new version is published. No agent works in this example. A script refreshes the data, code checks it, and a person releases it.
 
-**Code checks:** Two validators. `project` is the project's main validator, for example that every required column is filled and every key is unique. `tenant/data-contract` is a script validator the tenant admin declares, for example that the row count is within a stated range of the last published version.
+**Code checks:** Two validators. `project` is the project's main validator, for example that every required column is filled and every key is unique. `data-contract` is a validator that every project in your tenant shares, declared in the tenant config, for example that the row count is within a stated range of the last published version.
 
 ```text
 [command refresh] -> [verify] -> (human approves publish) -> [publish]
@@ -111,11 +112,11 @@ steps:
   - id: refresh
     kind: command
     scope: ["data/**"]
-    run: "sh scripts/refresh.sh"
+    run: [sh, scripts/refresh.sh]
 
   - id: check-data
     kind: verify
-    validators: [project, tenant/data-contract]
+    validators: [project, data-contract]
 
   - id: approve-publish
     kind: human
@@ -142,7 +143,7 @@ In these seven examples the workspace is a Git repository and the work item is a
   -> (human, only if the loop runs out) -> [effect open-pr]
 ```
 
-The `test` step is the proof step: its `freeze` key freezes the test files when the step is sealed. See [Add a loop](/guide/how-to/add-a-loop#prove-each-item-first).
+The `test` step is the proof step: its `freeze` key freezes the test files when the step is sealed. See [Add a loop](/guide/how-to/add-a-loop#prove-each-criterion-first).
 
 ::: details Complete file
 ```yaml
@@ -182,7 +183,8 @@ steps:
           scope: ["src/**"]
         - id: check
           kind: verify
-          validators: [project, daggry/criterion-coverage]
+          validators: [project]
+          judges: [coverage]
 
   - id: stuck
     kind: human
@@ -245,7 +247,7 @@ steps:
 
 ### Process a list of items
 
-**Use when** you want to work through a list one item at a time, such as triaging a backlog. The plan turns the list into plan items, and the loop handles one per iteration. This workflow writes a triage note for each item and opens a pull request with the notes.
+**Use when** you want to work through a list one item at a time, such as triaging a backlog. The plan turns the list into criteria, and the loop handles one per iteration. This workflow writes a triage note for each item and opens a pull request with the notes.
 
 **Code checks:** Your main validator, for example that each note has a label, a priority and a reason.
 
@@ -288,7 +290,8 @@ steps:
           scope: ["triage/**"]
         - id: check-note
           kind: verify
-          validators: [project, daggry/criterion-coverage]
+          validators: [project]
+          judges: [coverage]
 
   - id: stuck
     kind: human
@@ -321,7 +324,7 @@ steps:
   - id: inventory
     kind: command
     scope: ["migration/**"]
-    run: "git ls-files v1 > migration/inventory.txt"
+    run: [sh, -c, "git ls-files v1 > migration/inventory.txt"]
 
   - id: plan
     kind: agent
@@ -350,7 +353,8 @@ steps:
           scope: ["src/**", "v1/**"]
         - id: check-batch
           kind: verify
-          validators: [project, daggry/criterion-coverage]
+          validators: [project]
+          judges: [coverage]
 
   - id: stuck
     kind: human
@@ -419,7 +423,7 @@ steps:
   - id: build
     kind: command
     scope: ["dist/**"]
-    run: "make release-build"
+    run: [make, release-build]
 
   - id: check-build
     kind: verify
@@ -463,7 +467,7 @@ steps:
   - id: scan
     kind: command
     scope: ["reports/**"]
-    run: "sh scripts/audit.sh"
+    run: [sh, scripts/audit.sh]
 
   - id: summarize
     kind: agent

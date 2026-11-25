@@ -14,33 +14,32 @@ You get three things:
 
 ## Validators: nobody can talk code into a pass
 
-An agent that grades an agent can be persuaded, and can answer differently on different days. A validator is named code that checks the work and returns pass or fail. It reads records that are already sealed, and the same records always give the same result.
+An agent that grades an agent can be persuaded, and can answer differently on different days. Validators measure. Judges judge. A gate decides when to stop. A validator is a command that measures the work. A judge turns the evidence trail into a verdict of pass or fail. A validator and a judge that is a command give the same result for the same work.
 
 <CheckFlow />
 
-The diagram shows sealed records going into a validator, the validator returning pass or fail, and that result opening or closing a gate.
+The diagram shows the evidence trail going into a judge, the judge returning a verdict of pass or fail, and that verdict opening or closing a gate.
 
-For example, a validator reads a sealed plan and a sealed result. A plan item counts as covered only when a passing finding carries its id. The agent can say "C2 is covered", but the validator says so only when the result shows it.
+For example, a criterion of the plan counts as covered only when a passing finding carries its id. The agent can say "C2 is covered", but the `coverage` judge agrees only when the result shows it.
 
 ::: details Where does a validator run?
 No validator runs where an agent can write, and none starts an agent.
 
-- **A built-in validator** ships with Daggry and runs in the control plane. It reads only sealed records.
-- **A native validator** is installed by the cluster admin. It reads only sealed records.
-- **A script validator** is a script of yours. It runs on a clean copy of the workspace, after the agent process has ended. The script reports a result, and Daggry, not the script, decides pass or fail.
+- **Your validator** is a command that `.daggry/project.yaml` declares. It runs on a clean copy of the workspace, after the agent process has ended. It reports a measurement, and a judge decides the verdict. It counts as evidence because Daggry reads it from the version the run started from, and an agent cannot change that version.
+- **A judge** is given the evidence trail and decides the verdict. Every `verify` step has a default judge, and you add more with `judges`, such as `coverage`. See [Judges](/reference/judges).
 
 To add your own, see [Add a validator](/guide/how-to/add-a-validator).
 :::
 
 ## Sealing: a change to the trail shows
 
-A record you can edit later proves nothing. To seal a record, Daggry takes its fingerprint, combines the fingerprint with a link to the trail so far, and signs the result. A fingerprint is a short code computed from every byte of the record. Each record therefore vouches for all the records before it.
+A record you can edit later proves nothing. To seal a record, Daggry takes its digest, combines the digest with a link to the trail so far, and signs the result. A digest is a short code computed from every byte of the record. Each record therefore vouches for all the records before it.
 
 <SealFlow />
 
-The diagram shows a record becoming a fingerprint, the fingerprint combined with the trail so far, and the combination signed.
+The diagram shows a record becoming a digest, the digest combined with the trail so far, and the combination signed.
 
-Suppose someone changes the `exit_code` of an old record from 1 to 0. Its fingerprint changes, so its signature fails, and so does every later record. One command finds the change.
+Suppose someone changes the `exit_code` of an old record from 1 to 0. Its digest changes, so its signature fails, and so does every later record. One command finds the change.
 
 ```sh
 daggry verify
@@ -50,7 +49,7 @@ daggry verify
 daggry: entry 2: digest does not match the content
 ```
 
-The output says entry for a record and digest for a fingerprint. Every record format is a published JSON Schema under `/schemas/` on this site, so your own tools can read the trail too. See [Verify a run](/guide/how-to/verify-a-run).
+The output calls one record in the trail an entry, and the code that identifies it a digest. Every record format is a published JSON Schema under `/schemas/` on this site, so your own tools can read the trail too. See [Verify a run](/guide/how-to/verify-a-run).
 
 ## What a seal does not prove
 
@@ -58,7 +57,7 @@ A seal is not a quality stamp: a result is only as good as the validator that pr
 
 <SealedRecord />
 
-The trail is tamper-evident, not tamper-proof. `daggry verify` takes the public key from the same control plane that serves the trail. So it proves this: nobody without the signing key changed, reordered or removed a record in the middle of the trail. Two cases need a signed copy of the newest link, kept outside the cluster: someone drops the newest records, or someone with the signing key rewrites everything. For every field of a record, see the [Evidence record format](/reference/envelope).
+The trail is tamper-evident, not tamper-proof. `daggry verify` takes the public key from the same control plane that serves the trail. So it proves this: nobody without the signing key changed, reordered or removed a record in the middle of the trail. Two cases need a signed copy of the newest link, kept outside the cluster: someone drops the newest records, or someone with the signing key rewrites everything. For every field of a record, see the [Evidence envelope](/reference/envelope).
 
 Related:
 

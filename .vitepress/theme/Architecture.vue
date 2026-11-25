@@ -92,7 +92,7 @@ import ScrollFrame from './ScrollFrame.vue'
 // `run` numbers the five stages of a run on the same picture (How it works).
 defineProps<{ run?: boolean }>()
 
-const label = 'Architecture: on your cluster, the control plane holds the store and the keys, and the conductor orders the steps and starts a throwaway runner for each job. The runner holds the engine and the script validators, a token for one workspace and the model credential, never the signing key. The forge sends work in and takes the result. You use the CLI on your machine.'
+const label = 'Architecture: on your cluster, the control plane holds the store and the keys, and the conductor orders the steps and starts a throwaway runner for each job. The runner holds the engine and the validators you define, a token for one workspace and the model credential, never the signing key. The forge sends work in and takes the result. You use the CLI on your machine.'
 const runLabel =
   'One run in five numbered stages: 1, work comes in from the forge; 2, the conductor picks the next step; 3, the runner does the work; 4, the control plane checks and seals; 5, the result goes out to the forge. '
 // Each marker sits in free space beside its edge, or on the top edge of the module it numbers.

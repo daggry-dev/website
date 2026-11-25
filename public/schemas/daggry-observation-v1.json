@@ -4,12 +4,12 @@
   "title": "daggry/observation@1: a protected-restored or a step-failed record",
   "type": "object",
   "required": [
-    "record",
+    "event",
     "reason"
   ],
   "additionalProperties": false,
   "properties": {
-    "record": {
+    "event": {
       "enum": [
         "protected-restored",
         "step-failed"
@@ -41,12 +41,12 @@
     {
       "if": {
         "properties": {
-          "record": {
+          "event": {
             "const": "protected-restored"
           }
         },
         "required": [
-          "record"
+          "event"
         ]
       },
       "then": {
@@ -62,12 +62,12 @@
     {
       "if": {
         "properties": {
-          "record": {
+          "event": {
             "const": "step-failed"
           }
         },
         "required": [
-          "record"
+          "event"
         ]
       },
       "then": {

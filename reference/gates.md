@@ -2,19 +2,19 @@
 
 *Reference*
 
-A loop must stop on a fact, not on an agent's word. A gate is an expression in a loop's `until` that reads facts from sealed evidence, and this page defines its grammar, the contexts, every read form, the fact classes and the functions. Read it when you write a loop and need to know what `until` can read. For where `until` sits, see [Workflow file](/reference/workflow-schema#loop). For the facts that validators emit, see [Validators](/reference/validators). For the steps, follow [Add a loop](/guide/how-to/add-a-loop).
+A gate is the expression in a loop's `until` that reads facts from sealed evidence. This page lists its grammar, the contexts, every read form, the fact classes and the functions. Read it when you write a loop and need to know what `until` can read. For where `until` sits, see [Workflow file](/reference/workflow-schema#loop). For the facts that judges emit, see [Judges](/reference/judges#facts-a-judge-emits). For the steps, follow [Add a loop](/guide/how-to/add-a-loop).
 
 The expressions on this page are illustrative. Where an example is refused, the page names the refusal.
 
 ## Quick reference
 
-A gate reads only `derived` facts: values that code computed from sealed inputs. The loader refuses a read of a `claimed` field, of a field with no class, and of a step that does not exist, before a run starts.
+A gate reads `derived` facts: values that code computed from sealed inputs. It reads a `judged` fact only once a person approves the rubric behind it. The loader refuses a read of a `claimed` field, of a field with no class, and of a step that does not exist, before a run starts.
 
 The loader accepts these reads.
 
 ```text
 verdict.all_covered
-verdict.status == 'pass'
+verdict.outcome == 'pass'
 verdict.criteria_uncovered == 0
 inputs.measurement.exit_code == 0
 success()
@@ -50,7 +50,7 @@ The table lists the four read forms. `<kind>` is the kind's bare name, such as `
 | steps | `steps.<step id>.<kind>.<field>` | Exactly 3. | The class of `<field>` in `<kind>`'s schema. `<step id>` must name a step of this workflow, top-level or inside a loop. |
 | needs | `needs.<id>.<kind>.<field>` | Exactly 3. | As `steps`, but the id is not checked against the workflow. |
 | inputs | `inputs.<kind>.<field>` | 2 or more. | The class of `<field>` in `<kind>`'s schema. Extra names leave the class unchanged. A read with fewer names has no class. |
-| verdict | `verdict.<name>` | Exactly 1. | If `<name>` is a property of the verdict schema, that property's class. Otherwise `<name>` is a fact name and takes the class of the verdict's `facts`: `derived`. |
+| verdict | `verdict.<name>` | Exactly 1. | If `<name>` is a property of the verdict schema, that property's class. Otherwise `<name>` is a fact name and takes the class of that fact in the verdict: `derived`, or `judged` for a rubric judge's. |
 
 The loader checks every read in an `until`, in source order, and returns the first refusal. A read that the loader cannot classify is refused, the same as a `claimed` read. This is fail-closed.
 
@@ -66,7 +66,7 @@ Every field has one of three classes or none.
 |---|---|---|
 | `claimed` | An agent wrote it. | No. |
 | `derived` | Code computed it from sealed inputs. | Yes. |
-| `judged` | A model's verdict under a rubric a person approved for that criterion. | Only once a person approves a rubric for that criterion. Until then the loader refuses a `judged` read. |
+| `judged` | The answer of a [rubric judge](/reference/judges#rubric-judge): a bounded model's pass or fail under a rubric a person approved, with citations that code confirmed. | Only once a person approves the rubric. Until then the loader refuses a `judged` read. |
 | none | The schema gives the field no `x-fact-class`. | No. |
 
 A schema marks a field's class with the keyword `x-fact-class` on the property.
@@ -78,36 +78,22 @@ The table gives the class of every top-level body field of every kind.
 | Kind | Field | Class |
 |---|---|---|
 | `evidence/plan@1` | `criteria` | claimed |
-| `evidence/measurement@1` | `label`, `criterion`, `exit_code`, `check`, `contract`, `outcome`, `findings`, `metrics`, `tests` | derived |
+| `evidence/measurement@1` | `label`, `criterion`, `exit_code`, `validator`, `output`, `outcome`, `findings`, `metrics` | derived |
 | | `revision` | claimed |
-| `evidence/verdict@1` | `status`, `facts`, and every fact name | derived |
-| | `validator`, `version`, `findings` | none |
+| `evidence/verdict@1` | `outcome`, and every fact name | derived, or judged for a rubric judge's fact |
+| | `judge`, `version`, `findings` | none |
 | `evidence/approval@1` | `subject`, `path`, `digest`, `source_ref`, `cited_phrase`, `intent_read`, `author` | derived |
 | `daggry/change@1` | `frozen` | derived |
 | | `revision`, `paths` | claimed |
-| `daggry/observation@1` | `record`, `path`, `reason`, `step`, `attempt` | derived |
-| `daggry/run-lock@1` | `validators`, `boundary_rules`, `image_digest`, `workflow_digest` | derived |
+| `daggry/observation@1` | `event`, `path`, `reason`, `step`, `attempt` | derived |
+| `daggry/run-lock@1` | `validators`, `judges`, `boundary_rules`, `image_digest`, `workflow_digest` | derived |
 | `daggry/work-item@1` | `workspace`, `request`, `repository`, `issue` | claimed |
 
 Only a top-level property of a body is readable. A fact value is a boolean, an integer or a string.
 
 ### Verdict facts
 
-A `verdict.<name>` read takes the value from the verdicts sealed for the run, newest first. Each verdict contributes `status` (a string) and each of its facts. A newer value of the same name replaces an older one, so `verdict.status` is the status of the latest verdict. The table lists the names the built-in validators give.
-
-| Name | Type | From | Meaning |
-|---|---|---|---|
-| `all_covered` | boolean | `daggry/criterion-coverage` | No plan criterion is uncovered. |
-| `criteria_covered` | integer | `daggry/criterion-coverage` | Criteria covered by a passing finding of the head measurement. |
-| `criteria_uncovered` | integer | `daggry/criterion-coverage` | Criteria with no passing finding. |
-| `red` | boolean | `daggry/baseline-proof` | The proof step's check failed on the baseline with a non-zero exit. |
-| `findings_removed` | integer | `daggry/base-relative` | Finding ids in base that are absent from head. Also emitted as `tests_removed`. |
-| `findings_newly_skipped` | integer | `daggry/base-relative` | Finding ids that are skipped in head and not in base. Also emitted as `tests_newly_skipped`. |
-| `findings_fail`, `findings_error`, `findings_skip` | integer | `daggry/result-gate` | The count of findings with that outcome in a measurement. |
-| `thresholds_missed` | integer | `daggry/result-gate` | Thresholds on the measurement that do not hold. |
-| `status` | string | any verdict | `pass`, `fail` or `inconclusive`. |
-
-A native validator the tenant admits emits facts of its own under the same rules. The built-in validators are defined in [Validators](/reference/validators#built-in-validators).
+A `verdict.<name>` read takes the value from the verdicts sealed for the run, newest first. Each verdict contributes `outcome` (a string) and each of its facts. A newer value of the same name replaces an older one, so `verdict.outcome` is the outcome of the latest verdict. Every fact name and the judge that emits it is in [Facts a judge emits](/reference/judges#facts-a-judge-emits).
 
 `until` does not depend on whether the iteration was green. When it holds at the end of a red iteration, the loop still ends.
 
@@ -201,13 +187,13 @@ The loader refuses an `until` that does not parse, and one that reads a field th
 ```text
 success()
 true == true
-verdict.passed != false
+verdict.covered != false
 'a' != 'b'
 steps.build-all.exit == 0
 failure()
 always()
-verdict.passed
-!verdict.passed
+verdict.covered
+!verdict.covered
 inputs.count <= 3
 verdict.coverage >= 80 && steps.verify.exit == 0
 needs.plan.status == 'ok' || inputs.count > 9
@@ -233,7 +219,7 @@ Each expression in the table parses, and the evaluator refuses it.
 
 | Expression | Message |
 |---|---|
-| `'a' < 'b'`, `'a' >= 'b'`, `true < false`, `verdict.passed > false`, `true <= true` | `operands of the wrong type` |
+| `'a' < 'b'`, `'a' >= 'b'`, `true < false`, `verdict.covered > false`, `true <= true` | `operands of the wrong type` |
 | `inputs.count` | `expression is not a boolean` |
 | `steps.write.summary == 'done'` where the field is claimed | ``field `<field>` is claimed, not derived`` |
 | `verdict.quality == 'good'` where the field is judged | ``field `<field>` is judged, not derived`` |
@@ -244,10 +230,10 @@ The loader accepts each `until` in the table.
 
 | `until` | Why |
 |---|---|
-| `verdict.status == 'pass'` | `status` is a derived verdict property. |
+| `verdict.outcome == 'pass'` | `outcome` is a derived verdict property. |
 | `inputs.measurement.exit_code == 0` | `exit_code` is derived. |
 | `inputs.measurement.outcome == 'pass'` | `outcome` is derived. |
-| `verdict.all_covered && verdict.status == 'pass'` | Both reads are derived. |
+| `verdict.all_covered && verdict.outcome == 'pass'` | Both reads are derived. |
 | `steps.v.measurement.exit_code == 0` | Step `v` exists. |
 | `needs.anything.measurement.exit_code == 0` | `needs` ids are not checked against the workflow. |
 

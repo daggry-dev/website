@@ -2,7 +2,7 @@
 
 *Reference*
 
-A record that only one vendor's tool can read is not a proof, and a workflow that only one product can run ties you to that product. Daggry therefore writes everything down in four published formats: the workflow, the project config, the tenant config and evidence. This page says what each format holds, how a format is versioned and how you add to one. Read it if you write a tool that reads these files, or if you want to know what stays the same when you replace a module.
+Daggry has four published formats: the workflow, the project config, the tenant config and evidence. This page says what each holds, how a format is versioned and how you add to one. Read it if you write a tool that reads these files, or if you want to know what stays the same when you replace a module.
 
 To write the files, start with [Configure Daggry](/guide/configure).
 
@@ -15,7 +15,7 @@ The table names each format, what it says, who writes it and who reads it. You w
 | Workflow | How one kind of work goes: the steps, what each hands to the next, the gates, the loops and the approvals. | A person, as a file. The tenant config lists it. | The conductor, and every person who wants to know what a run can do. | [Workflow file](/reference/workflow-schema) |
 | Project config | What is true of one project: what it is, which areas it has, which validators it has, which one is its main validator and which paths it protects. | The project owner, as a file in the workspace. | The runner and the control plane. | [Project config](/reference/project-config) |
 | Tenant config | How a tenant's factory works: which workflows it offers, which of them run on which project, how work is scheduled, which agents work and where a person must approve. | The tenant admin. | The conductor and the control plane. | [Tenant config](/reference/tenant-config) |
-| Evidence | What happened: one sealed record for each result, signed and linked to the record before it. | Code only. The control plane seals each record. | Gates, validators, the CLI and any tool of your own. | [Evidence record format](/reference/envelope), [Record kinds](/reference/kinds) |
+| Evidence | What happened: one sealed record for each result, signed and linked to the record before it. | Code only. The control plane seals each record. | Gates, validators, the CLI and any tool of your own. | [Evidence envelope](/reference/envelope), [Artifact kinds](/reference/kinds) |
 
 ## What every format has
 
@@ -54,28 +54,26 @@ The four formats name no tool and no kind of work, so the same files describe so
 | change | A set of differences made to the workspace. |
 | validator | Code that inspects the workspace or sealed records and reports a result. It can inspect a program, a document, a dataset, a configuration or a design file. |
 
-A binding is a ready-made setup for one kind of work. It names the adapters, validators, kinds, effects and conventions for that work. In the `software` binding the workspace is a repository, the work item is an issue and the result is delivered as a pull request. The formats of one toolset are adapters in a binding, and never part of the four formats. See [Bindings](/reference/bindings).
+A binding is a ready-made setup for one kind of work. It names the output formats, validators, kinds, effects and conventions for that work. In the `software` binding the workspace is a repository, the work item is an issue and the result is delivered as a pull request. The formats of one toolset are output formats in a binding, and never part of the four formats. See [Bindings](/reference/bindings).
 
 ## The validator interface
 
-The formats fix how a validator is called, so the source of a validator does not change what a workflow says. A validator takes sealed records and yields a result and a verdict. A script validator also gets a clean copy of the workspace.
+The formats fix how a validator is called, so the source of a validator does not change what a workflow says. A validator takes a clean copy of the workspace and yields a result. A `verify` step derives the verdict from it. A validator you define also gets a clean copy of the workspace.
 
-The table lists the three forms of a result. A result contract names the form.
+The table lists the three forms of a result. A validator's `output` names the form.
 
-| Result contract | The result is |
+| `output` | The result is |
 |---|---|
 | `exit-code` | The exit code alone. |
 | `document` | A result document in the standard's own format. |
-| `<namespace>/<adapter>` | A format that an adapter registered by the tenant reads. |
+| A tool format, such as `junit` | A format that a binding or the tenant registers a reader for. |
 
 A `verify` step lists validators by name. The table lists the forms of a name.
 
 | Name | Validator |
 |---|---|
-| `daggry/<name>` | A built-in validator. |
-| `tenant/<name>` or `project/<name>` | A script validator. |
+| `<name>` | A validator you define, from the project config or the tenant config. |
 | `project` | The project's main validator, with the supporting validators and thresholds the project config lists. |
-| `<namespace>/<name>` | A native validator, written in any language. |
 
 See [Validators](/reference/validators).
 
@@ -95,7 +93,7 @@ The formats say how to write things down. They do not say what a factory must de
 | The envelope, the kinds in the `evidence` namespace, and how a record is signed and linked. | Its own kinds in its own namespace, where the keys are kept and who holds them. |
 | The shape of a project config and a tenant config. | The values: the limits, the agents, the engines and the approval rules. |
 | How a kind, a version and an extension key are named. | Which extensions it reads. |
-| The validator interface: the inputs, the result and the verdict. | Which validators it ships, which it admits and whether a project's own count as evidence. |
+| The validator interface: the inputs and the result. | Which validators it ships and whether a project's own count as evidence. |
 | What a conforming reader accepts and refuses. | Where it runs: the cluster, the store and the forge. |
 
 Daggry's own choices are one such set. For example, Daggry runs each job in a throwaway container, and never lets an agent change what instructs, constrains or judges it. Another factory can decide otherwise and still write the same four formats. For Daggry's choices, see [What is not standard](/reference/conformance#what-is-not-standard).
@@ -106,6 +104,6 @@ Three more pages complete the specification. The table says what each one fixes.
 
 | Topic | What it fixes | Page |
 |---|---|---|
-| Signing and linking | Five rules: the envelope, the canonical bytes, the digest, the chain link and the signature. A verifier that follows them can check any trail, whoever produced it. | [Evidence record format](/reference/envelope) |
+| Signing and linking | Five rules: the envelope, the canonical bytes, the digest, the chain link and the signature. A verifier that follows them can check any trail, whoever produced it. | [Evidence envelope](/reference/envelope) |
 | Modules | What each module does and what can replace it. A module is defined by its contract, and nothing in a contract depends on a language, a database or a cluster. | [Module contracts](/reference/contracts) |
 | Other implementations | What another factory must accept, refuse and produce so that its files and its trail work with Daggry's. | [Conformance](/reference/conformance) |

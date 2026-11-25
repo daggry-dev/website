@@ -16,10 +16,10 @@ Start with one step so you can run the file at once.
      - id: prepare
        kind: command
        scope: anywhere
-       run: sh scripts/prepare.sh
+       run: [sh, scripts/prepare.sh]
    ```
 
-   The first line is the same in every workflow file. Each step needs an `id` that is unique in the file. A `command` step needs `run`, the shell line, and `scope`, the paths it can write.
+   The first line is the same in every workflow file. Each step needs an `id` that is unique in the file. A `command` step needs `run`, the program and its arguments as a list, and `scope`, the paths it can write.
 
 2. Choose a `scope`: `nothing`, `anywhere` or a list of globs such as `["drafts/**"]`. No scope can include a [protected path](/guide/concepts/protection).
 
@@ -63,10 +63,10 @@ Add an agent step when the work needs writing or judgement. A script cannot draf
      - id: prepare
        kind: command
        scope: anywhere
-       run: sh scripts/prepare.sh
+       run: [sh, scripts/prepare.sh]
    ```
 
-   `<engine>` is the engine the agent runs on, by a name the tenant config registers. `prompt` is the agent's instruction. `outputs` lists what the step must hand to the next step. The step succeeds when Daggry accepts every output.
+   `<engine>` is the coding-agent engine the step uses, by the name your tenant registers. `prompt` is the agent's instruction. `outputs` lists what the step must hand to the next step. The step succeeds when Daggry accepts every output.
 
 2. Limit the scope to what the step needs. This step only reads, so its scope is `nothing`.
 
@@ -82,19 +82,17 @@ Without a `verify` step, nothing checks what the agent did. A `verify` step has 
      - id: prepare
        kind: command
        scope: ["drafts/**"]
-       run: sh scripts/prepare.sh
+       run: [sh, scripts/prepare.sh]
      - id: check
        kind: verify
-       validators: [project, tenant/house-style]
+       validators: [project, house-style]
    ```
 
-   `project` runs the project's main validator. `tenant/house-style` is a script validator the tenant admin declares for every project.
+   `project` runs the project's main validator. `house-style` is a validator that every project in your tenant shares, declared in the tenant config. A name that neither the project config nor the tenant config declares is refused when the run starts. A validator of your project is named the same way, and it wins when both use one name.
 
 2. Make sure the project has a project config that names its main validator. See [Set up a project](/guide/how-to/set-up-a-project).
 
-3. Ask the tenant admin to accept the project's validators. By default they do not count, and Daggry refuses the run.
-
-A `verify` step passes when every validator it names passes. Outside a loop, a failed `verify` step fails the run. To write a validator of your own, see [Add a validator](/guide/how-to/add-a-validator).
+A `verify` step passes when every validator it names passes and every option it sets holds. Outside a loop, a failed `verify` step fails the run. To write a validator of your own, see [Add a validator](/guide/how-to/add-a-validator).
 
 ## Add an approval
 
@@ -117,7 +115,7 @@ Add an approval where a wrong guess would waste the night. A `human` step stops 
      - id: prepare
        kind: command
        scope: anywhere
-       run: sh scripts/prepare.sh
+       run: [sh, scripts/prepare.sh]
    ```
 
 2. Choose `waiting_for`. The value decides what you approve.

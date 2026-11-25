@@ -18,7 +18,7 @@ const items = ['State the daily limit for meals', 'Name who approves an exceptio
           <ol>
             <li v-for="i in items" :key="i">{{ i }}</li>
           </ol>
-          <span class="dg-chip"><DgIcon name="link" />plan fingerprint 9c1e</span>
+          <span class="dg-chip"><DgIcon name="link" />plan digest 9c1e</span>
         </div>
         <p class="acts">
           <span class="how">To approve, run:</span>
@@ -36,12 +36,12 @@ const items = ['State the daily limit for meals', 'Name who approves an exceptio
           <span class="dg-chip ok"><DgIcon name="tick" />recorded by code</span>
           <span class="dg-chip"><DgIcon name="link" />approves plan 9c1e</span>
         </div>
-        <p class="note">If anyone changes the plan afterwards, its fingerprint changes and your approval no longer matches it. The run goes on overnight.</p>
+        <p class="note">If anyone changes the plan afterwards, its digest changes and your approval no longer matches it. The run goes on overnight.</p>
       </div>
     </div>
     <figcaption class="cap">
       An approval. The run stops where the workflow asks for your approval, and says why. Your approval is recorded
-      against the fingerprint of the exact plan you read, so it cannot be moved to a different plan.
+      against the digest of the exact plan you read, so it cannot be moved to a different plan.
     </figcaption>
   </figure>
 </template>

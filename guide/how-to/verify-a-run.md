@@ -28,9 +28,9 @@ The command verifies the whole trail of your tenant, not one run. A run is verif
 The CLI fetches raw data and recomputes the result on your machine.
 
 1. It fetches the whole trail of your tenant, and the public half of each signing key the trail names.
-2. It recomputes each record's fingerprint from its bytes, and checks that each record points at the one before it.
+2. It recomputes each record's digest from its bytes, and checks that each record points at the one before it.
 3. It checks each record's signature against the public key.
-4. It fetches every stored file the trail points at and compares its fingerprint with the recorded one.
+4. It fetches every stored file the trail points at and compares its digest with the recorded one.
 
 For how sealing works, see [Why you can trust a run](/guide/concepts/trust).
 :::
@@ -92,7 +92,7 @@ Yes. Every record format has a published JSON Schema, and any tool that supports
    ok -- validation done
    ```
 
-A schema checks shape only, not the fingerprint or the signature, so finish with `daggry verify`. For the formats, see [Open formats](/reference/open-formats).
+A schema checks shape only, not the digest or the signature, so finish with `daggry verify`. For the formats, see [Open formats](/reference/open-formats).
 :::
 
 Related:

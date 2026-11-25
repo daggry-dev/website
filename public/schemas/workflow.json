@@ -29,8 +29,13 @@
     },
     "validatorRef": {
       "type": "string",
-      "pattern": "^(project|[A-Za-z0-9_-]+/[a-z][a-z0-9_-]*)$",
-      "description": "project, or daggry/<name>, tenant/<name>, project/<name> or <namespace>/<name>."
+      "pattern": "^(?!(daggry|coverage|no_regression|baseline_proof)$)[a-z][a-z0-9_-]*$",
+      "description": "project, or the name of a validator you define. project, daggry, coverage, no_regression and baseline_proof are reserved."
+    },
+    "judgeRef": {
+      "type": "string",
+      "pattern": "^(?!(project|daggry|baseline_proof)$)[a-z][a-z0-9_-]*$",
+      "description": "coverage, no_regression, or the name of a judge you declare."
     },
     "scopeEntry": {
       "type": "string",
@@ -116,7 +121,7 @@
             }
           },
           "then": {
-            "$ref": "#/$defs/command"
+            "$ref": "#/$defs/commandStep"
           }
         },
         {
@@ -128,7 +133,7 @@
             }
           },
           "then": {
-            "$ref": "#/$defs/agent"
+            "$ref": "#/$defs/agentStep"
           }
         },
         {
@@ -140,7 +145,7 @@
             }
           },
           "then": {
-            "$ref": "#/$defs/verify"
+            "$ref": "#/$defs/verifyStep"
           }
         },
         {
@@ -152,7 +157,7 @@
             }
           },
           "then": {
-            "$ref": "#/$defs/human"
+            "$ref": "#/$defs/humanStep"
           }
         },
         {
@@ -164,166 +169,10 @@
             }
           },
           "then": {
-            "$ref": "#/$defs/effect"
+            "$ref": "#/$defs/effectStep"
           }
         }
       ]
-    },
-    "command": {
-      "required": [
-        "id",
-        "kind",
-        "run",
-        "scope"
-      ],
-      "additionalProperties": false,
-      "patternProperties": {
-        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-      },
-      "properties": {
-        "id": {
-          "$ref": "#/$defs/id"
-        },
-        "kind": true,
-        "run": {
-          "type": "string",
-          "minLength": 1
-        },
-        "scope": {
-          "$ref": "#/$defs/scope"
-        }
-      }
-    },
-    "agent": {
-      "required": [
-        "id",
-        "kind",
-        "engine",
-        "outputs",
-        "scope"
-      ],
-      "additionalProperties": false,
-      "patternProperties": {
-        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-      },
-      "properties": {
-        "id": {
-          "$ref": "#/$defs/id"
-        },
-        "kind": true,
-        "engine": {
-          "type": "string",
-          "minLength": 1,
-          "description": "The identifier of an agent engine that the tenant registers."
-        },
-        "prompt": {
-          "type": "string"
-        },
-        "transcript": {
-          "type": "string",
-          "minLength": 1
-        },
-        "outputs": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "freeze": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "tests": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "scope": {
-          "$ref": "#/$defs/scope"
-        }
-      },
-      "not": {
-        "required": [
-          "freeze",
-          "tests"
-        ]
-      }
-    },
-    "verify": {
-      "required": [
-        "id",
-        "kind",
-        "validators"
-      ],
-      "additionalProperties": false,
-      "patternProperties": {
-        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-      },
-      "properties": {
-        "id": {
-          "$ref": "#/$defs/id"
-        },
-        "kind": true,
-        "validators": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {
-            "$ref": "#/$defs/validatorRef"
-          }
-        }
-      }
-    },
-    "human": {
-      "required": [
-        "id",
-        "kind",
-        "waiting_for"
-      ],
-      "additionalProperties": false,
-      "patternProperties": {
-        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-      },
-      "properties": {
-        "id": {
-          "$ref": "#/$defs/id"
-        },
-        "kind": true,
-        "waiting_for": {
-          "enum": [
-            "approval",
-            "input-needed"
-          ]
-        }
-      }
-    },
-    "effect": {
-      "required": [
-        "id",
-        "kind",
-        "do"
-      ],
-      "additionalProperties": false,
-      "patternProperties": {
-        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-      },
-      "properties": {
-        "id": {
-          "$ref": "#/$defs/id"
-        },
-        "kind": true,
-        "do": {
-          "type": "string",
-          "pattern": "^([A-Za-z0-9_-]+/)?[a-z][a-z0-9_-]*$",
-          "description": "The name of an effect that the tenant registers."
-        }
-      }
     },
     "loopEntry": {
       "type": "object",
@@ -377,6 +226,165 @@
           }
         }
       }
+    },
+    "commandStep": {
+      "required": [
+        "id",
+        "kind",
+        "run",
+        "scope"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": true,
+        "run": {
+          "$ref": "#/$defs/command"
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        }
+      }
+    },
+    "agentStep": {
+      "required": [
+        "id",
+        "kind",
+        "engine",
+        "outputs",
+        "scope"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": true,
+        "engine": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The identifier of an agent engine that the tenant registers."
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "transcript": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "freeze": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        }
+      }
+    },
+    "verifyStep": {
+      "required": [
+        "id",
+        "kind",
+        "validators"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": true,
+        "validators": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/validatorRef"
+          }
+        },
+        "judges": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/judgeRef"
+          },
+          "description": "Judges to run after the default judge. Absent: only the default judge. The order is the order of the verdicts."
+        }
+      }
+    },
+    "humanStep": {
+      "required": [
+        "id",
+        "kind",
+        "waiting_for"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": true,
+        "waiting_for": {
+          "enum": [
+            "approval",
+            "input-needed"
+          ]
+        }
+      }
+    },
+    "effectStep": {
+      "required": [
+        "id",
+        "kind",
+        "do"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": true,
+        "do": {
+          "type": "string",
+          "pattern": "^([A-Za-z0-9_-]+/)?[a-z][a-z0-9_-]*$",
+          "description": "The name of an effect that the tenant registers."
+        }
+      }
+    },
+    "command": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "A program and its arguments. The first string is the program. No shell reads the list."
     }
   }
 }

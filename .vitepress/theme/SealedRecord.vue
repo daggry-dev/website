@@ -4,7 +4,7 @@ import DgIcon from './DgIcon.vue'
 const label =
   'One sealed record, in four layers. The result: what the step produced, with its kind, its id and its body. ' +
   'Added by code at sealing: who produced it, when, which records it builds on and which key signs it. ' +
-  'The fingerprint: a short code computed from everything above it. ' +
+  'The digest: a short code computed from everything above it. ' +
   'The signature: made with the signing key, which never enters a runner. ' +
   'A seal proves that a validator ran and that the record is unchanged. ' +
   'It does not prove that you chose the right validators.'
@@ -27,7 +27,7 @@ const label =
             <span>Who produced it, when, which records it builds on and which key signs it.</span>
           </div>
           <div class="dg-node cool">
-            <span class="dg-who">fingerprint</span>
+            <span class="dg-who">digest</span>
             <b><span class="dg-mono">e0d3…</span></b>
             <span>A short code computed from everything above it.</span>
           </div>
@@ -52,7 +52,7 @@ const label =
     </div>
     <figcaption class="cap">
       What a sealed record contains. The result is what the step produced: its kind, its id and its body. Code
-      adds who produced it, when, which records it builds on and which key signs it. The fingerprint is computed
+      adds who produced it, when, which records it builds on and which key signs it. The digest is computed
       from all of that, and the signature is made with a key that never enters a runner. A seal proves that a
       validator ran and that the record is unchanged. It does not prove that you chose the right validators.
     </figcaption>

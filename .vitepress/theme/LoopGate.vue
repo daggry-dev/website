@@ -3,7 +3,7 @@ import DgArrow from './DgArrow.vue'
 import DgIcon from './DgIcon.vue'
 
 const steps = [
-  { who: 'agent', t: 'Write the proof', d: 'a test for the next plan item', c: 'cool' },
+  { who: 'agent', t: 'Write the proof', d: 'a test for the next criterion', c: 'cool' },
   { who: 'code', t: 'Shown to fail', d: 'before the work', c: '' },
   { who: 'agent', t: 'Do the work', d: 'change the paths in scope', c: 'cool' },
   { who: 'code', t: 'Run again on a clean copy', d: 'every validator', c: 'warm' },
@@ -14,7 +14,7 @@ const steps = [
   <figure class="dgm lg">
     <div class="dg-body grid">
       <div class="loop">
-        <p class="lt">One iteration for each plan item, up to the loop limit</p>
+        <p class="lt">One iteration for each criterion, up to the loop limit</p>
         <ol class="dg-flow">
           <li v-for="(s, i) in steps" :key="s.t">
             <div :class="['dg-node', s.c]">
@@ -25,7 +25,7 @@ const steps = [
             <DgArrow v-if="i < steps.length - 1" />
           </li>
         </ol>
-        <p class="back"><DgIcon name="back" />Plan items left, or this one failed: another iteration</p>
+        <p class="back"><DgIcon name="back" />Criteria left, or this one failed: another iteration</p>
       </div>
 
       <DgArrow hot class="to-gate" />
@@ -37,7 +37,7 @@ const steps = [
         </div>
         <ul class="exits">
           <li class="dg-node ok">
-            <span class="dg-who">every plan item covered</span>
+            <span class="dg-who">every criterion covered</span>
             <b>Next step</b>
           </li>
           <li class="dg-node rose">
@@ -48,9 +48,9 @@ const steps = [
       </div>
     </div>
     <figcaption class="cap">
-      Each iteration takes one plan item through four steps, two by the agent and two by code: the agent writes a proof,
+      Each iteration takes one criterion through four steps, two by the agent and two by code: the agent writes a proof,
       code shows that the proof fails before the work, the agent does the work, and code runs every validator on a clean
-      copy. The gate lets the run go on only when every plan item is covered. At the loop limit, the run fails, or it
+      copy. The gate lets the run go on only when every criterion is covered. At the loop limit, the run fails, or it
       waits for you at the <code>human</code> step the workflow names. In software, the proof is a test.
     </figcaption>
   </figure>

@@ -2,7 +2,7 @@
 
 *Reference*
 
-The Daggry chart installs with defaults that suit a first cluster, and your cluster can differ: another storage class, your own registry, a stricter split of rights. This page lists every value the chart takes and the option to run the launcher in its own pod. Read it if you are the cluster admin and you install or upgrade Daggry. For the steps, follow [Install Daggry](/guide/how-to/deploy).
+The Daggry chart installs with defaults that suit a first cluster. This page lists every value the chart takes and the option to run the launcher in its own pod. Read it if you are the cluster admin and you install or upgrade Daggry. For the steps, follow [Install Daggry](/guide/how-to/deploy).
 
 The chart holds what is true of the installation. How a tenant's factory works is in the [Tenant config](/reference/tenant-config): the lease length, the concurrency cap, the job images and each engine's credential.
 

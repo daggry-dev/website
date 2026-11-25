@@ -1,12 +1,10 @@
-# Evidence record format
+# Evidence envelope
 
 *Reference*
 
-A trail is a proof only if anyone can recompute it with a tool of their own. The envelope is the one JSON shape every sealed record has, and this page gives its exact rules. Read it if you write a reader, a verifier or a tool that checks a trail. To verify a run with the CLI, follow [Verify a run](/guide/how-to/verify-a-run).
+The envelope is the one JSON shape every sealed record has. This page gives its fields, the canonical JSON rules and how the digest, the chain link and the signature are computed. Read it if you write a reader, a verifier or a tool that checks a trail. To verify a run with the CLI, follow [Verify a run](/guide/how-to/verify-a-run).
 
-This page uses the specification's words: an artifact is a record, a digest is a fingerprint, and the log or the chain is the evidence trail. Any factory that follows the field, canonical JSON, digest, chain link and signature rules on this page produces evidence that any verifier can check, whoever built either one. For what an implementation must do, see [Conformance](/reference/conformance).
-
-This page lists every field, the rules for `meta`, the canonical JSON rules, and how the digest, the chain link and the signature are computed.
+On this page an artifact is one sealed record, and the log or the chain is what the guide calls the evidence trail. Any factory that follows the field, canonical JSON, digest, chain link and signature rules on this page produces evidence that any verifier can check, whoever built either one. For what an implementation must do, see [Conformance](/reference/conformance).
 
 The hand-written values on this page are illustrative. The test vector in [Worked example](#worked-example-recompute-a-digest-and-a-link) is copied from the published test vector.
 
@@ -27,7 +25,7 @@ An agent writes a draft that holds only `kind`, `id` and `body`. Code adds every
 | `format` | string | yes | seal | yes | Always `evidence/envelope@1`. |
 | `kind` | string | yes | draft | yes | `<namespace>/<name>@<major>`. Pattern `^[^/@]+/[^/@]+@[0-9]+$`. |
 | `id` | string | yes | draft | yes | Any string. |
-| `body` | any JSON value | yes | draft | yes | Validated against the kind's schema before sealing. See [Record kinds](/reference/kinds). |
+| `body` | any JSON value | yes | draft | yes | Validated against the kind's schema before sealing. See [Artifact kinds](/reference/kinds). |
 | `parents` | array of digests | yes | seal | yes | Each a 64-digit lowercase hex digest. Can be empty. |
 | `producer` | string | yes | seal | yes | Any string. |
 | `time` | integer | yes | seal | yes | 0 or more. Unix milliseconds. |
@@ -156,12 +154,12 @@ An artifact sits in two chains. The table names each one.
 
 | Chain | Made of | Answers |
 |---|---|---|
-| Lineage | `parents`: a verdict names the measurement it judged, the measurement names the change, and the change names the plan. | What did this record build on? |
+| Lineage | `parents`: a verdict names the records its judge was given, the measurement names the change, and the change names the plan. | What did this record build on? |
 | Log | `prev` and the link of each entry. | Has anything been changed, reordered or removed? |
 
 <ChainDiagram />
 
-The diagram shows two entries. Each holds a fingerprint, a link made from the previous link and that fingerprint, and a signature over the link. Changing one byte in the first breaks every later link.
+The diagram shows two entries. Each holds a digest, a link made from the previous link and that digest, and a signature over the link. Changing one byte in the first breaks every later link.
 
 ## Signature and key id
 
@@ -184,7 +182,7 @@ A log entry holds the previous link and one sealed artifact. This block is the s
     "format": "evidence/envelope@1",
     "kind": "evidence/measurement@1",
     "id": "<artifact id>",
-    "body": { "label": "head", "revision": "<version id>", "exit_code": 0, "check": "links", "contract": "exit-code", "outcome": "pass", "findings": [] },
+    "body": { "label": "head", "revision": "<version id>", "exit_code": 0, "validator": "links", "output": "exit-code", "outcome": "pass", "findings": [] },
     "parents": ["<digest of each artifact this one builds on>"],
     "producer": "<who produced it>",
     "time": "<unix milliseconds, a number>",

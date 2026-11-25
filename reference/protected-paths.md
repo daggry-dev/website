@@ -2,7 +2,7 @@
 
 *Reference*
 
-An agent that can edit its validators or its instructions can make any run pass. This page lists every path and scope rule that Daggry enforces on a step: which paths are protected, how a scope is judged and how the boundary check enforces both. Read it if you write workflows or own a project and need the exact list. For the reasons, read [What an agent cannot change](/guide/concepts/protection).
+This page lists every path and scope rule that Daggry enforces on a step: which paths are protected, how a scope is judged and how the boundary check enforces both. Read it if you write workflows or own a project and need the exact list. For the reasons, read [What an agent cannot change](/guide/concepts/protection).
 
 ## Protected paths
 
@@ -10,23 +10,23 @@ The table lists the paths that are protected in every run. No workflow and no st
 
 | Protected | Why |
 |---|---|
-| `.daggry/**` | The project config, `.daggry/project.yaml`, and the project harness. |
+| `.daggry/**` | The project config, `.daggry/project.yaml`, and anything else under `.daggry/`. |
 | `**/AGENTS.md`, `.agents/**`, `**/SKILL.md` | Instruction files and skills for agents. |
 | Engine-specific instruction files and config directories | The same, for each supported engine. |
 | `**/.mcp.json` | Tool-server configuration. |
 | Frozen paths | What a proof step sealed in a previous loop iteration. See [Frozen paths](#frozen-paths). |
-| The files of a script validator | What the validators of the baseline's [Project config](/reference/project-config) run. See [What a project adds](#what-a-project-adds). |
+| The files of a validator or judge you define | The files that the `run` of a validator or a custom judge in the baseline's [Project config](/reference/project-config) names. See [What a project adds](#what-a-project-adds). |
 | Paths a binding adds | The files that change how the binding's tools read the workspace. See [Bindings](/reference/bindings). |
 
 A change that adds a symbolic link, changes the type of a path or adds a case collision is a violation too. A case collision is judged on every directory component, so `Docs/x.md` is refused where `docs/` exists.
 
-The project harness changes only when a person accepts a change into the workspace, outside every run. A run's own change to `.daggry/` takes effect in the next run whose baseline holds it.
+Everything under `.daggry/` changes only when a person accepts a change into the workspace, outside every run. A run's own change to `.daggry/` takes effect in the next run whose baseline holds it.
 
 ## What a project adds
 
-A [Project config](/reference/project-config) adds to the protected set in two ways. It never removes a path from it.
+A [Project config](/reference/project-config) adds to the protected set in two ways, and both start from a name in the manifest. It never removes a path from it.
 
-- **The files a script validator runs.** Every string in a command of `validators` or `project.setup` that is the path of a file in the baseline is a protected path, with no entry anywhere. With `run: scripts/review.sh` the script is protected, and with `run: [sh, scripts/verify.sh]` so is `scripts/verify.sh`.
+- **The files a validator or judge you define runs.** Every string in a command of `validators`, `judges` or `project.setup` that is the path of a file in the baseline is a protected path, with no entry anywhere. With `run: [sh, scripts/verify.sh]` the script `scripts/verify.sh` is protected, and so is the file of any other string in the list that is a path in the baseline.
 - **The paths the project lists.** Each entry of `protect.paths` is a glob or an area reference, `area:<name>`. See [protect](/reference/project-config#protect).
 
 The default covers the files a command names, not the files those programs read. A script that reads a rules file does not protect the rules file. List such a file in `protect.paths`.
@@ -68,7 +68,7 @@ The boundary check under [Enforcement](#enforcement) judges the scope of a run t
 
 A proof step is an `agent` step with `freeze`. When the control plane seals it, each path of its change that matches the `freeze` globs is frozen with its file digest. Daggry compares each frozen path with the last sealed version by file digest at every later boundary. A changed or missing file is a violation, whatever scope a later step has.
 
-Frozen paths keep the proof of a criterion fixed while an agent does the work that satisfies it. See [Baseline proof](/reference/validators#baseline-proof).
+Frozen paths keep the proof of a criterion fixed while an agent does the work that satisfies it. See [Baseline proof](/reference/conformance#baseline-proof).
 
 ## Unfreeze grant
 
@@ -105,12 +105,12 @@ These rules hold for every pod.
 - Daggry's own instructions, such as the step prompt, sit in a volume that is read-only in the main container.
 - The project's own agent configuration (instruction files, agent folders, skills, commands, hooks and project settings) is read from the working copy. The boundary check under Enforcement guards it: a changed path is put back in the pod and rechecked in the control plane, and the step fails.
 - The seal key and the workspace store's own key never enter the pod.
-- A `verify` step runs each script validator on a clean copy of the workspace as a different unprivileged user after the agent has ended, with commands read from the baseline.
+- A `verify` step runs each validator you define on a clean copy of the workspace as a different unprivileged user after the agent has ended, with commands read from the baseline.
 - If the `verify` step cannot switch user, it measures nothing and the step fails with ``the verify step could not switch to a different unix user: <cause>; nothing was measured``.
 
 ## Next steps
 
 The list names the pages to read next.
 
-- For the `approval` fields, see [Record kinds](/reference/kinds#evidence-approval-1).
+- For the `approval` fields, see [Artifact kinds](/reference/kinds#evidence-approval-1).
 - For the paths one kind of work adds, see [Bindings](/reference/bindings).

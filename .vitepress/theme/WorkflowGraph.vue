@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import ScrollFrame from './ScrollFrame.vue'
 const before = [
-  { k: 'agent', t: 'Plan', d: 'a list of plan items', c: 'cool' },
+  { k: 'agent', t: 'Plan', d: 'a list of criteria', c: 'cool' },
   { k: 'you', t: 'You approve', d: 'the exact plan', c: 'rose' },
 ]
 const loop = [
-  { k: 'agent', t: 'Write the proof', d: 'a test for the next plan item', c: 'cool' },
+  { k: 'agent', t: 'Write the proof', d: 'a test for the next criterion', c: 'cool' },
   { k: 'code', t: 'Proof shown to fail', d: 'before the work', c: 'box' },
   { k: 'agent', t: 'Do the work', d: 'make the proof pass', c: 'cool' },
   { k: 'code', t: 'Run again on a clean copy', d: 'every validator', c: 'warm' },
@@ -21,7 +21,7 @@ const after = [
       <div class="row">
         <template v-for="s in before" :key="s.t"><div :class="['n', s.c]"><small>{{ s.k }}</small><b>{{ s.t }}</b><em>{{ s.d }}</em></div><span class="a" aria-hidden="true">→</span></template>
         <div class="loop">
-          <small class="lt">repeat for each plan item · up to the loop limit</small>
+          <small class="lt">repeat for each criterion · up to the loop limit</small>
           <div class="lrow">
             <template v-for="(s, i) in loop" :key="s.t"><div :class="['n', s.c]"><small>{{ s.k }}</small><b>{{ s.t }}</b><em>{{ s.d }}</em></div><span v-if="i < loop.length - 1" class="a" aria-hidden="true">→</span></template>
           </div>
@@ -30,7 +30,7 @@ const after = [
         <template v-for="s in after" :key="s.t"><span class="a" aria-hidden="true">→</span><div :class="['n', s.c]"><small>{{ s.k }}</small><b>{{ s.t }}</b><em>{{ s.d }}</em></div></template>
       </div>
     </ScrollFrame>
-    <figcaption class="cap">A workflow that delivers a change: a plan, your approval, a loop with a proof for each plan item that fails first, then passes, and an effect that delivers the result. When the loop reaches its limit, the run fails or waits for you. In software, the proof is a test and the effect opens a pull request.</figcaption>
+    <figcaption class="cap">A workflow that delivers a change: a plan, your approval, a loop with a proof for each criterion that fails first, then passes, and an effect that delivers the result. When the loop reaches its limit, the run fails or waits for you. In software, the proof is a test and the effect opens a pull request.</figcaption>
   </figure>
 </template>
 

@@ -15,7 +15,7 @@ A run goes through five stages. The diagram numbers them.
 1. **Work comes in.** You start a run with the CLI, for one work item in the forge.
 2. **The conductor picks the next step.** It reads the order from the workflow and the limits from the tenant config, and starts a runner for the job.
 3. **The runner does the work.** It runs a step in one of two ways: as a script, or with an agent. The agent runs on an engine.
-4. **The control plane checks and seals.** What the runner sends back is only a claim. A validator checks it, and the control plane signs the result and adds it to the evidence trail in the store.
+4. **The control plane checks and seals.** What the runner sends back is only a claim. Your validators measure it, the judges decide the verdict, and the control plane signs both and adds them to the evidence trail in the store.
 5. **The result goes out.** An `effect` step delivers the result to the forge, for example by opening a pull request.
 
 A step that needs your approval releases its runner. The job continues in a new runner when you approve. If a runner stops responding, Daggry starts a new one from the last sealed change.
@@ -32,7 +32,7 @@ You meet these seven names in status output, settings and errors. Each module ha
 | Engine | The coding-agent program an agent runs on. |
 | Forge | Where work comes from and where results go. For software, GitHub. |
 | Store | Keeps the trail. |
-| Validators | Check the work as code and return pass or fail. |
+| Validators | Measure the work as code. Judges decide a verdict from the evidence trail. |
 
 You can replace any module with your own. Daggry runs on your Kubernetes cluster.
 
@@ -40,9 +40,9 @@ You can replace any module with your own. Daggry runs on your Kubernetes cluster
 
 Four rules make a pass worth something.
 
-- **A claim is not a record.** What an agent says it did counts for nothing until a validator has checked it.
+- **A claim is not a record.** What an agent says it did counts for nothing until a validator has measured it and a judge has decided on it.
 - **Only the control plane signs.** The signing key never enters a runner, so no agent can sign a record.
-- **Each record is linked to the one before.** A record carries a fingerprint, a short code computed from every byte. Change one byte, and `daggry verify` shows where.
+- **Each record is linked to the one before.** A record carries a digest, a short code computed from every byte. Change one byte, and `daggry verify` shows where.
 - **An agent cannot change the rules.** Its validators, its instructions and its limits are protected paths.
 
 For the details, see [Why you can trust a run](/guide/concepts/trust) and [What an agent cannot change](/guide/concepts/protection).

@@ -15,11 +15,13 @@
       "const": "daggry/tenant@1"
     },
     "workflows": {
-      "type": "array",
-      "items": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/name"
+      },
+      "additionalProperties": {
         "type": "object",
         "required": [
-          "name",
           "source"
         ],
         "additionalProperties": false,
@@ -27,9 +29,6 @@
           "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
         },
         "properties": {
-          "name": {
-            "$ref": "#/$defs/name"
-          },
           "source": {
             "type": "object",
             "required": [
@@ -120,11 +119,13 @@
       },
       "properties": {
         "engines": {
-          "type": "array",
-          "items": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/name"
+          },
+          "additionalProperties": {
             "type": "object",
             "required": [
-              "name",
               "credential"
             ],
             "additionalProperties": false,
@@ -132,9 +133,6 @@
               "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
             },
             "properties": {
-              "name": {
-                "$ref": "#/$defs/name"
-              },
               "credential": {
                 "type": "object",
                 "required": [
@@ -154,11 +152,13 @@
           }
         },
         "roster": {
-          "type": "array",
-          "items": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/name"
+          },
+          "additionalProperties": {
             "type": "object",
             "required": [
-              "name",
               "engine"
             ],
             "additionalProperties": false,
@@ -166,9 +166,6 @@
               "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
             },
             "properties": {
-              "name": {
-                "$ref": "#/$defs/name"
-              },
               "engine": {
                 "$ref": "#/$defs/name"
               },
@@ -206,11 +203,13 @@
       },
       "properties": {
         "images": {
-          "type": "array",
-          "items": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/name"
+          },
+          "additionalProperties": {
             "type": "object",
             "required": [
-              "name",
               "image"
             ],
             "additionalProperties": false,
@@ -218,9 +217,6 @@
               "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
             },
             "properties": {
-              "name": {
-                "$ref": "#/$defs/name"
-              },
               "image": {
                 "$ref": "#/$defs/name"
               },
@@ -237,11 +233,13 @@
           }
         },
         "classes": {
-          "type": "array",
-          "items": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/name"
+          },
+          "additionalProperties": {
             "type": "object",
             "required": [
-              "name",
               "module",
               "network",
               "model_credential"
@@ -251,9 +249,6 @@
               "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
             },
             "properties": {
-              "name": {
-                "$ref": "#/$defs/name"
-              },
               "module": {
                 "enum": [
                   "deterministic-runner",
@@ -299,56 +294,43 @@
           "type": "object",
           "additionalProperties": false,
           "patternProperties": {
-            "^[a-z][a-z0-9_-]*$": {
+            "^(?!(project|daggry|coverage|no_regression|baseline_proof)$)[a-z][a-z0-9_-]*$": {
               "$ref": "#/$defs/scriptValidator"
             }
           }
-        },
-        "native": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": [
-              "name",
-              "version",
-              "digest"
-            ],
-            "additionalProperties": false,
-            "patternProperties": {
-              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-            },
-            "properties": {
-              "name": {
-                "type": "string",
-                "pattern": "^(?!daggry/|tenant/|project/)[A-Za-z0-9_-]+/[a-z][a-z0-9_-]*$"
-              },
-              "version": {
-                "$ref": "#/$defs/name"
-              },
-              "digest": {
-                "type": "string",
-                "pattern": "^[0-9a-f]{64}$"
-              }
+        }
+      }
+    },
+    "judges": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "scripts": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^(?!(project|daggry|coverage|no_regression|baseline_proof)$)[a-z][a-z0-9_-]*$": {
+              "$ref": "#/$defs/scriptJudge"
             }
           }
         }
       }
     },
     "projects": {
-      "type": "array",
-      "items": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/workspace"
+      },
+      "additionalProperties": {
         "type": "object",
-        "required": [
-          "workspace"
-        ],
         "additionalProperties": false,
         "patternProperties": {
           "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
         },
         "properties": {
-          "workspace": {
-            "$ref": "#/$defs/workspace"
-          },
           "binding": {
             "$ref": "#/$defs/label"
           },
@@ -388,23 +370,23 @@
                 "items": {
                   "$ref": "#/$defs/name"
                 }
-              }
-            }
-          },
-          "approval": {
-            "type": "object",
-            "additionalProperties": false,
-            "patternProperties": {
-              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-            },
-            "properties": {
-              "require": {
-                "type": "array",
-                "items": {
-                  "enum": [
-                    "plan",
-                    "effect"
-                  ]
+              },
+              "approval": {
+                "type": "object",
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+                },
+                "properties": {
+                  "require": {
+                    "type": "array",
+                    "items": {
+                      "enum": [
+                        "plan",
+                        "effect"
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -421,31 +403,10 @@
           "image": {
             "$ref": "#/$defs/name"
           },
-          "validators": {
-            "type": "object",
-            "additionalProperties": false,
-            "patternProperties": {
-              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-            },
-            "properties": {
-              "admit": {
-                "anyOf": [
-                  {
-                    "enum": [
-                      "all",
-                      "none"
-                    ]
-                  },
-                  {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "items": {
-                      "$ref": "#/$defs/validatorName"
-                    }
-                  }
-                ]
-              }
-            }
+          "trust_project": {
+            "type": "boolean",
+            "default": true,
+            "description": "False: only validators and judges the tenant config declares count as evidence. A project's own are previews."
           }
         }
       }
@@ -458,11 +419,13 @@
       },
       "properties": {
         "bindings": {
-          "type": "array",
-          "items": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/label"
+          },
+          "additionalProperties": {
             "type": "object",
             "required": [
-              "name",
               "version"
             ],
             "additionalProperties": false,
@@ -470,9 +433,6 @@
               "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
             },
             "properties": {
-              "name": {
-                "$ref": "#/$defs/label"
-              },
               "version": {
                 "$ref": "#/$defs/name"
               }
@@ -480,11 +440,13 @@
           }
         },
         "adapters": {
-          "type": "array",
-          "items": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/formatName"
+          },
+          "additionalProperties": {
             "type": "object",
             "required": [
-              "name",
               "version"
             ],
             "additionalProperties": false,
@@ -492,9 +454,6 @@
               "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
             },
             "properties": {
-              "name": {
-                "$ref": "#/$defs/adapterName"
-              },
               "version": {
                 "$ref": "#/$defs/name"
               }
@@ -502,11 +461,13 @@
           }
         },
         "effects": {
-          "type": "array",
-          "items": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/effectName"
+          },
+          "additionalProperties": {
             "type": "object",
             "required": [
-              "name",
               "version"
             ],
             "additionalProperties": false,
@@ -514,9 +475,6 @@
               "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
             },
             "properties": {
-              "name": {
-                "$ref": "#/$defs/effectName"
-              },
               "version": {
                 "$ref": "#/$defs/name"
               }
@@ -524,11 +482,14 @@
           }
         },
         "step_kinds": {
-          "type": "array",
-          "items": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[^/@]+/[^/@]+$"
+          },
+          "additionalProperties": {
             "type": "object",
             "required": [
-              "kind",
               "module",
               "schema"
             ],
@@ -537,10 +498,6 @@
               "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
             },
             "properties": {
-              "kind": {
-                "type": "string",
-                "pattern": "^[^/@]+/[^/@]+$"
-              },
               "module": {
                 "enum": [
                   "deterministic-runner",
@@ -555,11 +512,14 @@
           }
         },
         "artifact_kinds": {
-          "type": "array",
-          "items": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^(?!evidence/|daggry/)[^/@]+/[^/@]+@[0-9]+$"
+          },
+          "additionalProperties": {
             "type": "object",
             "required": [
-              "kind",
               "schema"
             ],
             "additionalProperties": false,
@@ -567,10 +527,6 @@
               "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
             },
             "properties": {
-              "kind": {
-                "type": "string",
-                "pattern": "^(?!evidence/|daggry/)[^/@]+/[^/@]+@[0-9]+$"
-              },
               "schema": {
                 "$ref": "#/$defs/name"
               }
@@ -593,10 +549,6 @@
       "type": "string",
       "minLength": 1
     },
-    "adapterName": {
-      "type": "string",
-      "pattern": "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$"
-    },
     "effectName": {
       "type": "string",
       "pattern": "^([A-Za-z0-9_-]+/)?[a-z][a-z0-9_-]*$"
@@ -606,23 +558,17 @@
       "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))\\S+$"
     },
     "command": {
-      "anyOf": [
-        {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          },
-          "minItems": 1
-        },
-        {
-          "$ref": "#/$defs/path"
-        }
-      ]
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "A program and its arguments. The first string is the program. No shell reads the list."
     },
     "validatorName": {
       "type": "string",
-      "pattern": "^[a-z][a-z0-9_-]*$"
+      "pattern": "^(?!(project|daggry|coverage|no_regression|baseline_proof)$)[a-z][a-z0-9_-]*$"
     },
     "scriptValidator": {
       "type": "object",
@@ -653,37 +599,19 @@
         "run": {
           "$ref": "#/$defs/command"
         },
-        "kind": {
-          "$ref": "#/$defs/label"
+        "role": {
+          "$ref": "#/$defs/label",
+          "default": "custom"
         },
-        "result": {
-          "type": "object",
-          "additionalProperties": false,
-          "patternProperties": {
-            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-          },
-          "properties": {
-            "contract": {
-              "anyOf": [
-                {
-                  "enum": [
-                    "exit-code",
-                    "document"
-                  ]
-                },
-                {
-                  "type": "string",
-                  "pattern": "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$"
-                }
-              ]
-            },
-            "path": {
-              "$ref": "#/$defs/path"
-            }
-          },
-          "required": [
-            "contract"
-          ]
+        "output": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$",
+          "default": "exit-code",
+          "description": "How Daggry reads the output: exit-code (default), document, or the name of a tool format such as junit or sarif."
+        },
+        "output_file": {
+          "$ref": "#/$defs/path",
+          "description": "The file the validator writes its output to. Absent: standard output."
         },
         "timeout": {
           "type": "integer",
@@ -717,8 +645,50 @@
       },
       "required": [
         "source",
-        "run",
-        "kind"
+        "run"
+      ]
+    },
+    "formatName": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$"
+    },
+    "scriptJudge": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "source": {
+          "type": "object",
+          "required": [
+            "workspace",
+            "revision"
+          ],
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          },
+          "properties": {
+            "workspace": {
+              "$ref": "#/$defs/workspace"
+            },
+            "revision": {
+              "$ref": "#/$defs/name"
+            }
+          }
+        },
+        "run": {
+          "$ref": "#/$defs/command"
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "source",
+        "run"
       ]
     }
   }

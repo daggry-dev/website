@@ -2,7 +2,7 @@
 
 *Reference*
 
-Two teams rarely work the same way: one lets agents deliver results all night, and another wants a person to approve every plan. The tenant config holds those choices as data. It is one YAML document that says how a tenant's factory works: which workflows it offers, how work is scheduled, which agents work and where a person must approve, which runners run the steps, which validators count as evidence, which projects it serves and which workflows run on each. This page defines the layout and the precedence rule. Read it if you are a tenant admin, or if you write a tool that reads the document. For the steps, follow [Set up a tenant](/guide/how-to/set-up-a-tenant).
+The tenant config is one YAML document that says how a tenant's factory works: which workflows it offers, how work is scheduled, which agents work and where a person must approve, which runners run the steps, which validators projects share, which projects it serves and which workflows run on each. Read this page to look up a key or the precedence rule, or if you write a tool that reads the document. For the steps, follow [Set up a tenant](/guide/how-to/set-up-a-tenant).
 
 The format is open. It follows the same layout rules as the [Project config](/reference/project-config): a `format` header, named sections and namespaced extension keys.
 
@@ -25,7 +25,7 @@ A tenant config has three parts.
 | Part | Keys | Rule |
 |---|---|---|
 | Header | `format` | Required. Names the standard and its major version. |
-| Sections | `workflows`, `orchestration`, `agents`, `runners`, `validators`, `projects`, `extensions` | Each is optional. Each appears at most once. |
+| Sections | `workflows`, `orchestration`, `agents`, `runners`, `validators`, `judges`, `projects`, `extensions` | Each is optional. Each appears at most once. |
 | Extension keys | `<namespace>/<key>` | Any number. The rules are in [Extension keys](/reference/project-config#extension-keys). |
 
 Every object is closed: a key that is not listed on this page and is not an extension key is refused. The document uses the strict [YAML subset](/reference/workflow-schema#yaml-subset).
@@ -46,11 +46,10 @@ The `workflows` section is the catalogue: the workflows the tenant offers, and w
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
-| `workflows` | array of objects | no | The catalogue. Names are unique. |
-| `workflows[].name` | string | yes | The name a project entry uses to assign the workflow. Non-empty. See [projects](#projects). |
-| `workflows[].source.workspace` | string | yes | The workspace that holds the workflow file. Non-empty. The tenant chooses it. |
-| `workflows[].source.path` | string | yes | The path of the workflow file in that workspace. Non-empty. |
-| `workflows[].source.revision` | string | yes | The version of the workspace the file is read from, in the form the binding gives. Non-empty. |
+| `workflows` | map | no | The catalogue, from a workflow name to its entry. The name is what a project entry uses to assign the workflow. Non-empty. See [projects](#projects). |
+| `workflows.<name>.source.workspace` | string | yes | The workspace that holds the workflow file. Non-empty. The tenant chooses it. |
+| `workflows.<name>.source.path` | string | yes | The path of the workflow file in that workspace. Non-empty. |
+| `workflows.<name>.source.revision` | string | yes | The version of the workspace the file is read from, in the form the binding gives. Non-empty. |
 
 A workflow is pinned to one version, so a catalogue entry names exactly one file content. The file itself follows the [Workflow file](/reference/workflow-schema). A run uses only a workflow from the catalogue.
 
@@ -76,13 +75,11 @@ The `agents` section says which engines and agents work for the tenant, and when
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
-| `agents.engines` | array of objects | no | The registered engines. An `engine` value in a workflow must name one of them. |
-| `agents.engines[].name` | string | yes | The engine identifier. Non-empty. Unique. |
-| `agents.engines[].credential.ref` | string | yes | The name of the stored secret the engine uses. Non-empty. |
-| `agents.roster` | array of objects | no | The named agents. |
-| `agents.roster[].name` | string | yes | The agent's name. Non-empty. Unique. |
-| `agents.roster[].engine` | string | yes | The name of a registered engine. |
-| `agents.roster[].instructions` | string | no | The path of the agent's instruction file in the workflow's source workspace. |
+| `agents.engines` | map | no | The registered engines, from an engine identifier to its entry. An `engine` value in a workflow must name one of them. |
+| `agents.engines.<name>.credential.ref` | string | yes | The name of the stored secret the engine uses. Non-empty. |
+| `agents.roster` | map | no | The named agents, from an agent's name to its entry. |
+| `agents.roster.<name>.engine` | string | yes | The name of a registered engine. |
+| `agents.roster.<name>.instructions` | string | no | The path of the agent's instruction file in the workflow's source workspace. |
 | `agents.approval.require` | array of strings | no | The points where a run always waits for a person. Each is `plan` or `effect`. |
 
 Two rules hold for this section:
@@ -96,65 +93,71 @@ The `runners` section holds the images that run steps, and the isolation class o
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
-| `runners.images` | array of objects | no | The images the tenant offers. |
-| `runners.images[].name` | string | yes | The name a project entry uses in `projects[].image`. Non-empty. Unique. |
-| `runners.images[].image` | string | yes | The image reference, by digest. |
-| `runners.images[].tools` | array of labels | no | The tools the image holds, by the labels a project config uses in `needs.tools`. |
-| `runners.images[].default` | boolean | no | `true` on at most one image: the one a workspace gets when its project entry names none. |
-| `runners.classes` | array of objects | no | The isolation classes. |
-| `runners.classes[].name` | string | yes | The class name. Non-empty. Unique. A script validator asks for a class by this name in `needs.runner`. |
-| `runners.classes[].module` | string | yes | `deterministic-runner` or `agent-runner`: the kind of step execution the class applies to. |
-| `runners.classes[].network` | string | yes | `none` or `open`: whether a pod of the class reaches the network. |
-| `runners.classes[].model_credential` | boolean | yes | Whether a pod of the class holds an engine's credential. `false` is required for `deterministic-runner`. |
+| `runners.images` | map | no | The images the tenant offers, from an image name to its entry. A project entry uses the name in `projects.<workspace>.image`. |
+| `runners.images.<name>.image` | string | yes | The image reference, by digest. |
+| `runners.images.<name>.tools` | array of labels | no | The tools the image holds, by the labels a project config uses in `needs.tools`. |
+| `runners.images.<name>.default` | boolean | no | `true` on at most one image: the one a workspace gets when its project entry names none. |
+| `runners.classes` | map | no | The isolation classes, from a class name to its entry. A validator you define asks for a class by this name in `needs.runner`. |
+| `runners.classes.<name>.module` | string | yes | `deterministic-runner` or `agent-runner`: the kind of step execution the class applies to. |
+| `runners.classes.<name>.network` | string | yes | `none` or `open`: whether a pod of the class reaches the network. |
+| `runners.classes.<name>.model_credential` | boolean | yes | Whether a pod of the class holds an engine's credential. `false` is required for `deterministic-runner`. |
 
 The deterministic runner runs what a person wrote into the workflow, the project or the tenant, and never holds a model credential. The agent runner runs an agent engine and whatever that engine generates. No class gives a pod the signing key.
 
 ### validators
 
-The `validators` section says which validators count as evidence for this tenant, beyond the built-in ones. The validator contract and the three sources are defined in [Validators](/reference/validators). The table lists the keys.
+The `validators` section holds validators that projects share, each pinned to a repository revision. They count as evidence because the tenant config is held outside every run. See [Validators](/reference/validators). The table lists the keys.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
-| `validators.scripts` | map | no | The tenant's script validators, from a validator name to a declaration. A workflow refers to one as `tenant/<name>`. |
+| `validators.scripts` | map | no | The tenant's validators you define, from a validator name to a declaration. A workflow refers to one by its bare name. A project validator of the same name wins. See [Referring to a validator](/reference/validators#referring-to-a-validator). |
 | `validators.scripts.<name>.source.workspace` | string | yes | The workspace that holds the script. Non-empty. |
 | `validators.scripts.<name>.source.revision` | string | yes | The version of that workspace the script is read from. Non-empty. |
 | `validators.scripts.<name>.run` | command | yes | What runs, with paths relative to the root of the source. See [Commands](/reference/project-config#commands). |
-| `validators.scripts.<name>.kind` | label | yes | What the validator looks at. |
-| `validators.scripts.<name>.result`, `timeout`, `env`, `needs` | | no | The same keys as a project's script validator. See [validators](/reference/project-config#validators). |
-| `validators.native` | array of objects | no | The native validators the tenant admits. |
-| `validators.native[].name` | string | yes | `<namespace>/<name>`, in a namespace other than `daggry`, `tenant` and `project`. A workflow refers to it by this name. |
-| `validators.native[].version` | string | yes | The exact version admitted. Non-empty. |
-| `validators.native[].digest` | string | yes | The SHA-256 of the validator as installed: 64 lowercase hex digits. |
+| `validators.scripts.<name>.role` | label | no | What the validator looks at. Default `custom`. |
+| `validators.scripts.<name>.output`, `output_file`, `timeout`, `env`, `needs` | | no | The same keys as a project's validator you define. See [validators](/reference/project-config#validators). |
 
 These rules apply to the section.
 
-- **A tenant's script validator runs on the project's workspace.** It runs in the deterministic runner, on a clean copy of the sealed version, with the files of its source beside it and read-only.
-- **A native validator is admitted, not installed, here.** The cluster admin installs it with the factory. The tenant admits it by name, version and digest, and one whose digest differs is refused.
-- **A project's own validators are admitted for each workspace.** See `projects[].validators.admit` in [projects](#projects).
+- **A tenant's validator you define runs on the project's workspace.** It runs in the deterministic runner, on a clean copy of the sealed version, with the files of its source beside it and read-only.
+- **A name cannot be `project`, `daggry`, `coverage`, `no_regression` and `baseline_proof`.** They are reserved.
 
-### projects
+### judges
 
-The `projects` section lists the workspaces the tenant's factory works on, and what the tenant decided for each one. This section is where a workflow is assigned to a workspace. The table lists the keys of a project entry.
+The `judges` section holds custom judges that projects share, each pinned to a repository revision. They count as evidence because the tenant config is held outside every run. See [Judges](/reference/judges). The table lists the keys.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
-| `projects` | array of objects | no | The workspaces. |
-| `projects[].workspace` | string | yes | The workspace, named in the form its binding gives. Non-empty. Unique. |
-| `projects[].binding` | label | no | The name of a binding from `extensions.bindings`. It says what the workspace is and how its versions, work items and changes are named. Absent is valid when the tenant registers exactly one binding. |
-| `projects[].workflows.allowed` | array of strings | no | Names from the catalogue that can run on this workspace. Absent means the whole catalogue. |
-| `projects[].workflows.default` | string | no | The workflow a run uses when it names none. One of the allowed names. |
-| `projects[].agents.engines` | array of strings | no | Names from `agents.engines` that can work on this workspace. Absent means every registered engine. |
-| `projects[].agents.roster` | array of strings | no | Names from `agents.roster` that can work on this workspace. Absent means the whole roster. |
-| `projects[].approval.require` | array of strings | no | Points where a run on this workspace always waits for a person, added to `agents.approval.require`. Each is `plan` or `effect`. |
-| `projects[].validators.admit` | string or array of names | no | Which of the project's own script validators count as evidence: `all`, `none`, or a list of validator names, none twice. Absent means `none`. |
-| `projects[].areas` | array of area names | no | Names of areas that the workspace's project config defines in [`areas`](/reference/project-config#areas). At least one name, none twice. Together they are the scope of every run on this workspace: a run changes paths inside those areas only. Absent means the tenant sets no scope for runs on the workspace. |
-| `projects[].image` | string | no | The name of a runner image from `runners.images`. Absent means the default image. |
+| `judges.scripts` | map | no | The tenant's custom judges, from a judge name to a declaration. A `verify` step refers to one by its bare name. A project judge of the same name wins. |
+| `judges.scripts.<name>.source.workspace` | string | yes | The workspace that holds the script. Non-empty. |
+| `judges.scripts.<name>.source.revision` | string | yes | The version of that workspace the script is read from. Non-empty. |
+| `judges.scripts.<name>.run` | command | yes | What runs, with paths relative to the root of the source. See [Commands](/reference/project-config#commands). |
+| `judges.scripts.<name>.timeout` | integer | no | 1 or more. The longest the judge can run, in seconds. |
+
+The names in [Referring to a validator](/reference/validators#referring-to-a-validator) are reserved. A tenant has no rubric judge: rubric judges are declared in the project config.
+
+### projects
+
+The `projects` section lists the workspaces the factory works on and what the tenant decided for each. A workflow is assigned to a workspace here. The table lists the keys of a project entry.
+
+| Key | Type | Required | Meaning |
+|---|---|---|---|
+| `projects` | map | no | The workspaces, from a workspace, named in the form its binding gives, to its entry. |
+| `projects.<workspace>.binding` | label | no | The name of a binding from `extensions.bindings`. It says what the workspace is and how its versions, work items and changes are named. Absent is valid when the tenant registers exactly one binding. |
+| `projects.<workspace>.workflows.allowed` | array of strings | no | Names from the catalogue that can run on this workspace. Absent means the whole catalogue. |
+| `projects.<workspace>.workflows.default` | string | no | The workflow a run uses when it names none. One of the allowed names. |
+| `projects.<workspace>.agents.engines` | array of strings | no | Names from `agents.engines` that can work on this workspace. Absent means every registered engine. |
+| `projects.<workspace>.agents.roster` | array of strings | no | Names from `agents.roster` that can work on this workspace. Absent means the whole roster. |
+| `projects.<workspace>.agents.approval.require` | array of strings | no | Points where a run on this workspace always waits for a person, added to `agents.approval.require`. Each is `plan` or `effect`. |
+| `projects.<workspace>.trust_project` | boolean | no | Default `true`: the validators and judges of the project config count as evidence. `false`: only validators and judges that the tenant config declares count. |
+| `projects.<workspace>.areas` | array of area names | no | Names of areas that the workspace's project config defines in [`areas`](/reference/project-config#areas). At least one name, none twice. Together they are the scope of every run on this workspace: a run changes paths inside those areas only. Absent means the tenant sets no scope for runs on the workspace. |
+| `projects.<workspace>.image` | string | no | The name of a runner image from `runners.images`. Absent means the default image. |
 
 These rules apply to a project entry.
 
 - **A run starts only for a listed workspace.**
 - **The tenant assigns, the project does not.** A run on a workspace uses a workflow from `workflows.allowed`. The workspace's own [Project config](/reference/project-config) has no key that names a workflow, an engine or an approval rule.
-- **The tenant decides which project scripts are evidence.** A `verify` step runs a project's validator only when `validators.admit` admits it, and a run that names one it does not admit is refused when it starts. A validator the tenant has not admitted still runs as a preview for the agent when the project exposes it. See [Admission](/reference/project-config#admission).
+- **A project's validators and judges count by default.** Set `trust_project: false` for a locked-down workspace. A run on it that names a project's validator, a project's judge, or `project`, is refused when it starts, and the validator still runs as a preview when the project exposes it. See [When a validator counts as evidence](/reference/validators#when-a-validator-counts-as-evidence).
 - **A project entry narrows the tenant's own lists.** A name that the catalogue, the engines, the roster, the images or the bindings lack is refused.
 - **Approval rules only add.** A project entry can require one more approval point than the tenant-wide rule. It cannot remove one.
 - **A workflow must fit the workspace.** A workflow whose `verify` step names `project` runs only on a workspace whose project config names a canonical validator. A run that does not fit is refused when it starts.
@@ -169,18 +172,16 @@ The `extensions` section holds what the tenant registers beyond the standard. A 
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
-| `extensions.bindings` | array of objects | no | The bindings the tenant uses. Each has a `name` (a label) and a `version`. |
-| `extensions.adapters` | array of objects | no | The adapters that read a tool's own output into a result document. Each has a `name`, `<namespace>/<adapter>`, and a `version`. A `result.contract` names one. |
-| `extensions.effects` | array of objects | no | The effects an `effect` step can name in `do`. Each has a `name`, bare or `<namespace>/<name>`, and a `version`. |
-| `extensions.step_kinds` | array of objects | no | Step kinds besides the five of the standard. |
-| `extensions.step_kinds[].kind` | string | yes | `<namespace>/<name>`. See [Extensibility](/reference/workflow-schema#extensibility). |
-| `extensions.step_kinds[].module` | string | yes | What runs the step: `deterministic-runner`, `agent-runner` or `control-plane`. |
-| `extensions.step_kinds[].schema` | string | yes | The URL of the JSON Schema for the step's keys. |
-| `extensions.artifact_kinds` | array of objects | no | Artifact kinds besides the eight in [Record kinds](/reference/kinds). |
-| `extensions.artifact_kinds[].kind` | string | yes | `<namespace>/<name>@<major>`, in a namespace other than `evidence` and `daggry`. |
-| `extensions.artifact_kinds[].schema` | string | yes | The URL of the JSON Schema for the kind's `body`. |
+| `extensions.bindings` | map | no | The bindings the tenant uses, from a name (a label) to its entry, which holds a `version`. |
+| `extensions.adapters` | map | no | The readers for tool output formats. They read a tool's own output into a result document, from the plain format name, such as `junit`, to its entry, which holds a `version`. A validator's `output` names one. |
+| `extensions.effects` | map | no | The effects an `effect` step can name in `do`, from a name, bare or `<namespace>/<name>`, to its entry, which holds a `version`. |
+| `extensions.step_kinds` | map | no | Step kinds besides the five of the standard, from a name, `<namespace>/<name>`, to its entry. See [Extensibility](/reference/workflow-schema#extensibility). |
+| `extensions.step_kinds.<name>.module` | string | yes | What runs the step: `deterministic-runner`, `agent-runner` or `control-plane`. |
+| `extensions.step_kinds.<name>.schema` | string | yes | The URL of the JSON Schema for the step's keys. |
+| `extensions.artifact_kinds` | map | no | Artifact kinds besides the eight in [Artifact kinds](/reference/kinds), from a name, `<namespace>/<name>@<major>`, in a namespace other than `evidence` and `daggry`, to its entry. |
+| `extensions.artifact_kinds.<name>.schema` | string | yes | The URL of the JSON Schema for the kind's `body`. |
 
-This section is the registry. A binding, an adapter, an effect, a step kind or an artifact kind that is neither part of the standard nor listed here is refused. Validators have a section of their own: see [validators](#validators).
+This section is the registry. A binding, an output format, an effect, a step kind or an artifact kind that is neither part of the standard nor listed here is refused. Validators have a section of their own: see [validators](#validators).
 
 ### Where it lives
 
@@ -197,9 +198,9 @@ Three documents set rules for a run. The order is tenant, then project, then wor
 
 | Document | Sets | Cannot |
 |---|---|---|
-| Tenant config | Every limit: the catalogue, the engines, the images, the approval points and the orchestration limits. Which workflows, agents, approval points, areas and admitted validators apply to each workspace. | - |
-| [Project config](/reference/project-config) | What is true of one workspace: its areas, its validators, its canonical validator and the paths it protects. | Choose a workflow, an engine, an approval rule or the scope of a run. Admit its own validators. Widen a tenant rule. |
-| [Workflow](/reference/workflow-schema) | Narrower rules for one step: its scope inside the scope of the run, and the validators a `verify` step names. | Name a validator the tenant has not admitted. Widen a project or tenant rule. |
+| Tenant config | Every limit: the catalogue, the engines, the images, the approval points and the orchestration limits. Which workflows, agents, approval points and areas apply to each workspace, and whether a project's own validators count. | - |
+| [Project config](/reference/project-config) | What is true of one workspace: its areas, its validators, its canonical validator and the paths it protects. | Choose a workflow, an engine, an approval rule or the scope of a run. Widen a tenant rule. |
+| [Workflow](/reference/workflow-schema) | Narrower rules for one step: its scope inside the scope of the run, and the validators a `verify` step names. | Widen a project or tenant rule. |
 
 A project or a workflow can add limits. A project can protect more paths, and a workflow can give a step a smaller scope inside the scope of the run. The scope of a run is the tenant's choice among the areas the project defines.
 
@@ -215,18 +216,18 @@ An agent is never in that table. The control plane holds the tenant config outsi
 
 ### Worked example
 
-This tenant offers two workflows, runs at most four attempts at once, registers one engine and two agents, requires a person before work builds on a plan, and serves two workspaces under two bindings. It defines one script validator of its own and admits one native validator. For the first workspace it admits every validator the project declares. For the second it admits three by name, requires a person before any effect and sets the scope of every run to one area.
+This tenant offers two workflows, runs at most four attempts at once, registers one engine and two agents, requires a person before work builds on a plan, and serves two workspaces under two bindings. It defines one validator of its own for every project. For the first workspace only tenant validators count as evidence. The second workspace uses its project's validators, requires a person before any effect and sets the scope of every run to one area.
 
 ```yaml
 format: daggry/tenant@1
 
 workflows:
-  - name: delivery
+  delivery:
     source:
       workspace: factory-workflows
       path: workflows/delivery.yaml
       revision: v-0017
-  - name: translate
+  translate:
     source:
       workspace: factory-workflows
       path: workflows/translate.yaml
@@ -244,14 +245,14 @@ orchestration:
 
 agents:
   engines:
-    - name: <engine>
+    <engine>:
       credential:
         ref: model-credential
   roster:
-    - name: lead
+    lead:
       engine: <engine>
       instructions: agents/lead.md
-    - name: reviewer
+    reviewer:
       engine: <engine>
       instructions: agents/reviewer.md
   approval:
@@ -259,23 +260,23 @@ agents:
 
 runners:
   images:
-    - name: documents
+    documents:
       image: registry.example/jobs/documents@sha256:<digest>
       tools: [pandoc-3]
       default: true
-    - name: programs
+    programs:
       image: registry.example/jobs/programs@sha256:<digest>
       tools: [node-22]
   classes:
-    - name: checks
+    checks:
       module: deterministic-runner
       network: none
       model_credential: false
-    - name: networked
+    networked:
       module: deterministic-runner
       network: open
       model_credential: false
-    - name: agents
+    agents:
       module: agent-runner
       network: open
       model_credential: true
@@ -287,60 +288,51 @@ validators:
         workspace: factory-validators
         revision: v-0009
       run: [sh, licence/check.sh]
-      kind: custom
-      result:
-        contract: document
+      output: document
       timeout: 120
-  native:
-    - name: acme/contract-clauses
-      version: "1.2.0"
-      digest: 3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855e
 
 projects:
-  - workspace: handbook
+  handbook:
     binding: review
     workflows:
       allowed: [delivery, translate]
       default: delivery
-    validators:
-      admit: all
+    trust_project: false
     image: documents
-  - workspace: example/shop-web
+  example/shop-web:
     binding: software
     workflows:
       allowed: [delivery]
       default: delivery
     agents:
       roster: [lead]
-    approval:
-      require: [effect]
-    validators:
-      admit: [test, lint, types]
+      approval:
+        require: [effect]
     areas: [app]
     image: programs
 
 extensions:
   bindings:
-    - name: review
+    review:
       version: "1.0.0"
-    - name: software
+    software:
       version: "1.0.0"
   adapters:
-    - name: review/citations
+    citations:
       version: "1.0.0"
-    - name: software/junit
+    junit:
       version: "1.0.0"
   effects:
-    - name: publish
+    publish:
       version: "1.0.0"
-    - name: open-pr
+    open-pr:
       version: "1.0.0"
   step_kinds:
-    - kind: acme/scan
+    acme/scan:
       module: deterministic-runner
       schema: https://acme.example/schemas/scan-step-v1.json
   artifact_kinds:
-    - kind: acme/scan-report@1
+    acme/scan-report@1:
       schema: https://acme.example/schemas/scan-report-v1.json
 
 acme/billing:
@@ -353,9 +345,9 @@ The table explains the values.
 |---|---|
 | `<engine>` | The identifier of an agent engine your installation provides. |
 | `v-0017`, `v-0009` | Version ids in the form the workspace's binding gives. |
-| `tenant/licence-terms` | How a workflow refers to the tenant's script validator. |
-| `admit: [test, lint, types]` | The validators of `example/shop-web` that count as evidence, by name. The reference `project` needs all three: the canonical validator and the two in `also`. |
-| `networked` | A class of deterministic runner that reaches the network. A script validator asks for it in `needs.runner`. |
+| `licence-terms` | How a workflow refers to the tenant's validator you define. |
+| `trust_project: false` | On `handbook`, only validators and judges the tenant config declares count as evidence. Its workflows name tenant validators such as `licence-terms`. |
+| `networked` | A class of deterministic runner that reaches the network. A validator you define asks for it in `needs.runner`. |
 | `<digest>` | The 64-digit digest of the image. |
 | `model-credential` | The name of a stored secret. The document never holds the secret. |
 | `app` | The name of an area that the project config of `example/shop-web` defines. A run on that workspace changes paths inside `app` only. |
@@ -369,14 +361,13 @@ A reader refuses each input in the table.
 | No `format` key | Missing `format`. |
 | `format: daggry/tenant@2` | Unknown major. |
 | `orchestration:` with `concurrency_cap: 0` | Below the minimum of 1. |
-| `agents.engines[]` with `credential: {value: ...}` | Unknown key. A credential is given by `ref` only. |
+| An `agents.engines` entry with `credential: {value: ...}` | Unknown key. A credential is given by `ref` only. |
 | A roster entry whose `engine` is not in `agents.engines` | Unknown engine. |
 | A class with `module: deterministic-runner` and `model_credential: true` | A deterministic runner never holds a model credential. |
-| `extensions.artifact_kinds[]` with `kind: evidence/scan@1` | The `evidence` namespace takes no added kinds. |
-| `validators.native[]` with `name: daggry/extra` | The `daggry` namespace holds the built-in validators only. |
-| `validators.native[]` with no `digest` | Missing `digest`. A native validator is admitted by name, version and digest. |
+| An `extensions.artifact_kinds` entry named `evidence/scan@1` | The `evidence` namespace takes no added kinds. |
 | `validators.scripts` with an entry that has no `source` | Missing `source`. |
-| A project entry with `validators: {admit: some}` | Not `all`, `none` or a list of names. |
+| A project entry with `trust_project: no` | Not a boolean. |
+| `validators.scripts` with an entry named `project` | Reserved name. |
 | A project entry whose `binding` is not in `extensions.bindings` | Unknown binding. |
 | A project entry whose `workflows.allowed` names a workflow the catalogue lacks | Unknown workflow. |
 | A project entry whose `workflows.default` is not an allowed name | The default is not allowed on the workspace. |
@@ -390,6 +381,6 @@ A reader refuses each input in the table.
 The list names the pages to read next.
 
 - For what a workspace says about itself, see [Project config](/reference/project-config).
-- For the validator contract and the three sources of a validator, see [Validators](/reference/validators).
+- For the two kinds of validator, see [Validators](/reference/validators).
 - For the workflow file a catalogue entry points to, see [Workflow file](/reference/workflow-schema).
 - For what another factory implements to use the same documents, see [Conformance](/reference/conformance).

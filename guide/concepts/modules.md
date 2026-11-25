@@ -40,7 +40,7 @@ A step in a runner can reach the internet and your cluster's network, because ou
 
 You need this to know what a script or an agent in a step can touch. Each job gets its own runner. The runner starts from the version of the workspace the conductor names, then runs the steps one after another.
 
-The runner runs a step in one of two ways: as a script, or with an agent. A script step never starts an agent. A script validator runs on a clean copy of the workspace, after the agent process has ended. No step can write the trail or a [protected path](/guide/concepts/protection).
+The runner runs a step in one of two ways: as a script, or with an agent. A script step never starts an agent. Your validator runs on a clean copy of the workspace, after the agent process has ended. No step can write the trail or a [protected path](/guide/concepts/protection).
 
 A runner never restarts. If a runner stops responding, Daggry starts a new one from the last sealed change and repeats the step that was interrupted. A step that waits for your approval gives its runner back, and the job continues in a new runner when you approve.
 

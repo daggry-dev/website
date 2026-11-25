@@ -20,6 +20,7 @@ import MorningTrail from './MorningTrail.vue'
 import HowItWorks from './HowItWorks.vue'
 import SealFlow from './SealFlow.vue'
 import CheckFlow from './CheckFlow.vue'
+import ValidatorFlow from './ValidatorFlow.vue'
 import LoopGate from './LoopGate.vue'
 import HumanWait from './HumanWait.vue'
 import Boundary from './Boundary.vue'
@@ -47,6 +48,7 @@ export default {
     app.component('HowItWorks', HowItWorks)
     app.component('SealFlow', SealFlow)
     app.component('CheckFlow', CheckFlow)
+    app.component('ValidatorFlow', ValidatorFlow)
     app.component('LoopGate', LoopGate)
     app.component('HumanWait', HumanWait)
     app.component('Boundary', Boundary)

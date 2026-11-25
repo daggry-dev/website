@@ -12,7 +12,7 @@ Here is what a night of unattended work looks like. The example is software, whe
 
 **22:00.** You write an issue. An agent drafts a plan from it, and you approve the plan before bed.
 
-**Overnight.** Each job runs in its own throwaway runner, which never holds the signing key. The agent takes the plan one item at a time. It writes a test, Daggry shows that the test fails, the agent makes it pass, and Daggry runs the test again on a clean copy of the repository. If a machine dies at 3 a.m., a new runner starts from the last sealed change and repeats the interrupted step.
+**Overnight.** Each job runs in its own throwaway runner, which never holds the signing key. The agent takes the plan one criterion at a time. It writes a test, Daggry shows that the test fails, the agent makes it pass, and Daggry runs the test again on a clean copy of the repository. If a machine dies at 3 a.m., a new runner starts from the last sealed change and repeats the interrupted step.
 
 **06:30.** The pull request is open, with a record beside it of everything code checked. A run that needed you stopped and says why.
 

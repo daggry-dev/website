@@ -2,7 +2,7 @@
 
 *Reference*
 
-A workflow that Daggry misread would run the wrong steps, so the file has a strict form and Daggry refuses anything else. This page defines every key, every value a key accepts, every file the loader refuses and how you add your own keys and step kinds. Read it when you write or review a workflow and need the exact rule. To write your first one, follow [Write a workflow](/guide/how-to/write-a-workflow).
+A workflow has a strict form, and Daggry refuses anything else. This page defines every key, every value a key accepts, every file the loader refuses and how you add your own keys and step kinds. Read it when you write or review a workflow and need the exact rule. To write your first one, follow [Write a workflow](/guide/how-to/write-a-workflow).
 
 A workflow is one YAML file that lists steps and loops, each loop with a limit. It is one of the four [open formats](/reference/open-formats), with the [Project config](/reference/project-config), the [Tenant config](/reference/tenant-config) and evidence.
 
@@ -64,20 +64,20 @@ Every step requires `id` and `kind`. `kind` is one of the five values of the sta
 | Kind | What runs the step | What it does |
 |---|---|---|
 | `agent` | Agent runner | A session of an agent engine that must deliver named artifact kinds. |
-| `command` | Deterministic runner | A shell line, limited by a `scope` of paths it can write. |
+| `command` | Deterministic runner | A program and its arguments, limited by a `scope` of paths it can write. |
 | `verify` | Deterministic runner and control plane | Runs the validators it names on the last sealed version of the workspace. |
 | `human` | None. A person decides. | Releases the pod and waits. `daggry approve` completes it. |
 | `effect` | Control plane | An idempotent side effect that the tenant registers, such as handing a change over. |
 
 ### command
 
-A shell line that the runner executes in the pod. A failed command step fails the run, also inside a loop. The table lists its keys.
+A command that the runner executes in the pod, in the form defined in [Commands](/reference/project-config#commands). A failed command step fails the run, also inside a loop. The table lists its keys.
 
 | Key | Type | Required | Constraints |
 |---|---|---|---|
 | `id` | string | yes | Non-empty. |
 | `kind` | string | yes | `command`. |
-| `run` | string | yes | Non-empty. |
+| `run` | command | yes | A program and its arguments, as a list. See [Commands](/reference/project-config#commands). |
 | `scope` | scope | yes | See [Scope](#scope). |
 
 ### agent
@@ -93,7 +93,6 @@ A session of an agent engine. The table lists its keys.
 | `transcript` | string | no | Non-empty. The path of the recorded transcript that the `replay` engine plays back, in place of `prompt`. |
 | `outputs` | array of strings | yes | Each non-empty. The kinds the step must deliver. |
 | `freeze` | array of strings | no | Each non-empty. Globs that mark which of the step's changed paths are frozen when the step is sealed. |
-| `tests` | array of strings | no | A second name for `freeze`, used by the software binding. A step holds one of the two. See [Bindings](/reference/bindings#frozen-tests). |
 | `scope` | scope | yes | See [Scope](#scope). |
 
 These rules apply to an `agent` step.
@@ -106,19 +105,18 @@ These rules apply to an `agent` step.
 
 ### verify
 
-Runs validators on the last sealed version of the workspace. See [Validators](/reference/validators). The table lists its keys.
+Runs validators on the last sealed version of the workspace and judges the result. For what each step does and the verdict rules, see [Judges](/reference/judges#the-model). The table lists its keys.
 
 | Key | Type | Required | Constraints |
 |---|---|---|---|
 | `id` | string | yes | Non-empty. |
 | `kind` | string | yes | `verify`. |
 | `validators` | array of references | yes | One or more, none twice. See [Validators by reference](#validators-by-reference). |
+| `judges` | array of names | no | Judges to run after the default judge: `coverage`, `no_regression` or the name of a judge you declare. None twice. Absent: only the default judge. The order is the order of the verdicts. See [Judges](/reference/judges). |
 
 A `verify` step has no command. Every validator it names is resolved when the run starts.
 
-- A script validator runs in the deterministic runner, on a clean copy of the last sealed version. The step submits one `head` measurement for each, and the control plane derives a verdict from each measurement.
-- A built-in or a native validator runs with the control plane over sealed artifacts, and the control plane seals its verdict.
-- The step passes when every verdict has the status `pass`.
+- A validator you define runs in the deterministic runner, on a clean copy of the last sealed version. The step submits one `head` measurement for each.
 - Inside a loop, a `verify` step that does not pass is red: the iteration ends and the run does not fail. Outside a loop, a failed `verify` step fails the run.
 
 ### human
@@ -152,7 +150,7 @@ A step kind is an entry in a registry. Each entry names the kind, the keys a ste
 | Kind | What runs the step | Registered by |
 |---|---|---|
 | `command` | Deterministic runner | The standard. |
-| `verify` | Deterministic runner, for script validators. Control plane, for built-in and native validators. | The standard. |
+| `verify` | Deterministic runner, for validators. Control plane, for the judges. | The standard. |
 | `agent` | Agent runner | The standard. |
 | `effect` | Control plane | The standard. |
 | `human` | None. A person decides, and the control plane seals the decision. | The standard. |
@@ -172,33 +170,28 @@ A workflow declares what runs a step through the step's `kind` and through nothi
 
 | What runs the step | Runs | Never |
 |---|---|---|
-| Deterministic runner | What a person wrote into the workflow, the project or the tenant: a `command` step's `run` line and script validators. | Starts a model. |
+| Deterministic runner | What a person wrote into the workflow, the project or the tenant: a `command` step's `run` line and validators you define. | Starts a model. |
 | Agent runner | An agent engine, and whatever the engine generates. | Judges its own work. |
-| Control plane | Effects, seals, and built-in and native validators. | Runs a command or an agent. |
+| Control plane | Effects, seals and judges. | Runs a command or an agent. |
 | A person | The decision at a `human` step. | - |
 
 No key of a step changes what runs it. An `agent` step always runs in the agent runner, and a `command` step never does.
 
 ### Validators by reference
 
-A workflow never holds a verification command. A `verify` step names validators, and the project, the tenant and Daggry supply them. The table lists the forms of a reference.
+A `verify` step names validators, and the project and the tenant supply them. A workflow holds no validator command. The table lists the forms of a reference.
 
 | Reference | Resolves to |
 |---|---|
-| `project` | The project's verification: the canonical validator, each validator in `verification.also` and the thresholds of the [Project config](/reference/project-config#verification). |
-| `project/<name>` | The script validator of that name in the project config. |
-| `tenant/<name>` | The script validator of that name in the [Tenant config](/reference/tenant-config#validators). |
-| `daggry/<name>` | A built-in validator. |
-| `<namespace>/<name>` | A native validator the tenant admits. |
+| `project` | The project's default set of validators: the canonical validator and each validator in `verification.also` of the [Project config](/reference/project-config#verification). |
+| `<name>` | The validator you define of that name: first in the project config of the baseline, then in the [Tenant config](/reference/tenant-config#validators). The project's validator wins over a tenant's of the same name. |
 
 These rules apply to a reference.
 
-- A reference is `project`, or a namespace, a `/` and a validator name: a lowercase letter, then lowercase letters, digits, `-` or `_`.
-- A project reference is looked up in the project config of the baseline when the run starts. A reference that names nothing refuses the run.
-- A project's validator runs in a `verify` step only when the tenant admits it. See [Admission](/reference/project-config#admission).
+- A reference is `project` or a validator name: a lowercase letter, then lowercase letters, digits, `-` or `_`. A `/` is never part of a name.
 - `project` needs a project config with `verification.canonical`.
 
-The sources, the built-in validators and where each runs are in [Validators](/reference/validators).
+For reserved names, lookup and when a validator counts as evidence, see [Referring to a validator](/reference/validators#referring-to-a-validator).
 
 ### Engine
 
@@ -283,7 +276,7 @@ The table lists how a loop counts, repeats and ends.
 
 A red-then-green loop has three steps in an iteration. A proof step (an `agent` step with `freeze`) writes what proves the criterion: a proof whose finding carries the criterion id. A second `agent` step does the work that makes it pass. A `verify` step runs the validators on a clean copy. The guide calls this "fails first, then passes".
 
-The runner overlays the proof step's new frozen paths on a clean copy of the baseline and runs the baseline's canonical validator there. The built-in `daggry/baseline-proof` judges the result, and a proof step in a loop that does not prove red is rejected. See [Baseline proof](/reference/validators#baseline-proof). Frozen paths and unfreeze are defined in [Protected paths](/reference/protected-paths#frozen-paths).
+The runner overlays the proof step's new frozen paths on a clean copy of the baseline and runs the baseline's canonical validator there. The `baseline_proof` judge, which Daggry applies itself, seals a verdict with the fact `red`. A proof step in a loop that does not prove red is rejected. See [Baseline proof](/reference/conformance#baseline-proof). Frozen paths and unfreeze are defined in [Protected paths](/reference/protected-paths#frozen-paths).
 
 ## Extensibility
 
@@ -313,7 +306,7 @@ acme/owner: platform-team
 steps:
   - id: render
     kind: command
-    run: sh scripts/render.sh
+    run: [sh, scripts/render.sh]
     scope: anywhere
     acme/cost-centre: build
   - id: scan
@@ -374,13 +367,14 @@ steps:
           scope: ["area:handbook", "checks/**"]
         - id: check
           kind: verify
-          validators: [project, daggry/criterion-coverage]
+          validators: [project]
+          judges: [coverage]
   - id: ask
     kind: human
     waiting_for: input-needed
   - id: render
     kind: command
-    run: sh scripts/render.sh
+    run: [sh, scripts/render.sh]
     scope: anywhere
   - id: deliver
     kind: effect
@@ -402,7 +396,7 @@ format: daggry/workflow@1
 steps:
   - id: render
     kind: command
-    run: sh scripts/render.sh
+    run: [sh, scripts/render.sh]
     scope: anywhere
 ```
 
@@ -444,7 +438,8 @@ The table is a short, representative set. The first column shows the cause. The 
 | A `verify` step with `run: x` | Schema at `/steps/0` (extra key) |
 | A `verify` step with no `validators`, or with `validators: []` | Schema at `/steps/0` |
 | `validators: [Project Review]` | Schema at `/steps/0/validators/0` (not a reference) |
-| An `agent` step with both `freeze` and `tests` | Schema at `/steps/0` |
+| `validators: [daggry]` | Schema at `/steps/0/validators/0` (reserved name) |
+| `validators: [acme/links]` | Schema at `/steps/0/validators/0` (a `/` is not allowed) |
 | `do: Open PR` | Schema at `/steps/0/do` (not an effect name) |
 | `scope: ["area:Web App"]` | Schema at `/steps/0/scope` (not an area name) |
 | Two steps with `id: v` | Duplicate id `v` |
@@ -458,7 +453,7 @@ The loader does not check the rules in this table at load. Each fails later or d
 |---|---|
 | That `outputs` names real kinds. | An unknown output is never delivered, and the step fails. |
 | That `freeze` and `scope` globs compile. | A bad glob fails at the boundary check. |
-| A fact name after `verdict.` | A name no validator emits is not caught at load. |
+| A fact name after `verdict.` | A name no judge emits is not caught at load. |
 
 ::: details Schema: workflow file
 This is the content of [workflow.json](/schemas/workflow.json).
@@ -495,8 +490,13 @@ This is the content of [workflow.json](/schemas/workflow.json).
     },
     "validatorRef": {
       "type": "string",
-      "pattern": "^(project|[A-Za-z0-9_-]+/[a-z][a-z0-9_-]*)$",
-      "description": "project, or daggry/<name>, tenant/<name>, project/<name> or <namespace>/<name>."
+      "pattern": "^(?!(daggry|coverage|no_regression|baseline_proof)$)[a-z][a-z0-9_-]*$",
+      "description": "project, or the name of a validator you define. project, daggry, coverage, no_regression and baseline_proof are reserved."
+    },
+    "judgeRef": {
+      "type": "string",
+      "pattern": "^(?!(project|daggry|baseline_proof)$)[a-z][a-z0-9_-]*$",
+      "description": "coverage, no_regression, or the name of a judge you declare."
     },
     "scopeEntry": {
       "type": "string",
@@ -582,7 +582,7 @@ This is the content of [workflow.json](/schemas/workflow.json).
             }
           },
           "then": {
-            "$ref": "#/$defs/command"
+            "$ref": "#/$defs/commandStep"
           }
         },
         {
@@ -594,7 +594,7 @@ This is the content of [workflow.json](/schemas/workflow.json).
             }
           },
           "then": {
-            "$ref": "#/$defs/agent"
+            "$ref": "#/$defs/agentStep"
           }
         },
         {
@@ -606,7 +606,7 @@ This is the content of [workflow.json](/schemas/workflow.json).
             }
           },
           "then": {
-            "$ref": "#/$defs/verify"
+            "$ref": "#/$defs/verifyStep"
           }
         },
         {
@@ -618,7 +618,7 @@ This is the content of [workflow.json](/schemas/workflow.json).
             }
           },
           "then": {
-            "$ref": "#/$defs/human"
+            "$ref": "#/$defs/humanStep"
           }
         },
         {
@@ -630,166 +630,10 @@ This is the content of [workflow.json](/schemas/workflow.json).
             }
           },
           "then": {
-            "$ref": "#/$defs/effect"
+            "$ref": "#/$defs/effectStep"
           }
         }
       ]
-    },
-    "command": {
-      "required": [
-        "id",
-        "kind",
-        "run",
-        "scope"
-      ],
-      "additionalProperties": false,
-      "patternProperties": {
-        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-      },
-      "properties": {
-        "id": {
-          "$ref": "#/$defs/id"
-        },
-        "kind": true,
-        "run": {
-          "type": "string",
-          "minLength": 1
-        },
-        "scope": {
-          "$ref": "#/$defs/scope"
-        }
-      }
-    },
-    "agent": {
-      "required": [
-        "id",
-        "kind",
-        "engine",
-        "outputs",
-        "scope"
-      ],
-      "additionalProperties": false,
-      "patternProperties": {
-        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-      },
-      "properties": {
-        "id": {
-          "$ref": "#/$defs/id"
-        },
-        "kind": true,
-        "engine": {
-          "type": "string",
-          "minLength": 1,
-          "description": "The identifier of an agent engine that the tenant registers."
-        },
-        "prompt": {
-          "type": "string"
-        },
-        "transcript": {
-          "type": "string",
-          "minLength": 1
-        },
-        "outputs": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "freeze": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "tests": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "scope": {
-          "$ref": "#/$defs/scope"
-        }
-      },
-      "not": {
-        "required": [
-          "freeze",
-          "tests"
-        ]
-      }
-    },
-    "verify": {
-      "required": [
-        "id",
-        "kind",
-        "validators"
-      ],
-      "additionalProperties": false,
-      "patternProperties": {
-        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-      },
-      "properties": {
-        "id": {
-          "$ref": "#/$defs/id"
-        },
-        "kind": true,
-        "validators": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {
-            "$ref": "#/$defs/validatorRef"
-          }
-        }
-      }
-    },
-    "human": {
-      "required": [
-        "id",
-        "kind",
-        "waiting_for"
-      ],
-      "additionalProperties": false,
-      "patternProperties": {
-        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-      },
-      "properties": {
-        "id": {
-          "$ref": "#/$defs/id"
-        },
-        "kind": true,
-        "waiting_for": {
-          "enum": [
-            "approval",
-            "input-needed"
-          ]
-        }
-      }
-    },
-    "effect": {
-      "required": [
-        "id",
-        "kind",
-        "do"
-      ],
-      "additionalProperties": false,
-      "patternProperties": {
-        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-      },
-      "properties": {
-        "id": {
-          "$ref": "#/$defs/id"
-        },
-        "kind": true,
-        "do": {
-          "type": "string",
-          "pattern": "^([A-Za-z0-9_-]+/)?[a-z][a-z0-9_-]*$",
-          "description": "The name of an effect that the tenant registers."
-        }
-      }
     },
     "loopEntry": {
       "type": "object",
@@ -843,6 +687,165 @@ This is the content of [workflow.json](/schemas/workflow.json).
           }
         }
       }
+    },
+    "commandStep": {
+      "required": [
+        "id",
+        "kind",
+        "run",
+        "scope"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": true,
+        "run": {
+          "$ref": "#/$defs/command"
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        }
+      }
+    },
+    "agentStep": {
+      "required": [
+        "id",
+        "kind",
+        "engine",
+        "outputs",
+        "scope"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": true,
+        "engine": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The identifier of an agent engine that the tenant registers."
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "transcript": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "freeze": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        }
+      }
+    },
+    "verifyStep": {
+      "required": [
+        "id",
+        "kind",
+        "validators"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": true,
+        "validators": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/validatorRef"
+          }
+        },
+        "judges": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/judgeRef"
+          },
+          "description": "Judges to run after the default judge. Absent: only the default judge. The order is the order of the verdicts."
+        }
+      }
+    },
+    "humanStep": {
+      "required": [
+        "id",
+        "kind",
+        "waiting_for"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": true,
+        "waiting_for": {
+          "enum": [
+            "approval",
+            "input-needed"
+          ]
+        }
+      }
+    },
+    "effectStep": {
+      "required": [
+        "id",
+        "kind",
+        "do"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": true,
+        "do": {
+          "type": "string",
+          "pattern": "^([A-Za-z0-9_-]+/)?[a-z][a-z0-9_-]*$",
+          "description": "The name of an effect that the tenant registers."
+        }
+      }
+    },
+    "command": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "A program and its arguments. The first string is the program. No shell reads the list."
     }
   }
 }

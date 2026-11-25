@@ -1,8 +1,8 @@
-# Record kinds
+# Artifact kinds
 
 *Reference*
 
-A record helps you only if you know what its fields mean. Daggry seals eight kinds of record, and this page lists each kind's body fields, its constraints, a valid example and who seals it. Read it if you write gates, validators or tools that read the trail. The validators that judge these records are in [Validators](/reference/validators). The envelope around every body is in [Evidence record format](/reference/envelope).
+Daggry seals eight kinds of record. This page lists each kind's body fields, its constraints, a valid example and who seals it. Read it if you write gates, validators or tools that read the trail. For who judges, see [Judges](/reference/judges). The envelope around every body is in [Evidence envelope](/reference/envelope).
 
 A kind's namespace says who defines it. The `evidence` namespace holds the kinds of the standard, and `daggry` holds Daggry's own. Another factory adds kinds in a namespace of its own and leaves both of these unchanged, so a new kind of record never changes the standard. See [Conformance](/reference/conformance).
 
@@ -24,7 +24,7 @@ Every kind has a published JSON Schema (draft 2020-12) for its `body`, and so do
 | `daggry/run-lock@1` | [daggry-run-lock-v1.json](/schemas/daggry-run-lock-v1.json) |
 | `daggry/work-item@1` | [daggry-work-item-v1.json](/schemas/daggry-work-item-v1.json) |
 
-The result document a script validator writes is not a sealed kind. Its schema, `daggry/result@1`, is in [Project config](/reference/project-config#result-document).
+The result document a validator you define writes is not a sealed kind. Its schema, `daggry/result@1`, is in [Project config](/reference/project-config#result-document).
 
 ## The eight kinds
 
@@ -35,8 +35,8 @@ The table lists each kind, what it holds and who seals it.
 | Kind | Holds | Sealed by |
 |---|---|---|
 | `evidence/plan@1` | The acceptance criteria an agent plans. | Control plane, from an agent step's submitted record. |
-| `evidence/measurement@1` | The result of one check on one version of the workspace. | Control plane, from the runner's record of a script validator's run. |
-| `evidence/verdict@1` | What a validator produced. | Control plane, from a validator's output. |
+| `evidence/measurement@1` | What a validator reported on one version of the workspace. | Control plane, from the runner's record of a validator's run. |
+| `evidence/verdict@1` | What a judge decided from the evidence trail in a `verify` step. | Control plane, from the judge's verdict body. |
 | `evidence/approval@1` | A human grant bound to one digest. | Control plane, on `daggry approve`. |
 | `daggry/change@1` | A version of the workspace, the paths it changed and the frozen set. | Control plane, after it accepts an agent or command step. |
 | `daggry/observation@1` | A `protected-restored` or `step-failed` record. | Control plane, from the runner's report or its own failure record. |
@@ -58,7 +58,7 @@ Each field table has these two columns besides the name, the type and the constr
 | Column | Meaning |
 |---|---|
 | Req | Whether the schema requires the field. |
-| Class | The field's fact class: `claimed` (an agent wrote it), `derived` (code computed it from sealed inputs) or `-` (no class). A gate reads only `derived` fields. See [Gate expressions](/reference/gates). |
+| Class | The field's fact class: `claimed` (an agent wrote it), `derived` (code computed it from sealed inputs), `judged` (a rubric judge's answer) or `-` (no class). A gate reads `derived` fields, and `judged` fields once a person approves the rubric. See [Gate expressions](/reference/gates). |
 
 ### Who seals what
 
@@ -69,7 +69,7 @@ The control plane seals every kind. The table lists the artifact id and the `par
 | `run-lock` | `run-lock` | none, because it starts the run |
 | `work-item` | `work-item` | none, because it starts the run |
 | `plan` | `<step>-<n>` | the artifacts it builds on |
-| `measurement` | `<step>-head` for the canonical validator, `<step>-head-<name>` for any other script validator, `<step>-red` | the change it measured |
+| `measurement` | `<step>-head` for the canonical validator, `<step>-head-<name>` for any other validator you define, `<step>-red` | the change it measured |
 | `change` | `change-<n>` | the plan it implements |
 | `observation` | `<step>-restored-<n>`, `observation-<n>` | the artifacts it concerns |
 | `verdict` | `verdict-<n>` | the digests of the inputs judged |
@@ -141,9 +141,9 @@ Example:
 
 ## evidence/measurement@1
 
-The result of one check on one version of the workspace. A measurement names the script validator that ran and its result contract, and holds the exit code, an outcome, the findings and the metrics.
+The result of one validator on one version of the workspace. A measurement names the validator you define that ran and its output format, and holds the exit code, an outcome, the findings and the metrics.
 
-A `verify` step seals one measurement for each script validator it runs. See [Validators](/reference/validators#result-and-verdict).
+A `verify` step seals one measurement for each validator you define it runs. See [Validators](/reference/validators#how-daggry-reads-the-output).
 
 | Field | Type | Req | Class | Constraints |
 |---|---|---|---|---|
@@ -151,8 +151,8 @@ A `verify` step seals one measurement for each script validator it runs. See [Va
 | `revision` | string | yes | claimed | Non-empty. The version of the workspace that was measured, in the form the binding gives. |
 | `criterion` | string | no | derived | Non-empty when present. Policy: required for `red`, refused for `base` and `head`. |
 | `exit_code` | integer | yes | derived | Any integer. |
-| `check` | string | no | derived | The name of the script validator that ran, as its declaration names it: a lowercase letter, then lowercase letters, digits, `-` or `_`. |
-| `contract` | string | no | derived | Non-empty. The result contract: `exit-code`, `document` or `<namespace>/<adapter>`. |
+| `validator` | string | no | derived | The name of the validator you define that ran, as its declaration names it: a lowercase letter, then lowercase letters, digits, `-` or `_`. |
+| `output` | string | no | derived | Non-empty. The output format of the validator: `exit-code`, `document` or the plain name of a tool format, such as `junit`. |
 | `outcome` | string | no | derived | `pass`, `fail` or `error`. See [Outcome](#outcome). |
 | `findings` | array of objects | no | derived | Can be empty. |
 | `findings[].id` | string | yes | - | Non-empty. |
@@ -161,9 +161,8 @@ A `verify` step seals one measurement for each script validator it runs. See [Va
 | `findings[].path` | string | no | - | Non-empty when present. The path part of the locator, when the locator names a file of the workspace. |
 | `findings[].message` | string | yes | - | Any string, can be empty. |
 | `metrics` | map | no | derived | From a name to a number. A name starts with a lowercase letter and holds lowercase letters, digits and `_`. |
-| `tests` | array of objects | no | derived | A second form of the findings that the software binding's adapters write. See [Bindings](/reference/bindings#adapters). |
 
-The control plane fills `check`, `contract`, `outcome`, `findings` and `metrics` on every measurement it seals. The findings and the metrics come from the [result document](/reference/project-config#result-document) of the validator, unchanged.
+The control plane fills `validator`, `output`, `outcome`, `findings` and `metrics` on every measurement it seals. The findings and the metrics come from the [result document](/reference/project-config#result-document) of the validator, unchanged.
 
 The table lists the policy rules that Daggry applies after the schema.
 
@@ -180,23 +179,23 @@ The table lists the labels.
 |---|---|
 | `base` | The baseline: the version of the workspace the run starts from. |
 | `head` | The last sealed version. |
-| `red` | The baseline with a proof step's new frozen paths overlaid, by the canonical validator. It carries the criterion id it proves. See [Baseline proof](/reference/validators#baseline-proof). |
+| `red` | The baseline with a proof step's new frozen paths overlaid, by the canonical validator. It carries the criterion id it proves. See [Baseline proof](/reference/conformance#baseline-proof). |
 
 `revision` is `claimed`, so a gate cannot read it. The control plane separately checks that a `head` measurement's `revision` equals the last sealed version. `inputs.measurement.exit_code == 0` and `inputs.measurement.outcome == 'pass'` are usable gate reads.
 
 ### Outcome
 
-`outcome` says in one word what the check decided.
+`outcome` says in one word what the validator reported.
 
 | Outcome | When |
 |---|---|
-| `pass` | The exit code is 0, the result is readable by the contract, a result document says `pass` and every threshold on the validator holds. |
+| `pass` | The exit code is 0, the result is readable in its output format, a result document says `pass` and every threshold on the validator holds. |
 | `fail` | The exit code is not 0, a result document says `fail`, or a threshold on the validator is missed. |
-| `error` | The contract can read no result: the validator ran past its `timeout`, its result document is missing or invalid, or the document says `error`. An `error` counts as a failed check. |
+| `error` | Daggry can read no result: the validator ran past its `timeout`, its result document is missing or invalid, or the document says `error`. An `error` counts as a failed validator. |
 
 ### Threshold findings
 
-Each threshold in `verification.thresholds` adds one finding to the measurement of the validator it reads, whatever the contract.
+Each threshold in `verification.thresholds` adds one finding to the measurement of the validator it reads, whatever the output format.
 
 | Field | Value |
 |---|---|
@@ -208,15 +207,15 @@ A threshold finding with the outcome `fail` or `error` makes the measurement's `
 
 ### Examples
 
-The first measurement is of a canonical validator with the `document` contract. One finding failed, and a threshold on a metric holds:
+The first measurement is of a canonical validator with `output: document`. One finding failed, and a threshold on a metric holds:
 
 ```json
 {
   "label": "head",
   "revision": "v-0042",
   "exit_code": 1,
-  "check": "review",
-  "contract": "document",
+  "validator": "review",
+  "output": "document",
   "outcome": "fail",
   "findings": [
     {"id": "ac_1_summary_present", "outcome": "pass", "locator": "handbook/leave.md", "path": "handbook/leave.md", "message": ""},
@@ -227,39 +226,34 @@ The first measurement is of a canonical validator with the `document` contract. 
 }
 ```
 
-The second is of a validator with the `exit-code` contract:
+The second is of a validator with the `exit-code` output:
 
 ```json
 {
   "label": "head",
   "revision": "v-0042",
   "exit_code": 0,
-  "check": "links",
-  "contract": "exit-code",
+  "validator": "links",
+  "output": "exit-code",
   "outcome": "pass",
   "findings": []
 }
 ```
 
-The third is read through an adapter of the software binding. One test is skipped, so a threshold on the count of skipped findings is missed:
+The third is read through a tool format of the software binding. One test is skipped, so a threshold on the count of skipped findings is missed:
 
 ```json
 {
   "label": "head",
   "revision": "2f6c1e0b9a7d4c3e8f5a1b2c3d4e5f6a7b8c9d0e",
   "exit_code": 0,
-  "check": "test",
-  "contract": "software/libtest",
+  "validator": "test",
+  "output": "libtest",
   "outcome": "fail",
   "findings": [
     {"id": "cart::tests::ac_1_rejects_empty", "outcome": "pass", "message": ""},
     {"id": "cart::tests::ac_2_rejects_long_name", "outcome": "skip", "message": ""},
     {"id": "threshold:findings.skip", "outcome": "fail", "message": "findings.skip is 1, max is 0"}
-  ],
-  "metrics": {"passed": 1, "failed": 0, "skipped": 1},
-  "tests": [
-    {"name": "cart::tests::ac_1_rejects_empty", "outcome": "passed"},
-    {"name": "cart::tests::ac_2_rejects_long_name", "outcome": "ignored"}
   ]
 }
 ```
@@ -271,7 +265,7 @@ The third is read through an adapter of the software binding. One test is skippe
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "evidence/measurement@1",
-  "title": "evidence/measurement@1: the result of one check on one version of the workspace",
+  "title": "evidence/measurement@1: what a validator reported on one version of the workspace",
   "type": "object",
   "required": [
     "label",
@@ -299,37 +293,12 @@ The third is read through an adapter of the software binding. One test is skippe
       "type": "integer",
       "x-fact-class": "derived"
     },
-    "tests": {
-      "x-fact-class": "derived",
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": [
-          "name",
-          "outcome"
-        ],
-        "additionalProperties": false,
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "outcome": {
-            "enum": [
-              "passed",
-              "failed",
-              "ignored"
-            ]
-          }
-        }
-      }
-    },
-    "check": {
+    "validator": {
       "type": "string",
       "pattern": "^[a-z][a-z0-9_-]*$",
       "x-fact-class": "derived"
     },
-    "contract": {
+    "output": {
       "type": "string",
       "minLength": 1,
       "x-fact-class": "derived"
@@ -397,31 +366,34 @@ The third is read through an adapter of the software binding. One test is skippe
 
 ## evidence/verdict@1
 
-What a validator produced: a status, findings and derived facts. Only the control plane's verdicts open gates. The validator contract is in [Validators](/reference/validators).
+What a judge decided from the evidence trail in a `verify` step: an outcome, findings and facts. Daggry seals one verdict for each judge, and only those verdicts open gates. For who judges and how, see [Judges](/reference/judges).
 
 | Field | Type | Req | Class | Constraints |
 |---|---|---|---|---|
-| `validator` | string | yes | - | Non-empty. |
-| `version` | string | yes | - | Non-empty. |
-| `status` | string | yes | derived | `pass`, `fail` or `inconclusive`. |
-| `findings` | array of objects | yes | - | Each `{ "message": <string> }`. `message` is required and nothing else is allowed. |
-| `facts` | array of objects | yes | derived | Each fact has a `name`, a `class` and a `value`. |
-| `facts[].name` | string | yes | - | Non-empty. A stricter grammar applies. See [Verdict rules](/reference/validators#verdict-rules). |
-| `facts[].class` | string | yes | - | Only `derived`. |
+| `judge` | string | yes | - | The judge that returned the verdict: `default`, `coverage`, `no_regression`, `baseline_proof` or the name of a judge you declare. |
+| `version` | string | yes | - | Non-empty. The version of the judge. See [Versioning](/reference/conformance#versioning). |
+| `outcome` | string | yes | derived | `pass`, `fail` or `error`. `error` when an input is missing or malformed. See [Verdict rules](/reference/conformance#facts-and-verdict-rules). |
+| `findings` | array of objects | yes | - | The same fields as the findings of a measurement: `id`, `outcome`, `message`, and optionally `locator` and `path`. Can be empty. |
+| `facts` | array of objects | yes | derived or judged | Each fact has a `name`, a `class` and a `value`. |
+| `facts[].name` | string | yes | - | Non-empty. A stricter grammar applies. See [Verdict rules](/reference/conformance#facts-and-verdict-rules). |
+| `facts[].class` | string | yes | - | `derived`, or `judged` for the facts of a [rubric judge](/reference/judges#rubric-judge). |
 | `facts[].value` | boolean, integer or string | yes | - | A float is refused. |
 
-A gate reads `verdict.status` and `verdict.<fact name>`. `verdict.findings`, `verdict.validator` and `verdict.version` have no class and are refused.
+A gate reads `verdict.outcome` and `verdict.<fact name>`. `verdict.findings`, `verdict.judge` and `verdict.version` have no class and are refused.
 
-The verdict's `parents` are the digests of the artifacts it judged.
+The verdict's `parents` are the digests of the records the judge was given.
 
-Example: the verdict of `daggry/criterion-coverage` over a plan with `AC-1` and `AC-2`, and a head measurement where only a finding for `AC-1` passed.
+Example: the verdict of the `coverage` judge over a plan with `AC-1` and `AC-2`, and a head measurement where only a finding for `AC-1` passed.
 
 ```json
 {
-  "validator": "daggry/criterion-coverage",
+  "judge": "coverage",
   "version": "0.1.0",
-  "status": "fail",
-  "findings": [{"message": "uncovered: AC-2"}],
+  "outcome": "fail",
+  "findings": [
+    {"id": "AC-1", "outcome": "pass", "message": ""},
+    {"id": "AC-2", "outcome": "fail", "message": "no passing finding carries this id"}
+  ],
   "facts": [
     {"name": "criteria_covered", "class": "derived", "value": 1},
     {"name": "criteria_uncovered", "class": "derived", "value": 1},
@@ -435,30 +407,32 @@ Example: the verdict of `daggry/criterion-coverage` over a plan with `AC-1` and 
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "evidence/verdict@1",
-  "title": "evidence/verdict@1: what a validator produced. A gate reads verdict.<fact name> and verdict.status",
+  "title": "evidence/verdict@1: what a judge decided from the evidence trail in a verify step. A gate reads verdict.<fact name> and verdict.outcome",
   "type": "object",
   "required": [
-    "validator",
+    "judge",
     "version",
-    "status",
+    "outcome",
     "findings",
     "facts"
   ],
   "additionalProperties": false,
   "properties": {
-    "validator": {
+    "judge": {
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "description": "The judge that returned this verdict: default, coverage, no_regression, baseline_proof or the name of a judge you declare."
     },
     "version": {
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "description": "The version of the judge."
     },
-    "status": {
+    "outcome": {
       "enum": [
         "pass",
         "fail",
-        "inconclusive"
+        "error"
       ],
       "x-fact-class": "derived"
     },
@@ -467,10 +441,32 @@ Example: the verdict of `daggry/criterion-coverage` over a plan with `AC-1` and 
       "items": {
         "type": "object",
         "required": [
+          "id",
+          "outcome",
           "message"
         ],
         "additionalProperties": false,
         "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "outcome": {
+            "enum": [
+              "pass",
+              "fail",
+              "error",
+              "skip"
+            ]
+          },
+          "locator": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
           "message": {
             "type": "string"
           }
@@ -494,7 +490,11 @@ Example: the verdict of `daggry/criterion-coverage` over a plan with `AC-1` and 
             "minLength": 1
           },
           "class": {
-            "const": "derived"
+            "enum": [
+              "derived",
+              "judged"
+            ],
+            "description": "derived: computed by code. judged: a rubric judge's answer under a rubric a person approved."
           },
           "value": {
             "type": [
@@ -702,31 +702,31 @@ Example:
 
 ## daggry/observation@1
 
-A record Daggry keeps and no gate uses. One schema admits two records, selected by `record`.
+A record Daggry keeps and no gate uses. One schema admits two records, selected by `event`.
 
 | Field | Type | Req | Class | Constraints |
 |---|---|---|---|---|
-| `record` | string | yes | derived | `protected-restored` or `step-failed`. |
+| `event` | string | yes | derived | `protected-restored` or `step-failed`. |
 | `reason` | string | yes | derived | Non-empty. |
-| `path` | string | by record | derived | Non-empty. Required for `protected-restored`. Refused for `step-failed`. |
-| `step` | string | by record | derived | Non-empty. Required for `step-failed`. Refused for `protected-restored`. |
-| `attempt` | integer | by record | derived | 1 or more. Required for `step-failed`. Refused for `protected-restored`. |
+| `path` | string | by event | derived | Non-empty. Required for `protected-restored`. Refused for `step-failed`. |
+| `step` | string | by event | derived | Non-empty. Required for `step-failed`. Refused for `protected-restored`. |
+| `attempt` | integer | by event | derived | 1 or more. Required for `step-failed`. Refused for `protected-restored`. |
 
 The table lists the two records.
 
 | Record | Fields | Sealed when |
 |---|---|---|
-| `protected-restored` | `record`, `path`, `reason` | The runner puts a violating path back and reports it. |
-| `step-failed` | `record`, `step`, `attempt`, `reason` | The control plane fails a job. `reason` is `the job ran past its timeout` or `the lease lapsed on the last allowed attempt`. |
+| `protected-restored` | `event`, `path`, `reason` | The runner puts a violating path back and reports it. |
+| `step-failed` | `event`, `step`, `attempt`, `reason` | The control plane fails a job. `reason` is `the job ran past its timeout` or `the lease lapsed on the last allowed attempt`. |
 
 Examples:
 
 ```json
-{"record": "protected-restored", "path": "checks/ac-2-sentence-length.rule", "reason": "protected"}
+{"event": "protected-restored", "path": "checks/ac-2-sentence-length.rule", "reason": "protected"}
 ```
 
 ```json
-{"record": "step-failed", "step": "implement", "reason": "the job ran past its timeout", "attempt": 1}
+{"event": "step-failed", "step": "implement", "reason": "the job ran past its timeout", "attempt": 1}
 ```
 
 ::: details Schema: daggry/observation@1
@@ -737,12 +737,12 @@ Examples:
   "title": "daggry/observation@1: a protected-restored or a step-failed record",
   "type": "object",
   "required": [
-    "record",
+    "event",
     "reason"
   ],
   "additionalProperties": false,
   "properties": {
-    "record": {
+    "event": {
       "enum": [
         "protected-restored",
         "step-failed"
@@ -774,12 +774,12 @@ Examples:
     {
       "if": {
         "properties": {
-          "record": {
+          "event": {
             "const": "protected-restored"
           }
         },
         "required": [
-          "record"
+          "event"
         ]
       },
       "then": {
@@ -795,12 +795,12 @@ Examples:
     {
       "if": {
         "properties": {
-          "record": {
+          "event": {
             "const": "step-failed"
           }
         },
         "required": [
-          "record"
+          "event"
         ]
       },
       "then": {
@@ -824,9 +824,12 @@ What a run pins at start. It is the first entry of a run.
 
 | Field | Type | Req | Class | Constraints |
 |---|---|---|---|---|
-| `validators` | array of objects | yes | derived | |
-| `validators[].name` | string | yes | - | Non-empty. The validator's reference. See [Versioning](/reference/validators#versioning). |
+| `validators` | array of objects | yes | derived | The validators the run uses. |
+| `validators[].validator` | string | yes | - | Non-empty. The validator's reference. See [Versioning](/reference/conformance#versioning). |
 | `validators[].version` | string | yes | - | Non-empty. |
+| `judges` | array of objects | yes | derived | The judges the run uses, the default judge included. |
+| `judges[].judge` | string | yes | - | Non-empty. The judge's reference. |
+| `judges[].version` | string | yes | - | Non-empty. |
 | `boundary_rules` | array of strings | yes | derived | Each non-empty. |
 | `image_digest` | string | yes | derived | Non-empty. The digest of the job image. |
 | `workflow_digest` | string | yes | derived | Non-empty. SHA-256 hex of the exact bytes of the workflow file. |
@@ -841,10 +844,13 @@ The workflow has three steps: `plan` with scope `nothing`, `draft` with scope `h
 ```json
 {
   "validators": [
-    {"name": "daggry/base-relative", "version": "0.1.0"},
-    {"name": "daggry/baseline-proof", "version": "0.1.0"},
-    {"name": "daggry/criterion-coverage", "version": "0.1.0"},
-    {"name": "daggry/result-gate", "version": "0.1.0"}
+    {"validator": "review", "version": "v-0042"}
+  ],
+  "judges": [
+    {"judge": "default", "version": "0.1.0"},
+    {"judge": "coverage", "version": "0.1.0"},
+    {"judge": "no_regression", "version": "0.1.0"},
+    {"judge": "baseline_proof", "version": "0.1.0"}
   ],
   "boundary_rules": [
     "always .daggry/**", "always **/AGENTS.md", "always .agents/**", "always **/SKILL.md",
@@ -865,6 +871,7 @@ The workflow has three steps: `plan` with scope `nothing`, `draft` with scope `h
   "type": "object",
   "required": [
     "validators",
+    "judges",
     "boundary_rules",
     "image_digest",
     "workflow_digest"
@@ -877,12 +884,34 @@ The workflow has three steps: `plan` with scope `nothing`, `draft` with scope `h
       "items": {
         "type": "object",
         "required": [
-          "name",
+          "validator",
           "version"
         ],
         "additionalProperties": false,
         "properties": {
-          "name": {
+          "validator": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "judges": {
+      "x-fact-class": "derived",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "judge",
+          "version"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "judge": {
             "type": "string",
             "minLength": 1
           },
@@ -1047,6 +1076,6 @@ Example in the neutral form:
 
 ## Fact classes by kind
 
-Every field has one class, and a gate reads only `derived` fields. For the classes and the class of every field of every kind, see [Fact classes](/reference/gates#fact-classes). Every `meta` value is `derived`, because code stamps it. Any field a schema does not list has no class.
+Every field has one class, and a gate reads `derived` fields and approved `judged` fields. For the classes and the class of every field of every kind, see [Fact classes](/reference/gates#fact-classes). Every `meta` value is `derived`, because code stamps it. Any field a schema does not list has no class.
 
 

@@ -1,7 +1,7 @@
 <template>
   <figure class="dgm">
     <ScrollFrame label="Module diagram">
-    <svg viewBox="0 0 960 500" role="img" aria-label="Modules: four open formats on top, the modules below. The conductor reads the tenant config and the workflow, and hands each job attempt to a runner under a lease. The runner, drawn as the deterministic runner and the agent runner, reads the project config, runs script validators and the engine, and sends claims to the control plane. The control plane has validators check the claims, seals them as evidence and keeps them in the store. The forge sends work in and takes the result.">
+    <svg viewBox="0 0 960 500" role="img" aria-label="Modules: four open formats on top, the modules below. The conductor reads the tenant config and the workflow, and hands each job attempt to a runner under a lease. The runner, drawn as the deterministic runner and the agent runner, reads the project config, runs validators you define and the engine, and sends claims to the control plane. The control plane has validators check the claims, seals them as evidence and keeps them in the store. The forge sends work in and takes the result.">
       <defs>
         <marker id="mod-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="arrow"/></marker>
         <marker id="mod-ah-hot" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="arrow hot"/></marker>
@@ -33,7 +33,7 @@
       <!-- runners -->
       <rect x="390" y="170" width="260" height="100" rx="18" class="rose"/>
       <text x="520" y="200" text-anchor="middle" class="md">Deterministic runner</text>
-      <text x="520" y="220" text-anchor="middle" class="sm">commands · script validators</text>
+      <text x="520" y="220" text-anchor="middle" class="sm">commands · validators you define</text>
       <text x="520" y="244" text-anchor="middle" class="sm">never starts a model</text>
       <rect x="390" y="290" width="260" height="110" rx="18" class="rose"/>
       <text x="520" y="318" text-anchor="middle" class="md">Agent runner</text>
@@ -83,7 +83,7 @@
     <figcaption class="cap">
       The seven modules and the four open formats they read and write. The runner is drawn twice, because it runs a step as a script or with an agent. The conductor hands a job attempt to a runner, the runner sends back
       claims, validators check each claim as code, and the control plane seals it as evidence in the store. The forge sends work in and takes the result.
-      You can add your own validators: a script, or a native validator in any language.
+      You can add your own validators: a command of your own.
     </figcaption>
   </figure>
 </template>

@@ -1,86 +1,85 @@
 # Add a validator
 
-An agent can say the work is done. A validator is a script of yours that Daggry runs to check it, so a run passes only when your rule holds. Read this page if you write workflows or own a project.
+An agent can say the work is done. A validator is a command that Daggry runs to measure it, and a judge decides the verdict, so a run passes only when your rule holds. Read this page if you write workflows or own a project.
 
 The examples on this page are illustrative.
 
-## A verify step names its validators
+## Add a validator in three steps
 
-Start here to see where a validator is used. A workflow's `verify` step lists the validators that check the work.
+A validator is a command that you declare in `.daggry/project.yaml`. Daggry only uses what that file names. The command exits with 0 when the work passes. The declaration needs one key, `run`, and the rest has defaults.
 
-```yaml
-- id: check
-  kind: verify
-  validators: [project, project/summaries, tenant/house-style]
-```
-
-This step runs three validators. `project` is the project's main validator. `project/summaries` is one more script from the project. `tenant/house-style` is a script the tenant admin declares for every project. The step passes when every validator passes.
-
-## Write a script validator
-
-A validator can be any script that looks at the files and reports pass or fail. It can check a program, a document, a dataset or a configuration.
-
-1. Write the script in the project. It starts in the root of the workspace and exits with 0 when the work passes.
+1. Write the script `scripts/summaries.sh`. It starts in the root of the workspace.
 
    ```sh
    #!/bin/sh
-   # scripts/check-summaries.sh: every page has a summary line.
+   # scripts/summaries.sh: every page has a summary line.
    for page in handbook/*.md; do
      grep -q '^Summary: ' "$page" || exit 1
    done
    ```
 
-2. Declare it in the project config, `.daggry/project.yaml`, under `validators`.
+2. Declare it in `.daggry/project.yaml`, and commit both files.
 
    ```yaml
+   format: daggry/project@1
    validators:
      summaries:
-       run: scripts/check-summaries.sh
-       kind: custom
+       run: [sh, scripts/summaries.sh]
    ```
 
-3. Ask the tenant admin to accept it. A project's validator counts only when the tenant config lists it for your project. See [Set up a tenant](/guide/how-to/set-up-a-tenant).
+3. Name it in a `verify` step.
 
-4. Name it in a `verify` step as `project/summaries`.
+   ```yaml
+   - id: check
+     kind: verify
+     validators: [project, summaries, house-style]
+   ```
 
-To make it the project's main validator, see [Set up a project](/guide/how-to/set-up-a-project).
+The step runs three validators and passes when all three pass. `project` is the project's main validator. `summaries` is the script you wrote. `house-style` is a validator that every project in your tenant shares, declared under `validators.scripts` in the tenant config. If a project and the tenant use the same name, the project's validator runs.
 
-## Daggry decides pass or fail
-
-You need this to trust a result: the script reports, and Daggry, not the script, decides pass or fail.
-
-- Daggry runs the script on a clean copy of the workspace, after the agent has finished.
-- A run takes the project's validators from the version of the workspace it started from. Their files are protected paths. So an agent cannot pass by weakening its validator.
-- Daggry seals the result as a record in the evidence trail.
-
-See [Why you can trust a run](/guide/concepts/trust).
-
-::: details How does a script report more than pass or fail?
-By default Daggry reads the exit code alone. A script can also write a result file: an outcome and a list of findings, each with an id and its own outcome. Set the result format with `result.contract`.
+To set an option such as a timeout, add it to the declaration.
 
 ```yaml
 validators:
   summaries:
-    run: scripts/check-summaries.sh
-    kind: custom
-    result:
-      contract: document
-      path: reports/summaries.json
+    run: [sh, scripts/summaries.sh]
+    timeout: 120
 ```
 
-A loop needs the result file from the main validator. A plan item passes only when a passing finding carries its id. For the result file's fields, see the [Validators reference](/reference/validators).
+To make it the project's main validator, see [Set up a project](/guide/how-to/set-up-a-project).
+
+## Your validator measures, a judge judges
+
+You need this to trust a result. Your script reports, and a judge decides the verdict. Every `verify` step has a default judge, so a step needs nothing more. See [Judges](/reference/judges).
+
+- Daggry runs the script on a clean copy of the workspace, after the agent has finished.
+- A run takes your validators from the version it started from. The files a validator's `run` names are protected paths, so an agent cannot pass by weakening its validator.
+- Your validators count as evidence with no setup.
+- Daggry seals the measurement, then the verdict, in the evidence trail.
+
+See [Why you can trust a run](/guide/concepts/trust).
+
+::: details How does a script report more than pass or fail?
+By default Daggry reads the exit code alone. A script can also write a result file: an outcome and a list of findings, each with an id and its own outcome. Set `output: document` in the declaration.
+
+```yaml
+validators:
+  summaries:
+    run: [sh, scripts/summaries.sh]
+    output: document
+    output_file: reports/summaries.json
+```
+
+`output` can also name the format of a tool you already run, such as `junit` or `sarif`. A loop needs the result file from the main validator. A criterion passes only when a passing finding carries its id. For the result file's fields, see the [Validators reference](/reference/validators).
 :::
 
-::: details What other validators are there?
-- **Built-in validators** ship with Daggry and are named `daggry/<name>`. A loop uses one of them, `daggry/criterion-coverage`.
-- **Tenant validators** are scripts the tenant admin declares for every project, named `tenant/<name>`.
-- **Native validators** read only sealed records, never the workspace. The cluster admin installs one, and the tenant admin approves the exact version. A workflow names it `<namespace>/<name>`.
+## Go further: judges
 
-For each kind and the full rules, see the [Validators reference](/reference/validators).
-:::
+Most steps need only the default judge. To add a condition, name a judge in the step: `judges: [coverage]` requires that every criterion of the plan has a passing finding, and `no_regression` requires that no finding of the baseline is lost. You can also write a judge of your own. See [Judges](/reference/judges). To share a validator across projects, a tenant owner declares it in the tenant config. See the [Validators reference](/reference/validators).
 
 Related:
 
 - [Set up a project](/guide/how-to/set-up-a-project)
 - [Write a workflow](/guide/how-to/write-a-workflow)
 - [Validators reference](/reference/validators)
+- [Judges reference](/reference/judges)

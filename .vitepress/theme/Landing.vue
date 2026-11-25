@@ -34,7 +34,7 @@ const snippet: { k?: string; v?: string; p?: string }[][] = [
   [{ k: 'steps' }, { p: ':' }],
   [{ p: '  - ' }, { k: 'id' }, { p: ': ' }, { v: 'migrate' }],
   [{ p: '    ' }, { k: 'kind' }, { p: ': ' }, { v: 'command' }],
-  [{ p: '    ' }, { k: 'run' }, { p: ': ' }, { v: './scripts/migrate-config.sh' }],
+  [{ p: '    ' }, { k: 'run' }, { p: ': ' }, { p: '[' }, { v: 'sh' }, { p: ', ' }, { v: 'scripts/migrate-config.sh' }, { p: ']' }],
   [{ p: '    ' }, { k: 'scope' }, { p: ': [' }, { v: '"config/**"' }, { p: ']' }],
   [{ p: '  - { ' }, { k: 'id' }, { p: ': ' }, { v: 'validate' }, { p: ', ' }, { k: 'kind' }, { p: ': ' }, { v: 'verify' }, { p: ', ' }, { k: 'validators' }, { p: ': [' }, { v: 'project' }, { p: '] }' }],
   [{ p: '  - { ' }, { k: 'id' }, { p: ': ' }, { v: 'review' }, { p: ', ' }, { k: 'kind' }, { p: ': ' }, { v: 'human' }, { p: ', ' }, { k: 'waiting_for' }, { p: ': ' }, { v: 'input-needed' }, { p: ' }' }],
@@ -84,7 +84,7 @@ const doors = [
       <p class="eyebrow">Overnight</p>
       <h2>Go to bed. Wake at <em>daggry</em>.</h2>
       <p class="sub">
-        A software example: an issue becomes a pull request. For each item in your plan, the agent writes a test,
+        A software example: an issue becomes a pull request. For each criterion in your plan, the agent writes a test,
         Daggry shows that the test fails, the agent makes it pass, and Daggry runs it again on a clean copy. If a
         machine dies at 3 a.m., a new runner starts from the last sealed change.
       </p>

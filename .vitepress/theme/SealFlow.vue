@@ -17,7 +17,7 @@ import DgArrow from './DgArrow.vue'
         </li>
         <li>
           <div class="dg-node cool">
-            <span class="dg-who">2. fingerprint</span>
+            <span class="dg-who">2. digest</span>
             <b>A short code from every byte</b>
             <span class="dg-mono sample">e0d3…</span>
             <span>Change one byte and the code changes.</span>
@@ -53,8 +53,8 @@ import DgArrow from './DgArrow.vue'
       </ol>
     </div>
     <figcaption class="cap">
-      Sealing a record: take its fingerprint, combine it with the link that ends the trail so far, sign the new link,
-      and add it to the trail. Change any earlier record and every later fingerprint stops matching.
+      Sealing a record: take its digest, combine it with the link that ends the trail so far, sign the new link,
+      and add it to the trail. Change any earlier record and every later digest stops matching.
     </figcaption>
   </figure>
 </template>

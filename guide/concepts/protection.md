@@ -16,13 +16,13 @@ You need this list to know which of your files an agent can never edit. Three gr
 
 - **What instructs it.** The step prompt, and your project's own agent configuration: instruction files, agent folders, skills, commands, hooks and project settings. The agent reads them and cannot change them.
 - **What constrains it.** The workflow, each step's scope (the paths it can write) and the protected paths. Daggry keeps the workflow outside the runner.
-- **What judges it.** The validators and the files they read. The files of a script validator are protected by default. A run takes a project's validators from the version of the workspace it started from, never from the agent's change.
+- **What measures it.** The validators and the files they read. The files that your validators' `run` commands name are protected by default. A run takes a project's validators from the version of the workspace it started from, never from the agent's change.
 
 A project owner can add protected paths in the project config. For the exact list, see [Protected paths](/reference/protected-paths).
 
 ## Frozen paths
 
-A run that writes its own test could also rewrite it, so the test is frozen once sealed. In a loop, a proof step writes the proof for a plan item, and Daggry seals it. From then on, the paths the proof step wrote are frozen paths. The work cannot pass by weakening its own proof.
+A run that writes its own test could also rewrite it, so the test is frozen once sealed. In a loop, a proof step writes the proof for a criterion, and Daggry seals it. From then on, the paths the proof step wrote are frozen paths. The work cannot pass by weakening its own proof.
 
 In this illustrative example, a proof step writes `checks/leave-policy.sh`. A later step whose scope holds `checks/**` still cannot change that file.
 

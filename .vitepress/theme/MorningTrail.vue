@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // An example of what the evidence trail of one night reads like.
-// Every record carries its own fingerprint and a link to the trail before it.
+// Every record carries its own digest and a link to the trail before it.
 import DgIcon from './DgIcon.vue'
 
 const records = [
@@ -29,9 +29,9 @@ const records = [
               <p>{{ r.d }}</p>
               <div class="meta">
                 <span class="dg-chip ok"><DgIcon name="tick" />{{ r.by }}</span>
-                <span class="dg-chip" :title="`This record's fingerprint is ${r.fp}. It is linked to the trail before it, which ends at ${r.prev}.`">
+                <span class="dg-chip" :title="`This record's digest is ${r.fp}. It is linked to the trail before it, which ends at ${r.prev}.`">
                   <DgIcon name="link" />
-                  <span class="vh">fingerprint</span> {{ r.fp }}
+                  <span class="vh">digest</span> {{ r.fp }}
                   <span class="after">follows {{ r.prev }}</span>
                 </span>
               </div>

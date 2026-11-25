@@ -31,12 +31,13 @@ steps:
         - id: work
           kind: agent
           engine: <engine>
-          prompt: Do the work for this plan item.
+          prompt: Do the work for this criterion.
           outputs: [change]
           scope: ["docs/**"]
         - id: validate
           kind: verify
-          validators: [project, daggry/criterion-coverage]
+          validators: [project]
+          judges: [coverage]
   - id: deliver
     kind: effect
     do: publish
@@ -46,19 +47,19 @@ steps:
 
 - A **step** is one unit of work. It has a kind: `agent`, `command`, `verify`, `human` or `effect`.
 - An **output** is what a step hands to the next step, such as `plan`. Daggry seals it, so a later step cannot rewrite it.
-- A **loop** repeats steps once for each plan item, up to a loop limit. The file calls a plan item a criterion.
-- A **gate** is the rule that decides whether a loop can stop. Here it is `until: verdict.all_covered`.
+- A **loop** repeats steps once for each criterion, up to a loop limit.
+- A **gate** is an expression in a loop's `until`. It reads verdict facts and decides whether the loop ends. It runs nothing and judges nothing. Here it is `until: verdict.all_covered`.
 - An **approval** is a point where the run stops until you approve. Here it is the `human` step.
 
 The last step is an `effect`: the step that delivers the result, for example by opening a pull request. To write a file like this one, follow [Write a workflow](/guide/how-to/write-a-workflow).
 
 ## Loops always end
 
-A loop is where an agent can run all night, so every loop has a limit. After each iteration, Daggry reads the gate. If the validators passed, the loop moves to the next plan item. If they failed, the same plan item repeats. When the loop reaches its limit, the run fails or waits for you, whichever the file says.
+A loop is where an agent can run all night, so every loop has a limit. After each iteration, Daggry reads the gate. If every verdict of the `verify` step passed, the loop moves to the next criterion. If it failed, the same criterion repeats. When the loop reaches its limit, the run fails or waits for you, whichever the file says.
 
 <LoopGate />
 
-The diagram shows one iteration of a loop, the gate after it and the exit when the loop limit is reached. In the iteration, an agent writes a proof for the next plan item, and code shows that the proof fails before the work. The agent then does the work, and code runs every validator.
+The diagram shows one iteration of a loop, the gate after it and the exit when the loop limit is reached. In the iteration, an agent writes a proof for the next criterion, and code shows that the proof fails before the work. The agent then does the work, and code runs every validator.
 
 A proof is a test the run writes that fails first, then passes. A test that already passes says nothing about the work. Once Daggry seals the proof, the agent cannot edit it. See [Add a loop](/guide/how-to/add-a-loop).
 
@@ -76,7 +77,7 @@ Read this table to know what a run can and cannot vary. The file fixes everythin
 
 | The file fixes | The run decides |
 |---|---|
-| The order of steps and loops | How many iterations a loop needs, one for each plan item |
+| The order of steps and loops | How many iterations a loop needs, one for each criterion |
 | The limit on every loop, and whether the run fails or waits for you at the limit | Whether a loop stops early because its gate already holds |
 | Where the run stops for an approval | Which paths each step changed |
 | The paths each step can write | Whether those paths stayed in scope |

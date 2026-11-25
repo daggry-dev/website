@@ -18,7 +18,7 @@ Read more: [Workflows](/guide/concepts/workflows)
 
 ### 2. Validators
 
-Code checks every step; an agent never checks its own work. A validator is code with a name: it checks the work and returns pass or fail. You can add your own.
+Code checks every step; an agent never checks its own work. A validator is code with a name: it measures the work and reports. A judge turns the evidence trail into a verdict of pass or fail. You can add your own validators.
 
 Read more: [Add a validator](/guide/how-to/add-a-validator)
 

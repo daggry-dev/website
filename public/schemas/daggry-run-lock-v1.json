@@ -5,6 +5,7 @@
   "type": "object",
   "required": [
     "validators",
+    "judges",
     "boundary_rules",
     "image_digest",
     "workflow_digest"
@@ -17,12 +18,34 @@
       "items": {
         "type": "object",
         "required": [
-          "name",
+          "validator",
           "version"
         ],
         "additionalProperties": false,
         "properties": {
-          "name": {
+          "validator": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "judges": {
+      "x-fact-class": "derived",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "judge",
+          "version"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "judge": {
             "type": "string",
             "minLength": 1
           },

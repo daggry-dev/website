@@ -33,8 +33,8 @@ Each choice here narrows what an agent can do wrong. The table gives a rule of t
 |---|---|
 | Step kind | `agent` for writing or judgement. `command` for a fixed script. `verify` to run validators. `human` for an approval. `effect` to deliver the result. |
 | Who checks | Put the work in an `agent` step and the checking in a `verify` step. An agent never checks its own work. |
-| Loop or not | Use a loop when the same steps run once for each plan item. With no list, one `agent` step and one `verify` step are a complete workflow. |
-| Loop limit | Set `max` to the most plan items you expect, plus room for repeats. A failed item repeats and spends one iteration. |
+| Loop or not | Use a loop when the same steps run once for each criterion. With no list, one `agent` step and one `verify` step are a complete workflow. |
+| Loop limit | Set `max` to the most criteria you expect, plus room for repeats. A failed item repeats and spends one iteration. |
 | At the limit | Set `on_exhausted` to a `human` step if a person can unstick the work, or to `fail`. |
 | Scope | Give each step the least it needs: `nothing` for a step that only reads, a glob list such as `["translations/**"]` for one that writes. |
 
@@ -90,7 +90,8 @@ steps:
           scope: ["translations/da/**"]
         - id: check-page
           kind: verify
-          validators: [project, daggry/criterion-coverage]
+          validators: [project]
+          judges: [coverage]
 
   - id: stuck
     kind: human

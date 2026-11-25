@@ -109,9 +109,7 @@ Every connection goes out from the pod. Nothing dials into a pod. If a runner st
 :::
 
 ::: details Do I need to install validators?
-Script validators need no installation. The tenant config and each project config declare them. See [Add a validator](/guide/how-to/add-a-validator).
-
-Only a native validator is installed, and only by you, the cluster admin. The tenant admin then approves its exact version in the tenant config. See the [Validators reference](/reference/validators).
+No. A project declares its validators in `.daggry/project.yaml`, and the tenant config declares shared ones. The default judge and the named judges `coverage` and `no_regression` need no declaration. See [Add a validator](/guide/how-to/add-a-validator).
 :::
 
 ## Upgrade

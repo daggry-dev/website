@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "evidence/measurement@1",
-  "title": "evidence/measurement@1: the result of one check on one version of the workspace",
+  "title": "evidence/measurement@1: what a validator reported on one version of the workspace",
   "type": "object",
   "required": [
     "label",
@@ -29,37 +29,12 @@
       "type": "integer",
       "x-fact-class": "derived"
     },
-    "tests": {
-      "x-fact-class": "derived",
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": [
-          "name",
-          "outcome"
-        ],
-        "additionalProperties": false,
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "outcome": {
-            "enum": [
-              "passed",
-              "failed",
-              "ignored"
-            ]
-          }
-        }
-      }
-    },
-    "check": {
+    "validator": {
       "type": "string",
       "pattern": "^[a-z][a-z0-9_-]*$",
       "x-fact-class": "derived"
     },
-    "contract": {
+    "output": {
       "type": "string",
       "minLength": 1,
       "x-fact-class": "derived"

@@ -1,43 +1,35 @@
 # Set up a project
 
-Daggry cannot check work until it knows what "good" means for your project. The project config is one file, `.daggry/project.yaml`, that names the script that checks the project and the paths no agent can change. Read this page if you are the project owner. You do it once for each project.
+Daggry checks work against the rule you give it. The project config is one file, `.daggry/project.yaml`, that names the script that checks the project and the paths no agent can change. Daggry only uses what `.daggry/project.yaml` names: it never looks for scripts or files by folder or file name. Read this page if you own a project. You do it once.
 
 The files on this page are illustrative.
 
 ## Write the project config
 
-Start with the smallest file that works. It names one validator and makes it the main validator: the project's proof that the work is good.
+Start with the smallest file that works. It makes one validator the main validator, the one a `verify` step that names `project` runs first. The default judge decides from the result.
 
 ```yaml
 format: daggry/project@1
 validators:
   review:
-    run: [sh, check.sh]
-    kind: custom
+    run: [sh, scripts/review.sh]
 verification:
   canonical: review
 ```
 
 <FileTree kind="project" />
 
-1. Write the script, here `check.sh`, in the project. It looks at the files and exits with 0 when the work is good.
-2. Create `.daggry/project.yaml` with the content shown. `validators` names each script, and `verification.canonical` picks the main validator.
-3. Commit both files. A run reads the project config from the version of the workspace it starts from, so the file applies from the next run.
+1. Write the script `scripts/review.sh`. It exits with 0 when the work is good.
+2. Create `.daggry/project.yaml` with the content shown. `validators.review` names the script, and `verification.canonical` picks it as the main validator.
+3. Commit both files. The next run uses them.
 
-A workflow now runs your main validator with one word, `project`, in a `verify` step. To write the script and report more than pass or fail, see [Add a validator](/guide/how-to/add-a-validator).
-
-## Ask the tenant admin to accept your validators
-
-Your validators do not count until the tenant admin accepts them, so do this before the first run. By default a project's validators are not accepted, and Daggry refuses a run that names one.
-
-1. Send the tenant admin the names under `validators`.
-2. The tenant admin lists them for your project in the tenant config. See [Set up a tenant](/guide/how-to/set-up-a-tenant).
+A `verify` step now runs your main validator with the word `project`. To report more than pass or fail, see [Add a validator](/guide/how-to/add-a-validator).
 
 ## Protect more paths
 
-You need this when a file decides what "good" means, such as a style guide your validator reads. An agent that could edit it could pass by weakening the rule.
+Protect a file that decides what "good" means, such as a style guide your validator reads. An agent that could edit it could pass by weakening the rule.
 
-Daggry always protects `.daggry/**`, and it protects the files your validators run. Add your own paths under `protect.paths`.
+Daggry always protects `.daggry/**`, and it protects the files that the `run` of each of your validators names, such as `scripts/review.sh`. Add your own paths under `protect.paths`.
 
 ```yaml
 areas:
@@ -66,16 +58,14 @@ areas:
 validators:
   review:
     run: [sh, scripts/review-handbook.sh]
-    kind: style
-    result:
-      contract: document
-      path: reports/review.json
+    role: style
+    output: document
+    output_file: reports/review.json
     timeout: 300
   citations:
-    run: scripts/check-citations.sh
-    kind: citations
-    result:
-      contract: document
+    run: [sh, scripts/check-citations.sh]
+    role: citations
+    output: document
 
 verification:
   canonical: review

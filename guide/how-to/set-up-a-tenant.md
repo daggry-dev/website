@@ -1,8 +1,8 @@
 # Set up a tenant
 
-Two teams rarely work the same way. One lets agents deliver all night, and another wants a person to approve every plan. The tenant config is one file where you choose which workflows run on which project, which agents work and where a person must approve. Read this page if you are the tenant admin.
+Two teams rarely work the same way. One lets agents deliver all night, and another wants a person to approve every plan. The tenant config is one file where you choose which workflows run on which project, which agents work and where a person must approve. Read this page if you own a tenant. Project developers do not need it.
 
-The file on this page is illustrative. `<engine>` stands for the name of an engine your cluster admin provides.
+The file on this page is illustrative. `<engine>` stands for the name of a coding-agent engine you register.
 
 ## A small tenant config
 
@@ -12,7 +12,7 @@ This tenant offers one workflow, runs at most four jobs at a time, has one agent
 format: daggry/tenant@1
 
 workflows:
-  - name: review
+  review:
     source:
       workspace: factory-workflows
       path: workflows/review.yaml
@@ -25,11 +25,11 @@ orchestration:
 
 agents:
   engines:
-    - name: <engine>
+    <engine>:
       credential:
         ref: model-credential
   roster:
-    - name: reviewer
+    reviewer:
       engine: <engine>
       instructions: agents/reviewer.md
   approval:
@@ -37,21 +37,19 @@ agents:
 
 runners:
   images:
-    - name: documents
+    documents:
       image: registry.example/jobs/documents@sha256:<digest>
       default: true
 
 projects:
-  - workspace: handbook
+  handbook:
     workflows:
       allowed: [review]
       default: review
-    validators:
-      admit: all
 
 extensions:
   bindings:
-    - name: review
+    review:
       version: "1.0.0"
 ```
 
@@ -69,16 +67,16 @@ Each step answers one question about how your team works. Every section is optio
 
 4. **Choose where a person must approve.** `agents.approval.require` takes `plan`, `effect` or both. With `plan`, every workflow must stop for approval before work builds on a plan. With `effect`, every workflow must stop before it delivers a result. Daggry refuses a workflow that does not fit.
 
-5. **List your projects.** Under `projects`, add each project by the name of its workspace. A run starts only for a listed project. For each one, say which workflows can run there and which runs by default. `validators.admit` says which of the project's own validators count: `all`, `none` or a list of names. Without it, none count.
+5. **List your projects.** Under `projects`, add each project by the name of its workspace. A run starts only for a listed project. For each one, say which workflows can run there and which runs by default. A project's own validators and judges count as evidence. To count only the ones the tenant declares for one project, set `trust_project: false`.
 
 6. **Name the kind of work.** Under `extensions.bindings`, register the binding your projects use. A binding is a ready-made setup for one kind of work.
 
-7. **Hand the file to the cluster admin.** Daggry holds it in the control plane, outside every runner. See [Install Daggry](/guide/how-to/deploy).
+7. **Give the file to Daggry.** Daggry holds it outside every runner. See [Install Daggry](/guide/how-to/deploy).
 
 A run records the tenant config it started under. A later change applies to new runs only.
 
 ::: details Can I add a validator for every project?
-Yes. Declare a script under `validators.scripts`, and a workflow names it `tenant/<name>`. It then checks every project you serve. See [Add a validator](/guide/how-to/add-a-validator).
+Yes. Declare a script under `validators.scripts`, and a workflow names it by its bare name. It then checks every project you serve. See [Add a validator](/guide/how-to/add-a-validator).
 :::
 
 ::: details Can one project have stricter rules?
@@ -86,13 +84,11 @@ Yes. A project entry can limit the agents, add an approval point and limit runs 
 
 ```yaml
 projects:
-  - workspace: example/shop-web
+  example/shop-web:
     agents:
       roster: [lead]
-    approval:
-      require: [effect]
-    validators:
-      admit: [test, lint, types]
+      approval:
+        require: [effect]
     areas: [app]
 ```
 
@@ -101,7 +97,7 @@ A project entry can add an approval point. It cannot remove one.
 
 ## Who can loosen a rule
 
-You need this when a project owner asks for an exception. The tenant config wins over the project config, which wins over the workflow. An agent can change none of them.
+The tenant config wins over the project config, which wins over the workflow. An agent can change none of them.
 
 A project or a workflow can add limits. Only a person can remove one. For the full rules, see the [Tenant config reference](/reference/tenant-config).
 

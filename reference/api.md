@@ -2,7 +2,7 @@
 
 *Reference*
 
-The `daggry` CLI does all its work through an HTTP API, and a tool of your own can call the same routes. This page lists the tenant API: the routes that a tenant client calls, their request and response fields, the status codes and the run states. Read it if you write a client or a script that starts or watches runs. If you use the CLI, the [CLI reference](/reference/cli) is enough.
+The `daggry` CLI calls an HTTP API, and a tool of your own can call the same routes. This page lists the routes, their request and response fields, the status codes and the run states. Read it if you write a client or a script that starts or watches runs. If you use the CLI, the [CLI reference](/reference/cli) is enough.
 
 ## Conventions
 

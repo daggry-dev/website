@@ -14,7 +14,7 @@ const parts = [
   { x: 30, w: 100, c: 'box', t: 'Forge', d: ['work item', 'comes in'] },
   { x: 162, w: 120, c: 'box', t: 'Conductor', d: ['picks the next', 'step and starts', 'a runner'] },
   { x: 314, w: 150, c: 'rose', t: 'Runner', d: ['does the work,', 'then is thrown away'], in: { t: 'Engine', d: 'runs the agent' } },
-  { x: 496, w: 120, c: 'cool', t: 'Validators', d: ['check the work', 'as code:', 'pass or fail'] },
+  { x: 496, w: 120, c: 'cool', t: 'Validators', d: ['measure the work', 'as code', 'and report'] },
   { x: 648, w: 150, c: 'warm', t: 'Control plane', d: ['holds the keys,', 'signs the result'], in: { t: 'Store', d: 'keeps the trail' } },
   { x: 830, w: 100, c: 'box', t: 'Forge', d: ['result', 'goes out'] },
 ]
@@ -23,7 +23,7 @@ const parts = [
 <template>
   <figure class="dgm">
     <ScrollFrame label="Factory kit diagram">
-    <svg viewBox="0 0 960 440" role="img" aria-label="The factory kit. On top, the three files you write: workflow, project config and tenant config. In the middle, seven modules in a row, each in a slot you can refill: work comes in from the forge, the conductor picks the next step and starts a runner, the runner does the work on an engine, validators check the work as code, the control plane holds the keys, signs the result and keeps it in the store, and the checked result goes out to the forge. Below, the evidence trail, which Daggry writes.">
+    <svg viewBox="0 0 960 440" role="img" aria-label="The factory kit. On top, the three files you write: workflow, project config and tenant config. In the middle, seven modules in a row, each in a slot you can refill: work comes in from the forge, the conductor picks the next step and starts a runner, the runner does the work on an engine, validators measure the work as code, the control plane holds the keys, signs the result and keeps it in the store, and the checked result goes out to the forge. Below, the evidence trail, which Daggry writes.">
       <defs>
         <marker id="kit-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="arrow"/></marker>
         <marker id="kit-ah-hot" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="arrow hot"/></marker>
@@ -78,7 +78,7 @@ const parts = [
       The factory kit. You write three files: the workflow, the project config and the tenant config. Seven
       modules read them, and each sits in a slot you can refill with your own: conductor, control plane, runner,
       engine, forge, store and validators. Work comes in from the forge. The conductor picks the next step, the
-      runner does the work on an engine, validators check it as code, and the control plane signs the result and
+      runner does the work on an engine, validators measure it as code, judges judge, and the control plane signs the result and
       keeps it in the store. The checked result goes back to the forge. Daggry writes the evidence trail.
     </figcaption>
   </figure>

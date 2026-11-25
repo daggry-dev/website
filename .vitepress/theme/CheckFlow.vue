@@ -17,17 +17,17 @@ import DgIcon from './DgIcon.vue'
         </li>
         <li>
           <div class="dg-node cool check">
-            <span class="dg-who">runs</span>
-            <b>A validator</b>
-            <span>For example: every plan item has a proof that failed before the work and passes after it.</span>
+            <span class="dg-who">a judge decides</span>
+            <b>A judge</b>
+            <span>For example: every criterion has a proof that failed before the work and passes after it.</span>
           </div>
           <DgArrow hot />
         </li>
         <li>
           <div class="dg-node">
-            <span class="dg-who">decides</span>
-            <b>Pass or fail</b>
-            <span>Same records, same result, every time.</span>
+            <span class="dg-who">Daggry seals</span>
+            <b>A verdict: pass or fail</b>
+            <span>Same trail, same result, for a judge that is a command.</span>
             <span class="dg-chip ok v"><DgIcon name="tick" />pass</span>
           </div>
           <DgArrow hot />
@@ -53,12 +53,12 @@ import DgIcon from './DgIcon.vue'
         </div>
         <div class="bounce">
           <DgIcon name="back" class="bi" />
-          <span><b>Bounced.</b> No sealed record backs it, so the validator never sees it. A claim on its own opens no gate.</span>
+          <span><b>Bounced.</b> No sealed record backs it, so no judge sees it. A claim on its own opens no gate.</span>
         </div>
       </div>
     </div>
     <figcaption class="cap">
-      A validator reads only sealed records and returns pass or fail. The gate opens only on a pass.
+      A judge is given the evidence trail and returns a verdict of pass or fail, which Daggry seals. Validators measure, judges judge, and a gate decides when to stop. The gate opens only on a pass.
       What the agent says about its own work is not a record, so it cannot open a gate.
     </figcaption>
   </figure>

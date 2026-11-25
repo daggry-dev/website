@@ -2,7 +2,7 @@
 
 *Reference*
 
-You can replace any module of Daggry with your own, and a replacement must behave like the module it replaces. A contract is the published interface between two modules: a file, a protocol or a document with a fixed form. This page lists the seven modules and their limits, every contract, what can replace each module and how a replacement is tested. Read it if you extend Daggry or replace a module. If you only run workflows, you can skip it.
+A contract is the published interface between two modules, and a replacement for a module must keep it. This page lists the seven modules and their limits, every contract, what can replace each module and how a replacement is tested. Read it if you extend Daggry or replace a module. If you only run workflows, you can skip it.
 
 For a shorter account of the modules, read [The modules and where they run](/guide/concepts/modules).
 
@@ -13,17 +13,18 @@ Each module has one job and a list of things it never does. The table lists both
 | Module | Its one job | What it never does |
 |---|---|---|
 | Conductor | Orders the steps of a run and schedules job attempts across runners. | Holds a key, seals a record or runs a step's work. |
-| Control plane | The one backend: holds the keys, seals, judges, serves the API and keeps tenant state. It runs the built-in validators. | Runs a command or an agent, or seals a claim that code has not checked. |
-| Runner, as the deterministic runner | Runs commands and script validators. | Starts a model. |
+| Control plane | The one backend: holds the keys, seals, judges, serves the API and keeps tenant state. It runs the judges and seals every verdict. | Runs a command or an agent, or seals a claim that code has not checked. |
+| Runner, as the deterministic runner | Runs commands and validators you define. | Starts a model. |
 | Runner, as the agent runner | Runs the work of an `agent` step through an engine adapter. | Judges its own work, or changes what instructs, constrains or judges it. |
 | Engine | The coding-agent program that does the work of an `agent` step. | Seals a record or reaches the signing key. |
 | Forge | Keeps the workspace and its work items, and takes the result. | Seals a record or judges a result. |
 | Store | Keeps the trail and each tenant's state. | Changes or removes a sealed entry. |
-| Validators | Judge the work in code. | Read anything but their inputs, or start a model. |
+| Validators | Measure the work in code. | Read anything but their inputs, produce a verdict or start a model. |
+| Judges | Take the evidence trail of the run so far as input and decide a verdict. | Read the workspace, produce a measurement or seal their own verdict. A rubric judge starts one bounded model and nothing else. |
 
 <Modules />
 
-The diagram shows the four open formats and the modules. Three modules run a job: the conductor, the runner, drawn as the two ways it runs a step, and the control plane. The conductor reads the tenant config and the workflow and hands each job attempt to a runner. The runner reads the project config and sends claims to the control plane. The control plane writes evidence. Script validators run in the deterministic runner, and built-in and native validators judge beside the control plane. The forge and the store are drawn as modules of their own.
+The diagram shows the four open formats and the modules. Three modules run a job: the conductor, the runner, drawn as the two ways it runs a step, and the control plane. The conductor reads the tenant config and the workflow and hands each job attempt to a runner. The runner reads the project config and sends claims to the control plane. The control plane writes evidence. Validators run in the deterministic runner, and the control plane runs the judges over their measurements and seals the verdicts. The forge and the store are drawn as modules of their own.
 
 ## Replace a module
 
@@ -36,7 +37,8 @@ A replacement is a module that passes the tests of every contract it implements.
 | A store for another database | The store | [Store interfaces](#store-interfaces) |
 | A runner for another execution environment | The runner | [Runner protocol](#runner-protocol). A runner that accepts a job attempt and keeps its lease can be scheduled, whether it runs in a pod, a virtual machine or a process. |
 | A scheduler of your own | The conductor | [Conductor interface](#conductor-interface) |
-| A validator in any language | No module: you add it | [Validator contract](/reference/validators#the-validator-contract) |
+| A validator of your own | No module: you add it | [Validators](/reference/validators#write-a-validator) |
+| A judge of your own | No module: you add it | [Judges](/reference/judges#custom-judge) |
 
 Daggry as shipped is one implementation of these contracts. Nothing in a contract depends on its language, its database or its cluster. Another implementation can write the same four formats and produce evidence that the same tools verify. See [Conformance](/reference/conformance).
 
@@ -47,11 +49,10 @@ The table lists each contract once. A module is replaceable when it passes the t
 | Contract | Between | Direction and transport | Defined in | What you can add or replace | Conformance test |
 |---|---|---|---|---|---|
 | Workflow document | The tenant and the conductor. | A file, read once when a run starts. | [Workflow file](/reference/workflow-schema) | Your own workflows, step kinds and extension keys. Another conductor that reads the same file. | The published schema and the refusal cases. |
-| Evidence envelope and kinds | The control plane and any verifier. | A file or a JSON response: sealed artifacts in a signed chain. | [Evidence record format](/reference/envelope), [Record kinds](/reference/kinds) | Your own kinds in your own namespace. Another signer or verifier. | The canonical JSON vectors and the two-entry chain vector. |
-| Validator contract | The control plane and a validator. | A function call in-process, or a request and a response with JSON bodies. | [Validators](/reference/validators#the-validator-contract) | Script validators and native validators, in any language. | Equal verdicts for equal inputs, over the published input sets. |
-| Result document and adapters | A script validator or an adapter, and the deterministic runner. | A file or standard output, written once when the process ends. | [Project config](/reference/project-config#result-document), [Bindings](/reference/bindings) | Any tool that writes the document. An adapter for any other format. | The published schema and the refusal cases. |
+| Evidence envelope and kinds | The control plane and any verifier. | A file or a JSON response: sealed artifacts in a signed chain. | [Evidence envelope](/reference/envelope), [Artifact kinds](/reference/kinds) | Your own kinds in your own namespace. Another signer or verifier. | The canonical JSON vectors and the two-entry chain vector. |
+| Result document and output formats | A validator you define or a format reader, and the deterministic runner. | A file or standard output, written once when the process ends. | [Project config](/reference/project-config#result-document), [Bindings](/reference/bindings) | Any tool that writes the document. A reader for any other format. | The published schema and the refusal cases. |
 | Project config | A project and a factory. | A file in the workspace, read from the baseline. | [Project config](/reference/project-config) | Your own validators, areas and extension keys. Another factory that reads the same file. | The published schema and the refusal cases. |
-| Tenant config | A tenant and the control plane. | A document the control plane holds. | [Tenant config](/reference/tenant-config) | Your own catalogue, limits, bindings and admitted validators. | The published schema and the refusal cases. |
+| Tenant config | A tenant and the control plane. | A document the control plane holds. | [Tenant config](/reference/tenant-config) | Your own catalogue, limits, bindings and validators. | The published schema and the refusal cases. |
 | Conductor interface | The conductor and the control plane. | Request and response over HTTP with JSON. | [Conductor interface](#conductor-interface) | Another conductor, with another way to order and place work. | The same sealed chain for the same workflow and the same step results. |
 | Runner protocol | A runner and the conductor. | Request and response over HTTP with JSON. The runner calls. | [Runner protocol](#runner-protocol) | Another runner, on another kind of machine or isolation. | A claimed attempt is reported, kept alive and released by the rules. |
 | Engine interface | The agent runner and an engine. | A process protocol: the runner starts the engine and offers it tools. | [Engine interface](#engine-interface) | Another engine for each tenant, through an engine adapter. | The same prompt, tools and hand-in for every engine. |
@@ -86,7 +87,7 @@ The table lists what each runner implements.
 
 | Runner | Implements | Never |
 |---|---|---|
-| Deterministic runner | `command` and `verify` steps, script validators and adapters. | Starts a model or holds a model credential. |
+| Deterministic runner | `command` and `verify` steps, validators you define and format readers. | Starts a model or holds a model credential. |
 | Agent runner | `agent` steps, through an engine adapter. | Judges its own work. |
 
 ## Engine interface
@@ -96,7 +97,7 @@ An engine does the work of an `agent` step. The agent runner drives every engine
 | The adapter gives the engine | Rule |
 |---|---|
 | A prompt | The step's instructions, in a file the engine cannot change. |
-| Tools | `submit`, to hand in a record, and `validate`, to preview a validator. |
+| Tools | `submit`, to hand in a record, and `validate`, to preview a validator. A preview answers with the findings and the tail of the command's output. |
 | A working copy | The workspace, inside the step's scope. |
 | A credential | By reference, from the tenant config. |
 
@@ -138,6 +139,6 @@ The table lists the rules for identity, credentials and the signing key.
 The list names the pages to read next.
 
 - For what an implementation does to conform, see [Conformance](/reference/conformance).
-- For the validator contract in full, see [Validators](/reference/validators).
+- For the kinds of validator, see [Validators](/reference/validators).
 - For the four formats the modules read and write, see [Open formats](/reference/open-formats).
 - For what one kind of work adds, see [Bindings](/reference/bindings).

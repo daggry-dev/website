@@ -1,30 +1,32 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "evidence/verdict@1",
-  "title": "evidence/verdict@1: what a validator produced. A gate reads verdict.<fact name> and verdict.status",
+  "title": "evidence/verdict@1: what a judge decided from the evidence trail in a verify step. A gate reads verdict.<fact name> and verdict.outcome",
   "type": "object",
   "required": [
-    "validator",
+    "judge",
     "version",
-    "status",
+    "outcome",
     "findings",
     "facts"
   ],
   "additionalProperties": false,
   "properties": {
-    "validator": {
+    "judge": {
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "description": "The judge that returned this verdict: default, coverage, no_regression, baseline_proof or the name of a judge you declare."
     },
     "version": {
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "description": "The version of the judge."
     },
-    "status": {
+    "outcome": {
       "enum": [
         "pass",
         "fail",
-        "inconclusive"
+        "error"
       ],
       "x-fact-class": "derived"
     },
@@ -33,10 +35,32 @@
       "items": {
         "type": "object",
         "required": [
+          "id",
+          "outcome",
           "message"
         ],
         "additionalProperties": false,
         "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "outcome": {
+            "enum": [
+              "pass",
+              "fail",
+              "error",
+              "skip"
+            ]
+          },
+          "locator": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
           "message": {
             "type": "string"
           }
@@ -60,7 +84,11 @@
             "minLength": 1
           },
           "class": {
-            "const": "derived"
+            "enum": [
+              "derived",
+              "judged"
+            ],
+            "description": "derived: computed by code. judged: a rubric judge's answer under a rubric a person approved."
           },
           "value": {
             "type": [

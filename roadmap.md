@@ -24,21 +24,43 @@ Status as of 2026-11-25. No wave exit test has passed, and the shapes of the sch
 
 | Area | Built | Not built |
 |---|---|---|
-| Evidence | The envelope, digests, the signed chain, one log per tenant, fact classes, the validator contract, all eight kinds with schemas and `daggry verify`. | The signed head, revocation, tombstoning and older-major decoding. Lineage by `parents` is filled for `verdict` and `approval` only. Kinds from a namespace other than `evidence` and `daggry` are refused as unknown. |
-| Measurement | A measurement with a label, a revision, an exit code and one record for each test. | The `check`, `contract`, `outcome`, `findings` and `metrics` fields, one measurement for each script validator, and threshold findings. |
-| Validators | The `verify` step runs one command of the project on a clean copy of the workspace, as a different unix user. `criterion-coverage` and `red-proof` run in a run, under those names and in their test form. | `validators` on a `verify` step and validator references. Script validators from the tenant, admission of a project's validators, native validators and the validator protocol. `daggry/result-gate`, `daggry/base-relative`, the neutral form of the baseline proof, the witness rule and `judged` facts. |
-| Result document | Nothing. | `daggry/result@1`, the `document` contract and the `exit-code` contract. |
-| Adapters | The reader of libtest-style result lines, built into the runner. | Adapters as registered extensions: `software/libtest` as one, `software/junit`, `software/tap` and `software/sarif`. |
+| Evidence | The envelope, digests, the signed chain, one log per tenant, fact classes, all eight kinds with schemas and `daggry verify`. | The signed head, revocation, tombstoning and older-major decoding. Lineage by `parents` is filled for `verdict` and `approval` only. Kinds from a namespace other than `evidence` and `daggry` are refused as unknown. |
+| Measurement | A measurement with a label, a revision, an exit code and one record for each test, in a `tests` field. | The `validator`, `output`, `outcome`, `findings` and `metrics` fields, one measurement for each validator you define, and threshold findings. |
+| Validators | The `verify` step runs one command of the project on a clean copy of the workspace, as a different unix user. `criterion-coverage` and `red-proof` run in a run, under those names and in their test form. | `validators` on a `verify` step and validator references. Validators you define in the project config and from the tenant, `trust_project`, the neutral form of the baseline proof, the witness rule and `judged` facts. |
+| Judges | The `criterion-coverage` and `red-proof` checks run in a run, under those names. | The `judges` key of a `verify` step, the default judge, the named judges `coverage` and `no_regression`, custom judges (a command declared in `judges`, in the project config or the tenant config) and rubric judges. See [Judges](/reference/judges). |
+| Result document | Nothing. | `daggry/result@1`, and the `output` values `document` and `exit-code`. |
+| Adapters | The reader of libtest-style result lines, built into the runner. | Output formats as registered extensions: `libtest` as one, `junit`, `tap` and `sarif`. |
 | Bindings | The conventions of the software binding, built in: a git repository, a commit, an issue and the `open-pr` effect. | Bindings as registered extensions, the neutral forms of `work-item` and `change`, effects other than `open-pr`, and any binding other than software. |
-| Workflow | Strict YAML, the five step kinds, bounded loops, a published schema, `approve` and `approve --unfreeze`, and the `open-pr` effect. The loader reads a file that holds `steps` only. Frozen paths are named by a step's `tests` key. | The `format` header, extension keys, extension step kinds, `validators` on a `verify` step, `freeze`, registered effects and area references in a scope. Delegation to other agents, a review of the finished run and parallel steps. |
+| Workflow | Strict YAML, the five step kinds, bounded loops, a published schema, `approve` and `approve --unfreeze`, and the `open-pr` effect. The loader reads a file that holds `steps` only. Frozen paths are named by a step's `tests` key, and a command step's `run` is a shell line. | The `format` header, `run` as a list of a program and its arguments, extension keys, extension step kinds, `validators` on a `verify` step, `freeze`, registered effects and area references in a scope. Delegation to other agents, a review of the finished run and parallel steps. |
 | Gates | The gate grammar and the reads of derived fields. | Reads of `meta` in a gate. |
-| Project config | A file in the workspace that holds one verification command. | `.daggry/project.yaml`: the `format` header, `project`, `areas`, named script validators, the canonical validator, supporting validators, thresholds, `protect.paths`, validators exposed to the agent and extension keys. |
-| Tenant config | The cluster admin sets the lease length, the concurrency cap, the job image and the model credential once for the whole installation. A workflow reaches the control plane as a file given to `daggry run --workflow <file>`. | The tenant config document: the workflow catalogue, orchestration limits for each tenant, the roster, runner images and classes, the `validators` section, project entries and the extension registry. |
-| Protection | The always-protected paths, the scope of a step, frozen paths, restore in the pod and a recheck in the control plane. Daggry's own instructions are read-only in the pod. A project's own agent config is read from the working copy and protected by the boundary check. | The paths a project adds, the default protection of the files a script validator runs, the scope of a run, and a human grant for protected paths other than `.daggry/**`. |
+| Project config | A file in the workspace that holds one verification command. | `.daggry/project.yaml`: the `format` header, `project`, `areas`, named validators you define, the canonical validator, supporting validators, thresholds, `protect.paths`, validators exposed to the agent and extension keys. |
+| Tenant config | You set the lease length, the concurrency cap, the job image and the model credential once for the whole installation. A workflow reaches the control plane as a file given to `daggry run --workflow <file>`. | The tenant config document: the workflow catalogue, orchestration limits for each tenant, the roster, runner images and classes, the `validators` section, project entries and the extension registry. |
+| Protection | The always-protected paths, the scope of a step, frozen paths, restore in the pod and a recheck in the control plane. Daggry's own instructions are read-only in the pod. A project's own agent config is read from the working copy and protected by the boundary check. | The paths a project adds, the default protection of the files a validator you define runs, the scope of a run, and a human grant for protected paths other than `.daggry/**`. |
 | Modules | The control plane holds the keys, seals, judges and serves the API. It also decides the next step and manages leases, and a launcher turns each job attempt into a pod. A lapsed lease starts a new attempt from the last sealed version. One runner in one pod runs commands, validators and the engine. | The conductor as its own module behind the conductor interface. Separate runner classes for the deterministic runner and the agent runner. Runners other than Kubernetes pods. A forge other than a git host. Published tests for each contract. |
 | Engine | The engine adapter, the replay engine, one live agent adapter and the tool server that offers `submit` and `validate`. Two live smoke runs passed on 2026-11-16. | `ask_human` and `delegate`. |
 | Conformance | The published test vectors. | A conformance suite, with tests for each row of the contracts table. |
 | Interfaces and deployment | The CLI commands `run`, `status`, `logs`, `verify` and `approve`. `run` takes `--repo <owner>/<name>` and an issue URL. Helm charts with a SQLite log and filesystem blobs. | `--workspace` on `run`. `stop`, `retry`, `doctor` and `update`. Postgres and S3 storage. |
+
+### Names the binary still uses
+
+The pages describe one design with one name for each thing. A few names in the built binary differ from it, and the next change to the binary adopts the design's name. Until then, an early user writes the built name.
+
+| Built today | The design, and every other page | Where |
+|---|---|---|
+| A command step's `run` is a shell line, such as `run: echo hello > hello.txt`. | `run` is a list: a program and its arguments, such as `[sh, -c, "echo hello > hello.txt"]`. | [Commands](/reference/project-config#commands) |
+| A step's `tests` key names the frozen paths. | `freeze`. | [agent](/reference/workflow-schema#agent) |
+| A measurement's `tests` field, with the outcomes `passed`, `failed` and `ignored`. | `findings`, with the outcomes `pass`, `fail` and `skip`. | [evidence/measurement@1](/reference/kinds#evidence-measurement-1) |
+| A verdict's `status`, with the value `inconclusive`. | `outcome`, with the value `error`. | [evidence/verdict@1](/reference/kinds#evidence-verdict-1) |
+| A verdict's `findings`, each only a `message`, such as `uncovered: AC-2`. | Each finding has an `id`, an `outcome` and a `message`, as in a measurement. | [evidence/verdict@1](/reference/kinds#evidence-verdict-1) |
+| A run lock lists each validator as `name` and `version`. | `validator` and `version`. | [daggry/run-lock@1](/reference/kinds#daggry-run-lock-1) |
+| The checks are `criterion-coverage` and `red-proof`. | The named judge `coverage`, and the `baseline_proof` judge that Daggry applies itself. | [Judges](/reference/judges#named-judges) |
+| A validator is referred to as `project/<name>`, `tenant/<name>` or `daggry/<name>`. | A bare `<name>`. The project config of the baseline is searched first, then the tenant config. `project` and `daggry` are reserved. | [Referring to a validator](/reference/validators#referring-to-a-validator) |
+| A validator's `result.contract` and `result.path`. | `output` and `output_file`. `output` is `exit-code`, `document` or a plain tool format name such as `junit`. | [Output formats](/reference/project-config#output-formats) |
+| A measurement's `contract` field, and a tool format written as `software/junit`. | `output`, and `junit`. | [evidence/measurement@1](/reference/kinds#evidence-measurement-1) |
+| `projects.<workspace>.validators.admit` (`all`, `none` or a list). | None: a project's validators count by default. `projects.<workspace>.trust_project: false` is the one switch. | [projects](/reference/tenant-config#projects) |
+| `daggry/criterion-coverage` and `daggry/base-relative` in a `validators` list. | `judges: [coverage, no_regression]` on the `verify` step. | [verify](/reference/workflow-schema#verify) |
+| `coverage: true` and `no_regression: true` on a `verify` step, in an earlier form of the design. | `judges: [coverage, no_regression]`. The two boolean keys are retired. | [verify](/reference/workflow-schema#verify) |
+| An observation's `record` field. | `event`. | [daggry/observation@1](/reference/kinds#daggry-observation-1) |
 
 ## The three waves
 
@@ -55,7 +77,7 @@ A wave is a milestone, accepted when its exit test passes. The exit test is writ
 A wave is accepted when its exit test passes.
 
 - **Wave 1.** Under the software binding, a real issue becomes a pull request with no human input beyond approving the plan, a step cannot tamper with the log, the stored files or a protected path, the validator measures exactly the version that is delivered, and a runner that is killed mid-run is taken over by a second attempt.
-- **Wave 2.** A real work item runs with a lead and one delegate, a project specialist is admitted as a delegate only, and a plan dialogue of several turns ends in an approval bound to the plan's digest.
+- **Wave 2.** A real work item runs with a lead and one delegate, a project specialist can act as a delegate only, and a plan dialogue of several turns ends in an approval bound to the plan's digest.
 - **Wave 3.** An approved plan with a `judged` criterion gates a delivered change, and a review of a finished run opens a work item whose citations code confirms.
 
 ::: details What does the design hold beyond the three waves?
@@ -63,16 +85,17 @@ The design holds more than the three waves build. No item in the table belongs t
 
 | Area | Design |
 |---|---|
-| Modules and open formats | The project config, the tenant config, the workflow `format` header and its extensions, the result contracts, the conductor as its own module and the separate runner classes. See [The modules and where they run](/guide/concepts/modules) and [Open formats](/reference/open-formats). |
+| Modules and open formats | The project config, the tenant config, the workflow `format` header and its extensions, the output formats, the conductor as its own module and the separate runner classes. See [The modules and where they run](/guide/concepts/modules) and [Open formats](/reference/open-formats). |
 | Kinds of work other than software | The result document, adapters and bindings other than software. See [Bindings](/reference/bindings). |
-| Your own validators | Validator references on a `verify` step, script validators from the tenant and the project, admission, and native validators in any language. See [Validators](/reference/validators). |
+| Your own validators | Validator names on a `verify` step, validators you define from the tenant and the project, and the `trust_project` switch. See [Validators](/reference/validators). |
+| Your own judges | The `judges` key: named judges, custom judges from the project and the tenant, and rubric judges with their person-approved rubric. See [Judges](/reference/judges). |
 | Replaceable modules | Each module behind a published contract with published tests. See [Module contracts](/reference/contracts). |
 | Signed head | A signed chain head kept outside the cluster, so that dropping entries from the end of a chain is visible. |
 | Witness rule | A reviewer's finding gates work only when code confirms what it cites. |
 | Gate reads of `meta` | A gate reads the values that code stamps in an artifact's `meta`. |
 | Revocation and tombstoning | Revoking an approval as its own artifact. Removing a transcript blob without breaking the chain. |
 | Older-major decoding | A reader decodes an older major of a kind for audit only. |
-| Native validators | A validator from outside Daggry, admitted when the tenant lists it by name, version and digest. |
+| Validator extension SDK | A way for a party outside Daggry to ship validators that read sealed records. |
 | `stop` and `retry` | CLI commands to stop a run and to retry one. |
 | `doctor` and `update` | Commands to repair an installation and to update it with a health-gated rollback. |
 | `harness-change` workflow | The one path for changing agent instruction and tool-setting files. |
@@ -94,6 +117,6 @@ Three more points follow from these and are not defined on the reference pages.
 
 - **Areas in the run lock.** How an area reference and the scope of a run are written into the boundary rules of a [run lock](/reference/kinds#daggry-run-lock-1).
 - **A catalogue workflow in a run request.** The tenant config says a run uses a workflow from the catalogue, by name or by the workspace's default. `daggry run` and the run request take the workflow as a file. How a run request names a catalogue workflow is not defined.
-- **Gate reads of several measurements.** A `verify` step seals one measurement for each script validator it runs. Which of them a `steps.<id>.measurement` read in a gate takes is not defined.
+- **Gate reads of several measurements.** A `verify` step seals one measurement for each validator you define it runs. Which of them a `steps.<id>.measurement` read in a gate takes is not defined.
 
 Where the design gives a direction and no detail, the reference pages make a choice. For those choices, see [Specification choices not confirmed](/reference/conformance#specification-choices-not-confirmed).

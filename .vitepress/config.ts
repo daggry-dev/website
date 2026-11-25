@@ -69,14 +69,15 @@ export default defineConfig({
         ] },
         { text: 'Rules', items: [
           { text: 'Validators', link: '/reference/validators' },
+          { text: 'Judges', link: '/reference/judges' },
           { text: 'Protected paths', link: '/reference/protected-paths' },
           { text: 'Bindings', link: '/reference/bindings' },
           { text: 'Helm chart values', link: '/reference/helm-chart' },
         ] },
         { text: 'Specification', items: [
           { text: 'Open formats', link: '/reference/open-formats' },
-          { text: 'Evidence record format', link: '/reference/envelope' },
-          { text: 'Record kinds', link: '/reference/kinds' },
+          { text: 'Evidence envelope', link: '/reference/envelope' },
+          { text: 'Artifact kinds', link: '/reference/kinds' },
           { text: 'Module contracts', link: '/reference/contracts' },
           { text: 'Conformance', link: '/reference/conformance' },
         ] },

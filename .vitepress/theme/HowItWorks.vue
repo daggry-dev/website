@@ -2,7 +2,7 @@
 import DgArrow from './DgArrow.vue'
 import DgIcon from './DgIcon.vue'
 
-const file = ['steps:', '  write a plan', '  wait for your approval', '  for each item:', '    do the work, validate it', '  deliver the result']
+const file = ['steps:', '  write a plan', '  wait for your approval', '  for each criterion:', '    do the work, validate it', '  deliver the result']
 </script>
 
 <template>
@@ -42,13 +42,13 @@ const file = ['steps:', '  write a plan', '  wait for your approval', '  for eac
               <span class="seal">sealed</span>
             </div>
             <h3><span class="n">3</span>Check and record</h3>
-            <p>What an agent says it did is only a claim. Validators check it as code, and Daggry signs the result. You can add your own.</p>
+            <p>What an agent says it did is only a claim. Validators measure it as code. A judge decides from the evidence trail and Daggry signs the verdict. You can add your own validators.</p>
           </div>
         </li>
       </ol>
     </div>
     <figcaption class="cap">
-      Three steps. You describe the work once. Each job gets its own runner. Nothing moves on until a validator has checked it and the result is signed into the evidence trail.
+      Three steps. You describe the work once. Each job gets its own runner. Nothing moves on until validators have measured it and a judge has returned a verdict that Daggry signed into the evidence trail.
     </figcaption>
   </figure>
 </template>

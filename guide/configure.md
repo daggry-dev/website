@@ -2,7 +2,7 @@
 
 A setting in the wrong place is hard to find and easy to get wrong.
 Three files hold every setting in Daggry, and one table tells you which file a setting goes in.
-Read this page before you set up a project or a tenant. Skip it if you only start and approve runs.
+Read this page before you set up a project. Tenant settings matter only to the person who runs Daggry for a team.
 
 ## Three files, three questions
 
@@ -10,7 +10,7 @@ Each file answers one question. Ask the question, and you know where a setting b
 
 | File | The question it answers | Example |
 |---|---|---|
-| Workflow | What is this piece of work? | Write a plan, wait for approval, then do the work and validate it for each plan item. |
+| Workflow | What is this piece of work? | Write a plan, wait for approval, then do the work and validate it for each criterion. |
 | Project config | What is true of this project? | This is its main validator. These paths are protected. |
 | Tenant config | How does our factory work? | At most four jobs run at a time. Plans need approval. This project gets the review workflow. |
 
