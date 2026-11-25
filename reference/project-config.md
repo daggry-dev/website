@@ -2,8 +2,6 @@
 
 *Reference*
 
-Proposed standard; see the [Roadmap](/roadmap) for status.
-
 For the idea, read [Open standards](/guide/concepts/standards) and [What an agent cannot change](/guide/concepts/protection).
 
 The project config is one YAML file in a repository, `.daggry/project.yaml`. It describes the project itself: what it is, which areas it has, how to check it and which paths it protects. It is the deterministic interface between a project and a factory. A workflow can assume that a verification step exists, and the factory knows how to run it, whether the project uses `cargo test`, vitest, `dotnet test` or a script of its own.
@@ -21,60 +19,6 @@ The project config has a published JSON Schema (draft 2020-12).
 | Schema | File |
 |---|---|
 | `daggry/project@1` | [daggry-project-v1.json](/schemas/daggry-project-v1.json) |
-
-## The profile
-
-The profile, `.daggry/profile.yaml`, is the earlier name and the earlier form of this file. It holds one check, a test command, and nothing else. For which form a reader reads, see the [Roadmap](/roadmap).
-
-```yaml
-verify:
-  test: <command>
-```
-
-| Key | Type | Required | Meaning |
-|---|---|---|---|
-| `verify` | block mapping | yes | The verification block. Appears once. |
-| `verify.test` | string | yes | The shell line that runs the project's tests. |
-
-A `verify` step runs `verify.test` from the base commit. The exit code is the measurement's `exit_code`, and a command that exits non-zero is a measurement, not an error. The output is read by the [`libtest-lines`](#libtest-lines) contract.
-
-Each part of the profile has a place in the standard.
-
-| Profile | Project config | Note |
-|---|---|---|
-| `.daggry/profile.yaml` | `.daggry/project.yaml` | The same folder. |
-| No header. | `format: daggry/project@1` | Required. |
-| `verify.test`, a shell line. | `checks.test.run` | An argument list or a script path. A line that uses shell syntax, such as a pipe, moves into a script in the repository. |
-| Output is read as libtest lines. | `checks.test.result.contract: libtest-lines` | The same lines and the same records. |
-| The one command is the evidence. | `verification.canonical: test` | Names the one check a `verify` step measures. |
-| Other top-level keys are skipped. | A key without a namespace that this page does not define is refused. | `name: example` beside `verify` is accepted in a profile and is an error in a project config. |
-| No areas and no protected paths of its own. | `areas` and `protect` | The always-protected set applies to both. See [Protected paths](/reference/protected-paths). |
-
-A profile with `test: sh check.sh` becomes the file in [Smallest file](#smallest-file).
-
-The profile reader accepts one fixed shape, not full YAML.
-
-| Rule | Detail |
-|---|---|
-| `verify:` | Stands alone on an unindented line, once. |
-| Other top-level keys | Skipped, with their indented lines, blank lines and comment lines. |
-| Block under `verify:` | Holds `test:` and nothing else, once. A space follows the colon. |
-| Indentation | Spaces only. A tab is refused. |
-| Command | Stands on the `test:` line, as a plain scalar or in single or double quotes. |
-| Quotes | No escapes. A quoted command cannot contain its own quote character. A double-quoted one cannot contain a backslash. |
-| Plain command | Refused when it starts with one of ``[ { & * ! | > % @ ` #`` or contains ` #` or `: `. Put such a command in quotes. |
-| Empty command | Refused. |
-| Missing `verify.test` | Refused. |
-
-A refused profile is a profile error with the message `profile: <reason>`. The `verify` step then measures nothing. A base commit with no profile file also stops the step.
-
-| Message | Cause |
-|---|---|
-| `` `verify:` must be a block mapping `` | A value on the same line as `verify:`, such as `verify: {test: x}`. |
-| `` `verify:` appears twice `` | A second `verify:` line. |
-| `` `verify:` holds `test:` only `` | A key other than `test:` in the block. |
-| `tabs are not indentation` | A tab used as indentation. |
-| ``profile: no `verify.test` `` | The block has no `test:`. |
 
 ## The standard
 
@@ -190,23 +134,25 @@ A result contract names the published format of a check's output and the parser 
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
-| `result.contract` | string | yes | One of the names below, or `<namespace>/<name>` for a contract another party defines. |
+| `result.contract` | string | yes | One of the six names below, or `<namespace>/<name>` for a contract another party defines. |
 | `result.path` | path | for `junit-xml` | The file the check writes its report to, relative to the repository root. |
 | `result.schema` | string | for `json` | The URL of the JSON Schema the output follows. |
 
 | Contract | Reads | Gives |
 |---|---|---|
-| `exit-code` | The exit code only. | Pass when the code is 0, fail otherwise. No per-item records. |
+| `exit-code` | The exit code only. | Pass when the code is 0, fail otherwise. No test records and no findings. |
 | `libtest-lines` | Standard output and standard error, by the rules in [libtest-lines](#libtest-lines). | One record per test: passed, failed or ignored. |
 | `junit-xml` | The JUnit XML report at `result.path`. | One record per `testcase` element: passed, failed, or ignored when skipped. |
 | `tap` | Standard output, as Test Anything Protocol version 13 or 14. | One record per test point: passed for `ok`, failed for `not ok`, ignored for a `SKIP` directive. |
-| `sarif` | A SARIF 2.1.0 document at `result.path`, or on standard output when no path is given. | One finding per result, with its rule, level and location. |
-| `json` | A JSON document at `result.path`, or on standard output when no path is given. | The document, once it is valid against `result.schema`. |
+| `sarif` | A SARIF 2.1.0 document at `result.path`, or on standard output when no path is given. | One finding per result, with its rule, its level, its location and its message. |
+| `json` | A JSON document at `result.path`, or on standard output when no path is given. | One finding that says whether the document is valid against `result.schema`. A threshold reads a number from the document. |
+| `<namespace>/<name>` | What the party that owns the namespace publishes. | Findings in the same form. |
 
 Rules for every contract:
 
 - The exit code is always recorded, whatever the contract.
 - Output that does not follow the contract gives no records. A report that is missing or does not parse makes the check fail.
+- The result of every measured check is sealed in one form, whatever the contract: a [measurement](/reference/kinds#evidence-measurement-1) that names the check and the contract and holds the exit code, an outcome, the test records and the findings. [Records by contract](/reference/kinds#records-by-contract) defines what each contract writes there.
 - A reader refuses a contract it has no parser for. An extension contract is `<namespace>/<name>`, and the party that owns the namespace publishes its format.
 - The three test contracts, `libtest-lines`, `junit-xml` and `tap`, give the same per-test records. A record's name is the test's name in the report.
 
@@ -270,6 +216,8 @@ What `read` can name depends on the check's result contract.
 Rules:
 
 - **The canonical check is the measurement.** A [`verify` step](/reference/workflow-schema#verify) has no command of its own. It runs the canonical check on a clean copy of the sealed commit, and the result is sealed as a [measurement](/reference/kinds#evidence-measurement-1).
+- **Each supporting check is a measurement too.** The result of each check in `also` is sealed as a measurement of its own, beside the canonical one.
+- **A threshold is a finding.** The result of each threshold is sealed as a finding in the measurement of the check it reads. See [Records by contract](/reference/kinds#records-by-contract).
 - **A workflow can assume it.** A workflow says `kind: verify` and names no command and no language. The project config supplies the command, and the factory knows how to read the result.
 - **A name must exist.** A name in `canonical`, `also` or a threshold that `checks` does not hold is refused.
 - **A missed threshold fails verification.** The verification is green when the canonical check passes, every check in `also` passes and every threshold holds.
@@ -284,7 +232,7 @@ A check is declared once and can be used in four ways. Only the first two produc
 | Use | Started by | Where it runs | Evidence |
 |---|---|---|---|
 | Canonical | A `verify` step. | The deterministic runner, on a clean copy of the sealed commit, after any agent process has ended. | Yes. This is the verification evidence. |
-| Supporting | The same `verify` step, for each check in `verification.also`. | The same place. | Yes, as supporting evidence beside the canonical result. |
+| Supporting | The same `verify` step, for each check in `verification.also`. | The same place. | Yes, as supporting evidence: one measurement for each check, beside the canonical one. |
 | Optional run | A workflow step that calls the check by name. See [Checks by name](/reference/workflow-schema#checks-by-name). | The deterministic runner, on a clean copy. | No. The result decides the step and is not the verification evidence. |
 | Preview | An agent, for a check with `expose: agent`. | The agent's pod, on the working tree. | Never. |
 
@@ -609,10 +557,6 @@ To check a file of your own, give the schema and the file to any validator that 
 | No `format` key | Missing `format`. |
 | `format: daggry/project@2` | Unknown major. |
 | `cheks:` at the top level | Unknown key without a namespace: a misspelt `checks`. |
-| `workflows:` at the top level | Unknown key without a namespace. A project does not choose workflows. |
-| `layout:` in `project` | Unknown key. A path group is an area, in the top-level `areas` section. |
-| `scope:` at the top level | Unknown key without a namespace. A project names its areas, and a workflow or the tenant chooses a scope. |
-| `areas:` with `app: ["src/**"]` | Not an object. The globs go in `paths`. |
 | An area with no `paths`, or with `paths: []` | An area holds at least one glob. |
 | `protect.paths` with `area:web` where `areas` holds no `web` | No such area. |
 | `protect.paths` with `area:Web App` | Not an area name. |
@@ -627,10 +571,6 @@ To check a file of your own, give the schema and the file to any validator that 
 | `canonical: tests` where `checks` holds `test` | No such check. |
 | `canonical:` with a list of two names | One check is canonical. The others go in `also`. |
 | A threshold with neither `min` nor `max` | A threshold needs a limit. |
-
-## Open points
-
-The points this standard leaves open are listed on the [Roadmap](/roadmap#open-points).
 
 ## Next steps
 

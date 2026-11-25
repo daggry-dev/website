@@ -2,8 +2,6 @@
 
 *Reference*
 
-Proposed standard; see the [Roadmap](/roadmap) for status.
-
 For the idea, read [The tenant defines the factory](/guide/concepts/tenant) and [Where it runs](/guide/concepts/architecture).
 
 The tenant config is one YAML document that says how a tenant's factory works: which workflows it offers, how work is orchestrated, which agents work and with what autonomy, which runners run the steps, which repositories it serves and which workflows run on each repository. This page defines the standard layout and the precedence rule. It is for people who run a tenant and for people who write a reader of the document.
@@ -19,19 +17,6 @@ The tenant config has a published JSON Schema (draft 2020-12).
 | Schema | File |
 |---|---|
 | `daggry/tenant@1` | [daggry-tenant-v1.json](/schemas/daggry-tenant-v1.json) |
-
-## Chart values
-
-Without a tenant config, the settings of this kind are chart values. The cluster admin sets them once for the whole installation, not for one tenant. See [Deploy Daggry](/guide/how-to/deploy). For which of the two is in use, see the [Roadmap](/roadmap).
-
-| Chart value | Default | Meaning | Section of the standard |
-|---|---|---|---|
-| `leaseSeconds` | `60` | Length of a job lease. | `orchestration.lease_seconds` |
-| `concurrencyCap` | `1` | Global cap on concurrent attempts. | `orchestration.concurrency_cap` |
-| `images.job` | placeholder | Default image for every job, by digest. | `runners.images` |
-| `modelSecret` | a Secret name | Secret that holds the model credential. | `agents.engines[].credential` |
-
-Without a tenant config, a workflow reaches the control plane as a file given to `daggry run --workflow <file>`, and the person who starts the run names the repository: nothing assigns a workflow to a repository. See [CLI](/reference/cli).
 
 ## The standard
 
@@ -87,11 +72,11 @@ A run is `parked` when a limit is reached and the work waits for it to reset. Fo
 
 ### agents
 
-Which agents work for the tenant, what each one runs on, and when a person must decide.
+Which engines and agents work for the tenant, and when a person must decide.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
-| `agents.engines` | array of objects | no | The registered engines. A workflow's `engine` value must name one of them. |
+| `agents.engines` | array of objects | no | The registered engines. An `engine` value in a workflow must name one of them. |
 | `agents.engines[].name` | string | yes | The engine identifier. Non-empty. Unique. |
 | `agents.engines[].credential.ref` | string | yes | The name of the stored secret the engine uses. Non-empty. |
 | `agents.roster` | array of objects | no | The named agents. |
@@ -160,7 +145,7 @@ What the tenant admits beyond the standard.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
-| `extensions.step_kinds` | array of objects | no | Step kinds besides the five built-in ones. |
+| `extensions.step_kinds` | array of objects | no | Step kinds besides the five of the standard. |
 | `extensions.step_kinds[].kind` | string | yes | `<namespace>/<name>`. See [Extensibility](/reference/workflow-schema#extensibility). |
 | `extensions.step_kinds[].module` | string | yes | What runs the step: `deterministic-runner`, `agent-runner` or `control-plane`. |
 | `extensions.step_kinds[].schema` | string | yes | The URL of the JSON Schema for the step's keys. |
@@ -179,7 +164,6 @@ This section is the registry. A step kind, an artifact kind or a validator that 
 |---|---|
 | Held by | The control plane, outside every pod and every workspace. |
 | Changed by | A person. No run, no step and no agent writes it. |
-| Pinned | A run records the configuration it started under in its run lock, so a later change applies to new runs only. |
 
 ### Precedence
 
@@ -307,7 +291,6 @@ acme/billing:
 | A roster entry whose `engine` is not in `agents.engines` | Unknown engine. |
 | A class with `module: deterministic-runner` and `model_credential: true` | A deterministic runner never holds a model credential. |
 | `extensions.artifact_kinds[]` with `kind: evidence/scan@1` | The `evidence` namespace takes no added kinds. |
-| `projects[]` with `workflows: [delivery]` | Not an object. The names go in `workflows.allowed`. |
 | A project entry whose `workflows.allowed` names a workflow the catalogue lacks | Unknown workflow. |
 | A project entry whose `workflows.default` is not an allowed name | The default is not allowed on the repository. |
 | A project entry whose `image` is not in `runners.images` | Unknown image. |
