@@ -4,21 +4,24 @@
 
 For the idea, read [Open standards](/guide/concepts/standards) and [What an agent cannot change](/guide/concepts/protection).
 
-The project config is one YAML file in a repository, `.daggry/project.yaml`. It describes the project itself: what it is, which areas it has, how to check it and which paths it protects. It is the deterministic interface between a project and a factory. A workflow can assume that a verification step exists, and the factory knows how to run it, whether the project uses `cargo test`, vitest, `dotnet test` or a script of its own.
+The project config is one YAML file in a workspace, `.daggry/project.yaml`. It describes the project itself: what it is, which areas it has, which validators check it and which paths it protects. It is the deterministic interface between a project and a factory. A workflow can assume that a verification step exists, and the factory knows how to run it, whether the work is a program, a set of documents, a dataset or a design.
 
 The file says what exists and what is protected. It never says what a run may change: a workflow chooses the scope of each step, and the tenant or the run request chooses the scope of a run. The file also names no workflow, no agent and no approval rule. Those are the tenant's decisions. See [Tenant config](/reference/tenant-config).
 
-This page defines the sections of the file, the checks, the result contracts and the extension rules. It is for people who set up a repository and for people who write a reader of the file.
+The file names no tool and no kind of work. A project is the body of work a factory works on, and a workspace is the versioned collection of files and data the work lives in. What a workspace is made of, and which tools read a check's output, is set by a binding. See [Bindings](/reference/bindings).
+
+This page defines the sections of the file, the project's script validators, the result contracts and the extension rules. The validator interface, the three sources of a validator and the built-in validators are defined in [Validators](/reference/validators). It is for people who set up a workspace and for people who write a reader of the file.
 
 The files on this page are illustrative. Each one is valid against the published schema. See [Validation](#validation).
 
 ## Download
 
-The project config has a published JSON Schema (draft 2020-12).
+The project config and the result document each have a published JSON Schema (draft 2020-12).
 
 | Schema | File |
 |---|---|
 | `daggry/project@1` | [daggry-project-v1.json](/schemas/daggry-project-v1.json) |
+| `daggry/result@1` | [daggry-result-v1.json](/schemas/daggry-result-v1.json) |
 
 ## The standard
 
@@ -29,17 +32,17 @@ A project config has three parts.
 | Part | Keys | Rule |
 |---|---|---|
 | Header | `format` | Required. Names the standard and its major version. |
-| Sections | `project`, `areas`, `checks`, `verification`, `protect` | Each is optional. Each appears at most once. |
+| Sections | `project`, `areas`, `validators`, `verification`, `protect` | Each is optional. Each appears at most once. |
 | Extensions | `<namespace>/<key>` | Any number. See [Extension keys](#extension-keys). |
 
-Each section answers one question a factory asks about a repository.
+Each section answers one question a factory asks about a workspace.
 
 | Section | Question |
 |---|---|
-| `project` | What is this project, and how is it built? |
-| `areas` | Which parts does the repository have? |
-| `checks` | What can run and decide something about it? |
-| `verification` | Which check is the evidence? |
+| `project` | What is this project, and how is a copy of it prepared? |
+| `areas` | Which parts does the workspace have? |
+| `validators` | Which scripts of its own check it? |
+| `verification` | Which validator is the project's verification? |
 | `protect` | Which paths does the project add to the protected set? |
 
 Every object is closed: a key that is not listed on this page and is not an extension key is refused.
@@ -54,29 +57,27 @@ Every object is closed: a key that is not listed on this page and is not an exte
 
 ### project
 
-The project's identity and toolchain. A factory reads this section to orient and to prepare a copy of the repository. It names no path group: the parts of the repository are in [`areas`](#areas).
+The project's identity and what a copy of it needs. A factory reads this section to orient and to prepare a copy of the workspace. It names no path group: the parts of the workspace are in [`areas`](#areas).
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `project.name` | string | no | The project's name. Non-empty. |
-| `project.languages` | array of labels | no | The languages the project is written in, for example `rust` or `typescript`. |
-| `project.toolchains` | array of labels | no | The toolchains the project is built with, for example `rust-1.90` or `node-22`. |
-| `project.setup` | array of commands | no | Commands that prepare a fresh copy of the repository, in order, such as installing dependencies. |
-| `project.build` | array of commands | no | Commands that build the project, in order. |
-| `project.entry_points` | array of paths | no | The files a reader starts from, such as a main source file. |
+| `project.tools` | array of labels | no | The tools a copy of the workspace needs before its validators can run. Each label names a tool and, when it matters, a version. |
+| `project.setup` | array of commands | no | Commands that prepare a fresh copy of the workspace, in order. |
+| `project.entry_points` | array of paths | no | The files a reader starts from. |
 
 A label is a short name made of ASCII letters, digits, `.`, `_` and `-`. Labels are an open vocabulary. A reader that does not know a label keeps it and applies nothing.
 
-A command has the form defined in [Commands](#commands). On a clean copy, a reader runs `project.setup` and then `project.build` before the first check.
+A command has the form defined in [Commands](#commands). On a clean copy, a reader runs `project.setup` before the first validator.
 
 ### areas
 
-The parts of the repository. An area is a named group of paths. `areas` is a map from an area name to an area, and it is the only place in the four standards that gives a group of paths a name. A name follows the rule for a [check name](#checks).
+The parts of the workspace. An area is a named group of paths. `areas` is a map from an area name to an area, and it is the only place in the four standards that gives a group of paths a name. A name follows the rule for a [validator name](#validators).
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `paths` | array of globs | yes | The paths the area holds. At least one glob, each non-empty. |
-| `role` | label | no | What the paths are for. Open vocabulary. The recommended set is `source`, `tests`, `docs`, `config`, `generated`, `vendor` and `infrastructure`. |
+| `role` | label | no | What the paths are for. Open vocabulary. A binding recommends a set of roles for its kind of work. See [Bindings](/reference/bindings). |
 | `description` | string | no | One or two sentences for a reader, person or agent. Non-empty. |
 
 An area has three uses. Each one refers to the area by its name.
@@ -92,9 +93,9 @@ Rules:
 
 - **The project names, others choose.** The project says which areas exist. It never says which of them a run may change. A workflow chooses the scope of a step, and the tenant or the run request chooses the scope of a run.
 - **A name must exist.** A step, a tenant entry, a run request or a `protect.paths` entry that names an area this section lacks is refused. For the first three the run is refused when it starts.
-- **Areas may overlap.** A path can be in more than one area, for example in one with `role: source` and one with `role: tests`. A path is inside a scope when at least one named area holds it, and it is protected when at least one protected area holds it.
+- **Areas may overlap.** A path can be in more than one area. A path is inside a scope when at least one named area holds it, and it is protected when at least one protected area holds it.
 - **A path in no area** is outside the scope of every run that names areas.
-- **A role is a label.** A reader that does not know a role keeps it and applies nothing. `role: tests` does not freeze a path. Frozen tests come from a step's `tests` key. See [Frozen tests](/reference/protected-paths#frozen-tests).
+- **A role is a label.** A reader that does not know a role keeps it and applies nothing. No role freezes a path. Frozen paths come from a step's `freeze` key. See [Frozen paths](/reference/protected-paths#frozen-paths).
 
 How a scope is judged, and how the scope of a run and the scope of a step combine, is in [Scope](/reference/protected-paths#scope).
 
@@ -105,155 +106,166 @@ A command is written in one of two forms. Neither is a shell line.
 | Form | YAML | Meaning |
 |---|---|---|
 | Argument list | An array of non-empty strings, at least one. | The first string is the program, and the rest are its arguments. No shell reads them, so no quoting, pipe or variable expansion applies. |
-| Script path | One string with no whitespace. | The path of a script in the repository, relative to the repository root. The reader runs the file with no arguments. |
+| Script path | One string with no whitespace. | The path of a script in the workspace, relative to the workspace root. The reader runs the file with no arguments. |
 
-A path is never absolute and never holds `..`. The working directory is the repository root. A command that needs a pipe or a loop is a script in the repository.
+A path is never absolute and never holds `..`. The working directory is the workspace root. A command that needs a pipe or a loop is a script in the workspace.
 
-### checks
+### validators
 
-The things that can run and decide something about the project: tests, a linter, a type checker, a build, a coverage report, a security scan or a script of the project's own. `checks` is a map from a check name to a check. A name starts with a lowercase letter and holds lowercase letters, digits, `-` and `_`.
+The project's script validators. A check is any deterministic procedure that inspects the workspace and reports a result, and a script validator is a check the project declares: an executable or a script in the workspace. What it inspects is the project's choice: a program, a document, a dataset, a configuration or a design file. `validators` is a map from a validator name to a script validator. A name starts with a lowercase letter and holds lowercase letters, digits, `-` and `_`.
 
-Tests are one kind of check among several. Any deterministic program that the project can run is a check.
+A workflow refers to a validator of this section as `project/<name>`. A project's script validator counts as evidence only when the tenant admits it. See [Admission](#admission). What a validator is given, what it yields and where each source of validator runs is in [Validators](/reference/validators).
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `run` | command | yes | What runs. See [Commands](#commands). |
-| `kind` | string | yes | What kind of result the check gives. Open vocabulary. The recommended set is `tests`, `lint`, `format`, `types`, `build`, `coverage`, `security` and `custom`. |
-| `result` | object | no | How the output is read. Absent means `contract: exit-code`. See [Result contracts](#result-contracts). |
-| `timeout` | integer | no | 1 or more. The longest the check may run, in seconds. A check that runs longer is stopped and counts as failed. |
-| `env` | array of names | no | The allow-list of environment variables the factory may pass to the check's process. The file holds names, never values. |
-| `needs.toolchains` | array of labels | no | The toolchains the check needs in its runner, by the same labels as `project.toolchains`. |
-| `needs.runner` | string | no | The class of runner the check needs, by name. The factory matches the name to a runner class it offers. |
-| `expose` | string | no | Who may call the check: `factory` or `agent`. Absent means `factory`. See [Who runs a check](#who-runs-a-check). |
+| `kind` | label | yes | What the validator looks at. Open vocabulary. `custom` is the label for one that fits no other. A binding names the kinds of its work. See [Bindings](/reference/bindings). |
+| `result` | object | no | How the result is read. Absent means `contract: exit-code`. See [Result contracts](#result-contracts). |
+| `timeout` | integer | no | 1 or more. The longest the validator may run, in seconds. One that runs longer is stopped and counts as failed. |
+| `env` | array of names | no | The allow-list of environment variables the factory may pass to the validator's process. The file holds names, never values. |
+| `needs.tools` | array of labels | no | The tools the validator needs in its runner, by the same labels as `project.tools`. |
+| `needs.runner` | string | no | The class of runner the validator needs, by name. The factory matches the name to a runner class it offers. |
+| `expose` | string | no | Who may call the validator: `factory` or `agent`. Absent means `factory`. See [Who runs a validator](#who-runs-a-validator). |
 
-A check that names a toolchain or a runner class the factory does not offer cannot run. A reader refuses the run when the canonical check cannot run.
+A validator that names a tool or a runner class the factory does not offer cannot run. A reader refuses the run when a validator the run uses cannot run.
 
 ### Result contracts
 
-A result contract names the published format of a check's output and the parser that reads it. The contract is what makes a check deterministic to a factory: the same output always gives the same records.
+A result contract says how a factory reads what a script validator decided. The contract is what makes a script validator deterministic to a factory: the same output always gives the same result.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
-| `result.contract` | string | yes | One of the six names below, or `<namespace>/<name>` for a contract another party defines. |
-| `result.path` | path | for `junit-xml` | The file the check writes its report to, relative to the repository root. |
-| `result.schema` | string | for `json` | The URL of the JSON Schema the output follows. |
+| `result.contract` | string | yes | `exit-code`, `document`, or the name of an adapter, `<namespace>/<adapter>`. |
+| `result.path` | path | no | The file the validator writes, relative to the workspace root. Absent means standard output. |
+
+The standard has three contracts. None of them names a tool.
 
 | Contract | Reads | Gives |
 |---|---|---|
-| `exit-code` | The exit code only. | Pass when the code is 0, fail otherwise. No test records and no findings. |
-| `libtest-lines` | Standard output and standard error, by the rules in [libtest-lines](#libtest-lines). | One record per test: passed, failed or ignored. |
-| `junit-xml` | The JUnit XML report at `result.path`. | One record per `testcase` element: passed, failed, or ignored when skipped. |
-| `tap` | Standard output, as Test Anything Protocol version 13 or 14. | One record per test point: passed for `ok`, failed for `not ok`, ignored for a `SKIP` directive. |
-| `sarif` | A SARIF 2.1.0 document at `result.path`, or on standard output when no path is given. | One finding per result, with its rule, its level, its location and its message. |
-| `json` | A JSON document at `result.path`, or on standard output when no path is given. | One finding that says whether the document is valid against `result.schema`. A threshold reads a number from the document. |
-| `<namespace>/<name>` | What the party that owns the namespace publishes. | Findings in the same form. |
+| `exit-code` | The exit code only. | Pass when the code is 0, fail otherwise. No findings and no metrics. |
+| `document` | A [result document](#result-document), `daggry/result@1`, that the validator writes at `result.path` or on standard output. | The outcome, the findings and the metrics the document holds. |
+| `<namespace>/<adapter>` | The validator's own output, at `result.path` or on standard output, through an adapter. | The result document the adapter writes from that output. |
+
+An adapter is a deterministic program that turns one tool's own output format into a result document. The tenant registers each adapter by name in `extensions.adapters` of the [Tenant config](/reference/tenant-config#extensions). The format an adapter reads is defined by the binding that owns its namespace and is no part of this standard. See [Bindings](/reference/bindings).
 
 Rules for every contract:
 
 - The exit code is always recorded, whatever the contract.
-- Output that does not follow the contract gives no records. A report that is missing or does not parse makes the check fail.
-- The result of every measured check is sealed in one form, whatever the contract: a [measurement](/reference/kinds#evidence-measurement-1) that names the check and the contract and holds the exit code, an outcome, the test records and the findings. [Records by contract](/reference/kinds#records-by-contract) defines what each contract writes there.
-- A reader refuses a contract it has no parser for. An extension contract is `<namespace>/<name>`, and the party that owns the namespace publishes its format.
-- The three test contracts, `libtest-lines`, `junit-xml` and `tap`, give the same per-test records. A record's name is the test's name in the report.
+- Output that the contract cannot read gives no findings. A result document that is missing, does not parse or is not valid against the schema makes the result an `error`.
+- The result of every script validator a `verify` step runs is sealed in one form, whatever the contract: a [measurement](/reference/kinds#evidence-measurement-1) that names the validator and the contract and holds the exit code, an outcome, the findings and the metrics.
+- Code judges. The control plane derives the verdict from the sealed measurement. A script validator never writes its own verdict. See [Validators](/reference/validators#result-and-verdict).
+- An adapter runs in the deterministic runner, after the validator's process has ended. It reads the validator's output and nothing else.
+- A reader refuses a contract that is neither `exit-code` nor `document` nor an adapter the tenant registers. The run is refused when it starts.
 
-#### libtest-lines
+### Result document
 
-The reader keeps one record for each result line that the check prints to standard output or standard error. The format is the one that Rust's test harness prints, so `cargo test` works with no change. Any other program can print the same lines.
+A result document is the one standard form of a check's result. A script validator writes it directly under the `document` contract, and an adapter writes it for a tool that has a format of its own.
 
-| Line | Record |
-|---|---|
-| `test <name> ... ok` | A passed test called `<name>`. |
-| `test <name> ... FAILED` | A failed test. |
-| `test <name> ... ignored` or `test <name> ... ignored, <reason>` | An ignored test. |
+| Key | Type | Required | Meaning |
+|---|---|---|---|
+| `format` | string | yes | Always `daggry/result@1`. |
+| `outcome` | string | yes | What the check decided: `pass`, `fail` or `error`. |
+| `findings` | array of objects | no | What the check found, one finding for each thing it inspected or each thing it reports. Can be empty. |
+| `findings[].id` | string | yes | The name of the finding, such as the name of a rule or of the item inspected. Non-empty. |
+| `findings[].outcome` | string | yes | `pass`, `fail`, `error` or `skip`. `skip` says the check did not inspect the item. |
+| `findings[].locator` | string | no | Where the finding is. A path relative to the workspace root, a path with a position as `<path>:<line>` or `<path>:<line>:<column>`, or any other string that names a place. Non-empty. |
+| `findings[].message` | string | yes | Any string, can be empty. |
+| `metrics` | map | no | Numbers the check measured, from a name to a number. A name starts with a lowercase letter and holds lowercase letters, digits and `_`. |
 
-The reader skips every other line, such as headers, summaries and log output. It drops a ` - should panic` suffix from a name. It also skips the lines between a line that reads `failures:` and the next line that starts with `test result:`, because a failed test prints its captured output there.
+Rules:
 
-The exit code and the records are independent: a check that exits non-zero and prints `ok` lines for some tests still gives passed records for those tests.
+- **The outcome is the check's decision.** Findings and metrics explain it and do not change it.
+- **`error` is no decision.** A check writes `error` when it could not inspect the workspace. An `error` counts as a failed check.
+- **An id can repeat.** Two findings can carry one id, for example one rule that fails in two places. A validator that compares findings by id takes the last one.
+- **The document is closed.** A key this section does not define and that is not an extension key is refused.
 
-What the records prove, such as which plan criterion a test covers, is defined in [Coverage and the carry rule](/reference/kinds#coverage-and-the-carry-rule) and [Red proof](/reference/kinds#red-proof).
+Illustrative. A style check of a set of documents:
 
-To use a test runner that prints another format, choose another contract, or wrap the runner in a script that prints the lines above. This script is illustrative. It runs each test file under `tests/`, prints one result line for it and exits non-zero if any test failed. A test file name carries the criterion id, for example `tests/c1-expired-token.sh`.
-
-```sh
-#!/bin/sh
-# check.sh: print one libtest-style line per test file.
-status=0
-for t in tests/*.sh; do
-  name=$(basename "$t" .sh)
-  if sh "$t" >/dev/null 2>&1; then
-    echo "test $name ... ok"
-  else
-    echo "test $name ... FAILED"
-    status=1
-  fi
-done
-exit $status
+```json
+{
+  "format": "daggry/result@1",
+  "outcome": "fail",
+  "findings": [
+    {"id": "heading-order", "outcome": "pass", "locator": "handbook/leave.md", "message": ""},
+    {"id": "sentence-length", "outcome": "fail", "locator": "handbook/pay.md:14", "message": "The sentence has 41 words. The limit is 30."},
+    {"id": "glossary-terms", "outcome": "skip", "locator": "handbook/drafts/", "message": "Drafts are not inspected."}
+  ],
+  "metrics": {"pages": 12, "reading_grade": 8}
+}
 ```
 
 ### verification
 
-Which check is the evidence. A project has many checks and exactly one canonical check.
+The project's verification: which validator is canonical, which others are measured with it and which limits hold. A project has many validators and exactly one canonical validator.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
-| `verification.canonical` | check name | yes, when `verification` is present | The one check whose result is the verification evidence. |
-| `verification.also` | array of check names | no | Checks that are measured with the canonical check, as supporting evidence. No name appears twice, and none is the canonical check. |
-| `verification.thresholds` | array of objects | no | Limits on numbers that the measured checks give. |
-| `verification.thresholds[].check` | check name | yes | The canonical check or a check in `also`. |
+| `verification.canonical` | validator name | yes, when `verification` is present | The validator that the reference `project` resolves to in a workflow. |
+| `verification.also` | array of validator names | no | Validators that run with the canonical one, as supporting evidence. No name appears twice, and none is the canonical validator. |
+| `verification.thresholds` | array of objects | no | Limits on numbers that those validators give. |
+| `verification.thresholds[].validator` | validator name | yes | The canonical validator or one in `also`. |
 | `verification.thresholds[].read` | string | yes | The number to read. See the table below. |
 | `verification.thresholds[].min` | number | one of the two | The lowest value that passes. |
 | `verification.thresholds[].max` | number | one of the two | The highest value that passes. |
 
-What `read` can name depends on the check's result contract.
+`read` names one number of the validator's result.
 
-| Contract | `read` values |
-|---|---|
-| `exit-code` | `exit_code`. |
-| `libtest-lines`, `junit-xml`, `tap` | `passed`, `failed`, `ignored`: the count of records with that outcome. |
-| `sarif` | `findings`: the count of results. `errors`, `warnings`: the count at that level. |
-| `json` | A JSON Pointer to a number in the document, such as `/total/lines/pct`. |
+| `read` | The number | Contracts that give it |
+|---|---|---|
+| `exit_code` | The exit code. | Every contract. |
+| `findings` | The count of findings. | `document` and every adapter. |
+| `findings.pass`, `findings.fail`, `findings.error`, `findings.skip` | The count of findings with that outcome. | `document` and every adapter. |
+| `metrics.<name>` | The metric of that name. | `document` and every adapter. |
 
 Rules:
 
-- **The canonical check is the measurement.** A [`verify` step](/reference/workflow-schema#verify) has no command of its own. It runs the canonical check on a clean copy of the sealed commit, and the result is sealed as a [measurement](/reference/kinds#evidence-measurement-1).
-- **Each supporting check is a measurement too.** The result of each check in `also` is sealed as a measurement of its own, beside the canonical one.
-- **A threshold is a finding.** The result of each threshold is sealed as a finding in the measurement of the check it reads. See [Records by contract](/reference/kinds#records-by-contract).
-- **A workflow can assume it.** A workflow says `kind: verify` and names no command and no language. The project config supplies the command, and the factory knows how to read the result.
-- **A name must exist.** A name in `canonical`, `also` or a threshold that `checks` does not hold is refused.
-- **A missed threshold fails verification.** The verification is green when the canonical check passes, every check in `also` passes and every threshold holds.
-- **Test rules need test records.** Criterion coverage and the red proof read per-test records. See [Coverage and the carry rule](/reference/kinds#coverage-and-the-carry-rule). They need a canonical check with a test contract. A canonical check with `exit-code` gives a pass or a fail and covers no criterion.
+- **`project` is the project's verification.** A [`verify` step](/reference/workflow-schema#verify) that names `project` runs the canonical validator and each validator in `also` on a clean copy of the sealed version of the workspace. Each result is sealed as a [measurement](/reference/kinds#evidence-measurement-1) of its own.
+- **A threshold is a finding.** The result of each threshold is sealed as a finding in the measurement of the validator it reads. See [Threshold findings](/reference/kinds#threshold-findings).
+- **A workflow can assume it.** A workflow names `project` and holds no command and no tool. The project config supplies the command, and the factory knows how to read the result.
+- **A name must exist.** A name in `canonical`, `also` or a threshold that `validators` does not hold is refused.
+- **A missed threshold fails verification.** The verification is green when the canonical validator passes, every validator in `also` passes and every threshold holds.
+- **Criterion rules need findings.** Criterion coverage and the baseline proof read the findings of the canonical validator. See [Coverage and the carry rule](/reference/validators#coverage-and-the-carry-rule). They need a canonical validator with the `document` contract or an adapter. One with `exit-code` gives a pass or a fail and covers no criterion.
 
-A workflow with a `verify` step needs this section.
+A workflow whose `verify` step names `project` needs this section.
 
-### Who runs a check
+### Admission
 
-A check is declared once and can be used in four ways. Only the first two produce evidence.
+The tenant decides whether a project's own scripts count as evidence. A project declares its validators here, and the tenant admits all of them, none of them or a named list in `projects[].validators.admit` of the [Tenant config](/reference/tenant-config#projects). The default is none.
+
+| The validator is | In a `verify` step | As a preview |
+|---|---|---|
+| Admitted | It runs, and its result is sealed as evidence. | It runs when it has `expose: agent`. |
+| Not admitted | The run is refused when it starts. | It runs when it has `expose: agent`. |
+
+`project` needs the canonical validator and every validator in `also` to be admitted.
+
+### Who runs a validator
+
+A script validator is declared once and can be used in two ways. Only the first produces evidence.
 
 | Use | Started by | Where it runs | Evidence |
 |---|---|---|---|
-| Canonical | A `verify` step. | The deterministic runner, on a clean copy of the sealed commit, after any agent process has ended. | Yes. This is the verification evidence. |
-| Supporting | The same `verify` step, for each check in `verification.also`. | The same place. | Yes, as supporting evidence: one measurement for each check, beside the canonical one. |
-| Optional run | A workflow step that calls the check by name. See [Checks by name](/reference/workflow-schema#checks-by-name). | The deterministic runner, on a clean copy. | No. The result decides the step and is not the verification evidence. |
-| Preview | An agent, for a check with `expose: agent`. | The agent's pod, on the working tree. | Never. |
+| Verification | A `verify` step that names `project` or `project/<name>`. See [Validators by reference](/reference/workflow-schema#validators-by-reference). | The deterministic runner, on a clean copy of the sealed version, as an unprivileged user, after any agent process has ended. | Yes: one measurement for each validator, and the verdict the control plane derives from it. |
+| Preview | An agent, for a validator with `expose: agent`. | The agent's pod, on the working copy. | Never. |
 
-`expose` says who may start a check.
+`expose` says who may start a validator.
 
 | Value | Meaning |
 |---|---|
-| `factory` | Only the factory's deterministic components call the check. The agent cannot start it. |
-| `agent` | The agent may also call the check by name, as a preview. |
+| `factory` | Only the factory's deterministic components call the validator. The agent cannot start it. |
+| `agent` | The agent may also call the validator by name, as a preview. |
 
-A preview gives the agent fast feedback, for example the lint findings before it hands in its change. A preview is never evidence, because it runs where the agent can write. The factory measures the same check again on a clean copy when the result counts.
+A preview gives the agent fast feedback, for example the findings of a style check before it hands in its change. A preview is never evidence, because it runs where the agent can write. The factory runs the same validator again on a clean copy when the result counts.
 
-Every check is available to the factory. A check with `expose: agent` can also be the canonical check: the agent previews it, and the factory measures it.
+A validator with `expose: agent` can also be the canonical validator: the agent previews it, and the factory measures it.
 
 ### protect
 
-The paths this project adds to the protected set. The always-protected paths, the default protection of the scripts a check runs and the boundary check that enforces all of it are defined in [Protected paths](/reference/protected-paths). This section defines only the project's own additions.
+The paths this project adds to the protected set. The always-protected paths, the default protection of the files a script validator runs and the boundary check that enforces all of it are defined in [Protected paths](/reference/protected-paths). This section defines only the project's own additions.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
-| `protect.paths` | array of entries | no | Each entry is a glob or an area reference, `area:<name>`. Added to the protected set for every run on this repository. |
+| `protect.paths` | array of entries | no | Each entry is a glob or an area reference, `area:<name>`. Added to the protected set for every run on this workspace. |
 
 Rules:
 
@@ -269,7 +281,7 @@ An extension key carries a section or a value that the standard does not define.
 |---|---|
 | Form | `<namespace>/<key>`. Pattern `^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$`. |
 | Namespace | Names the party that defines the key. One party owns every key under its namespace. It is the same form as a key of the envelope's [meta](/reference/envelope#meta). |
-| Place | At the top level and inside any section object, including a check. |
+| Place | At the top level and inside any section object, including a validator. |
 | Value | Any YAML value in the strict subset. |
 | A reader that knows the key | Applies it. |
 | A reader that does not know the key | Ignores the value and preserves it: a tool that rewrites the file writes the key back unchanged. |
@@ -286,36 +298,130 @@ The file uses the same strict subset of YAML as a workflow file: no anchors, ali
 
 | Rule | Detail |
 |---|---|
-| Folder | `.daggry/` in the repository. |
+| Folder | `.daggry/` in the workspace. |
 | Path | `.daggry/project.yaml`. |
-| Read from | The base commit: the commit a run starts from. Never the head or the working tree. |
+| Read from | The baseline: the version of the workspace a run starts from. Never the working copy of a step. |
 | Protected | `.daggry/**` is always protected, so no step and no grant changes the file. See [Protected paths](/reference/protected-paths). |
-| Changed by | A pull request that a person merges. The change takes effect in the next run after the merge. |
+| Changed by | A person, outside every run. The change takes effect in the next run whose baseline holds it. How a person accepts a change into a workspace is the binding's convention. See [Bindings](/reference/bindings). |
 
-A step that edits the file changes nothing for its own run: the edit is put back and recorded, and the checks come from the base commit. The red proof uses the base commit's canonical check too. See [Red proof](/reference/kinds#red-proof).
+A step that edits the file changes nothing for its own run: the edit is put back and recorded, and the validators come from the baseline. The baseline proof uses the baseline's canonical validator too. See [Baseline proof](/reference/validators#baseline-proof).
 
 ### Precedence
 
 Three documents set rules for a run: the tenant config, the project config and the workflow. The tenant's rule wins over the project's, and the project's wins over the workflow's. The full table is in [Precedence](/reference/tenant-config#precedence).
 
-The project config describes the repository: its areas, its checks, its canonical check and the paths it protects. It never chooses a workflow, an engine, an approval rule or the scope of a run, and it never widens a tenant rule.
+The project config describes the workspace: its areas, its validators, its canonical validator and the paths it protects. It never chooses a workflow, an engine, an approval rule or the scope of a run, and it never widens a tenant rule.
 
 ## Worked examples
 
-### A Node project with vitest
+### A set of documents
 
-The canonical check runs vitest and writes a JUnit XML report. The linter runs through an npm script that `package.json` defines. The [default protection](/reference/protected-paths#what-a-project-adds) covers the files a command names and not the files those programs read, so the file protects `package.json` itself, through an area.
+This workspace holds a handbook, not a program. Its canonical validator is a script of its own that reviews every page against the house style and writes a result document. A second validator verifies the citations, and the agent may preview it. A third needs a variable from the factory and a runner that reaches the network. The file carries one extension key.
+
+```yaml
+format: daggry/project@1
+
+project:
+  name: handbook
+  tools: [pandoc-3]
+  entry_points: [handbook/index.md]
+
+areas:
+  handbook:
+    paths: ["handbook/**"]
+    role: content
+    description: One page for each policy. Each page is one Markdown file.
+  sources:
+    paths: ["sources/**"]
+    role: reference
+  style:
+    paths: ["style/**"]
+    role: config
+
+validators:
+  review:
+    run: [sh, scripts/review-handbook.sh]
+    kind: style
+    result:
+      contract: document
+      path: reports/review.json
+    timeout: 300
+    needs:
+      tools: [pandoc-3]
+  citations:
+    run: scripts/check-citations.sh
+    kind: citations
+    result:
+      contract: document
+    expose: agent
+  links:
+    run: [sh, scripts/check-links.sh]
+    kind: custom
+    env: [LINK_CHECK_TOKEN]
+    needs:
+      runner: networked
+
+verification:
+  canonical: review
+  also: [citations]
+  thresholds:
+    - validator: review
+      read: metrics.reading_grade
+      max: 9
+    - validator: citations
+      read: findings.skip
+      max: 0
+
+protect:
+  paths:
+    - "area:style"
+
+acme/review:
+  owner: docs-team
+```
+
+| Value | Meaning |
+|---|---|
+| `review` | The canonical validator. It writes its result document to `reports/review.json`. `scripts/review-handbook.sh` is protected by default. See [What a project adds](/reference/protected-paths#what-a-project-adds). |
+| `citations` | A supporting validator, given as a script path. It writes its result document on standard output. The agent may run it as a preview. |
+| `links` | A validator with the `exit-code` contract. It is in neither `canonical` nor `also`, so it runs only when a `verify` step names `project/links`. |
+| `metrics.reading_grade` | A metric the `review` validator writes. The verification fails when it is above 9. |
+| `findings.skip` | The count of citations the validator did not inspect. The verification fails when it is above 0. |
+| `area:style` | An area reference. No step changes the house style the validators read. |
+| `LINK_CHECK_TOKEN` | The name of a variable the factory may pass. The file holds no value. |
+| `networked` | The name of a runner class. The factory matches it to a class it offers. |
+| `acme/review` | A section defined under the namespace `acme`. A reader that does not know it ignores it and preserves it. |
+
+### Smallest file
+
+The smallest project config that a `verify` step can use names one validator and makes it canonical. The validator has the `exit-code` contract.
+
+```yaml
+format: daggry/project@1
+validators:
+  review:
+    run: [sh, check.sh]
+    kind: custom
+verification:
+  canonical: review
+```
+
+## Examples under the software binding
+
+The three files below are for workspaces that hold programs. Each tool they name, each adapter in the `software` namespace, each `kind` and each `role` belongs to the software binding and is defined in [Bindings](/reference/bindings#the-software-binding). The standard on this page defines none of them.
+
+### Software binding: a Node project
+
+The canonical validator runs vitest, which writes a JUnit XML report. The `software/junit` adapter reads the report. The linter runs through an npm script that `package.json` defines. The [default protection](/reference/protected-paths#what-a-project-adds) covers the files a command names and not the files those programs read, so the file protects `package.json` itself, through an area.
 
 ```yaml
 format: daggry/project@1
 
 project:
   name: shop-web
-  languages: [typescript]
-  toolchains: [node-22]
+  tools: [node-22]
   setup:
     - [npm, ci]
-  build:
     - [npm, run, build]
   entry_points: [src/main.ts]
 
@@ -334,16 +440,16 @@ areas:
     paths: ["package.json", "vitest.config.ts"]
     role: config
 
-checks:
+validators:
   test:
     run: [npx, vitest, run, --reporter=junit, --outputFile=reports/junit.xml]
     kind: tests
     result:
-      contract: junit-xml
+      contract: software/junit
       path: reports/junit.xml
     timeout: 600
     needs:
-      toolchains: [node-22]
+      tools: [node-22]
     expose: agent
   lint:
     run: [npm, run, lint]
@@ -365,29 +471,29 @@ protect:
 | Value | Meaning |
 |---|---|
 | `app`, `tests` | Two areas that overlap: a test file under `src/` is in both. |
-| `tooling` | An area for the files the checks read. |
+| `software/junit` | An adapter of the software binding. It gives one finding for each test in the report. |
+| `tooling` | An area for the files the validators read. |
 | `area:tooling` | An area reference. No step changes `package.json` or `vitest.config.ts`. |
 
-### A Rust project
+### Software binding: a Rust project
 
-`cargo test` prints libtest lines, so the canonical check needs no report file. One entry of `protect.paths` is a glob.
+`cargo test` prints one result line for each test, and the `software/libtest` adapter reads those lines from standard output, so the canonical validator needs no report file. A threshold refuses a skipped test. One entry of `protect.paths` is a glob.
 
 ```yaml
 format: daggry/project@1
 
 project:
   name: shop-core
-  languages: [rust]
-  toolchains: [rust-1.90]
-  build:
+  tools: [rust-1.90]
+  setup:
     - [cargo, build, --workspace]
 
-checks:
+validators:
   test:
     run: [cargo, test, --workspace]
     kind: tests
     result:
-      contract: libtest-lines
+      contract: software/libtest
     timeout: 1200
   clippy:
     run: [cargo, clippy, --workspace, --, -D, warnings]
@@ -402,8 +508,8 @@ verification:
   canonical: test
   also: [clippy, fmt]
   thresholds:
-    - check: test
-      read: ignored
+    - validator: test
+      read: findings.skip
       max: 0
 
 areas:
@@ -419,39 +525,36 @@ protect:
     - "docs/adr/**"
 ```
 
-### A .NET project
+### Software binding: a .NET project
 
-`dotnet test` writes a JUnit XML report through a logger that the test project references. A second check reads a coverage summary as JSON and sets a threshold on it.
+`dotnet test` writes a JUnit XML report through a logger that the test project references, and the `software/junit` adapter reads it. A second validator is a script that writes a result document with one metric, the share of lines the tests cover, and a threshold sets a floor on it.
 
 ```yaml
 format: daggry/project@1
 
 project:
   name: shop-api
-  languages: [csharp]
-  toolchains: [dotnet-9]
+  tools: [dotnet-9]
   setup:
     - [dotnet, restore]
-  build:
     - [dotnet, build, --no-restore]
   entry_points: [src/Shop.Api/Program.cs]
 
-checks:
+validators:
   test:
     run: [dotnet, test, --no-build, --logger, "junit;LogFilePath=reports/junit.xml"]
     kind: tests
     result:
-      contract: junit-xml
+      contract: software/junit
       path: reports/junit.xml
     needs:
-      toolchains: [dotnet-9]
+      tools: [dotnet-9]
   coverage:
     run: scripts/coverage-summary.sh
     kind: coverage
     result:
-      contract: json
+      contract: document
       path: reports/coverage.json
-      schema: https://example.com/schemas/coverage-summary-v1.json
   format:
     run: [dotnet, format, --verify-no-changes]
     kind: format
@@ -461,8 +564,8 @@ verification:
   canonical: test
   also: [coverage]
   thresholds:
-    - check: coverage
-      read: /total/lines/pct
+    - validator: coverage
+      read: metrics.line_coverage_pct
       min: 80
 
 areas:
@@ -474,81 +577,11 @@ areas:
     role: tests
 ```
 
-### A custom lint script and a custom verifier
-
-This repository holds documents, not a program. Its canonical check is a script of its own that prints one TAP test point for each rule it verifies. A second script lints the prose, and the agent may preview it. A scan needs a variable from the factory and a runner that reaches the network. The file carries one extension key.
-
-```yaml
-format: daggry/project@1
-
-project:
-  name: handbook
-
-checks:
-  verify:
-    run: [sh, scripts/verify-handbook.sh]
-    kind: custom
-    result:
-      contract: tap
-    timeout: 300
-  prose:
-    run: scripts/lint-prose.sh
-    kind: lint
-    expose: agent
-  links:
-    run: [node, scripts/check-links.mjs, --report, reports/links.sarif]
-    kind: custom
-    result:
-      contract: sarif
-      path: reports/links.sarif
-    env: [LINK_CHECK_TOKEN]
-    needs:
-      runner: networked
-
-verification:
-  canonical: verify
-  also: [prose]
-
-areas:
-  handbook:
-    paths: ["handbook/**"]
-    role: docs
-    description: One page for each policy. Each page is one Markdown file.
-
-acme/review:
-  owner: docs-team
-```
-
-| Value | Meaning |
-|---|---|
-| `verify` | The canonical check. `scripts/verify-handbook.sh` is protected by default. See [What a project adds](/reference/protected-paths#what-a-project-adds). |
-| `prose` | A custom lint script, given as a script path. The agent may run it as a preview. |
-| `links` | An optional run. It is in neither `canonical` nor `also`, so it runs only when a workflow step calls it by name. |
-| `LINK_CHECK_TOKEN` | The name of a variable the factory may pass. The file holds no value. |
-| `networked` | The name of a runner class. The factory matches it to a class it offers. |
-| `acme/review` | A section defined under the namespace `acme`. A reader that does not know it ignores it and preserves it. |
-
-### Smallest file
-
-The smallest project config that a `verify` step can use names one check and makes it canonical.
-
-```yaml
-format: daggry/project@1
-checks:
-  test:
-    run: [sh, check.sh]
-    kind: tests
-    result:
-      contract: libtest-lines
-verification:
-  canonical: test
-```
-
 ## Validation
 
-Every YAML example on this page was checked against [daggry-project-v1.json](/schemas/daggry-project-v1.json) with a draft 2020-12 validator, and each one is valid. The rules that a schema cannot state were checked too: every name in `canonical`, `also` and a threshold is a check in the same file, and every area reference in `protect.paths` names an area in the same file.
+Every YAML example on this page was checked against [daggry-project-v1.json](/schemas/daggry-project-v1.json) with a draft 2020-12 validator, and each one is valid. The result document was checked against [daggry-result-v1.json](/schemas/daggry-result-v1.json). The rules that a schema cannot state were checked too: every name in `canonical`, `also` and a threshold is a validator in the same file, and every area reference in `protect.paths` names an area in the same file.
 
-To check a file of your own, give the schema and the file to any validator that supports draft 2020-12.
+To check a file of your own, give the schema and the file to any validator that supports draft 2020-12. The schema does not check that an adapter is registered: that needs the tenant config.
 
 ## Examples a reader refuses
 
@@ -556,24 +589,38 @@ To check a file of your own, give the schema and the file to any validator that 
 |---|---|
 | No `format` key | Missing `format`. |
 | `format: daggry/project@2` | Unknown major. |
-| `cheks:` at the top level | Unknown key without a namespace: a misspelt `checks`. |
+| `validatrs:` at the top level | Unknown key without a namespace: a misspelt `validators`. |
 | An area with no `paths`, or with `paths: []` | An area holds at least one glob. |
 | `protect.paths` with `area:web` where `areas` holds no `web` | No such area. |
 | `protect.paths` with `area:Web App` | Not an area name. |
-| `run: cargo test --workspace` | A shell line. A command is an argument list or one script path. |
+| `run: sh check.sh --all` | A shell line. A command is an argument list or one script path. |
 | `run: /usr/local/bin/check` | An absolute path. |
-| A check with no `kind` | Missing `kind`. |
-| `result:` with `contract: junit-xml` and no `path` | `junit-xml` needs `result.path`. |
-| `result:` with `contract: json` and no `schema` | `json` needs `result.schema`. |
+| A validator with no `kind` | Missing `kind`. |
+| `kind: Style Review` | Not a label. |
+| `result:` with `contract: report` | Not a contract. A contract is `exit-code`, `document` or `<namespace>/<adapter>`. |
+| `result:` with `contract: acme/sheet` where the tenant registers no adapter of that name | No such adapter. The run is refused when it starts. |
+| `result:` with `schema: https://example.com/s.json` | Unknown key. The form of a result document is fixed. |
 | `expose: everyone` | Not `factory` or `agent`. |
 | `env:` with `TOKEN=abc` | Not a variable name. The file holds names, never values. |
 | `verification:` with no `canonical` | Missing `canonical`. |
-| `canonical: tests` where `checks` holds `test` | No such check. |
-| `canonical:` with a list of two names | One check is canonical. The others go in `also`. |
+| `canonical: reviews` where `validators` holds `review` | No such validator. |
+| `canonical:` with a list of two names | One validator is canonical. The others go in `also`. |
 | A threshold with neither `min` nor `max` | A threshold needs a limit. |
+| A threshold with `read: reading_grade` | Not a `read` form. A metric is read as `metrics.<name>`. |
+
+A result document a reader refuses makes the result an `error`:
+
+| Input | Refusal |
+|---|---|
+| No `format` key, or `format: daggry/result@2` | Missing `format`, or unknown major. |
+| `outcome: skipped` | Not `pass`, `fail` or `error`. |
+| A finding with no `message` | Missing `message`. |
+| `metrics:` with `pages: "12"` | A metric is a number. |
 
 ## Next steps
 
-- For the tenant's side, including which workflows run on a repository, see [Tenant config](/reference/tenant-config).
+- For the validator interface, the three sources of a validator and the built-in validators, see [Validators](/reference/validators).
+- For what a binding adds for one kind of work, including the adapters of the software binding, see [Bindings](/reference/bindings).
+- For the tenant's side, including which workflows run on a workspace, see [Tenant config](/reference/tenant-config).
 - For the always-protected paths and the boundary check, see [Protected paths](/reference/protected-paths).
 - For what another factory implements to read this file, see [Conformance](/reference/conformance).

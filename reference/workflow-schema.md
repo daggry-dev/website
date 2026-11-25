@@ -8,7 +8,9 @@ A workflow is one YAML file that lists steps and bounded loops. It is one of fou
 
 The examples on this page are illustrative. Each one is valid against the published schema. See [Validation](#validation).
 
-In examples, `engine: <engine>` stands for the identifier of a coding-agent engine that the tenant registers. Write that identifier in place of `<engine>`. One engine, `replay`, plays back a recorded transcript for tests and takes a `transcript` path in place of `prompt`.
+In examples, `engine: <engine>` stands for the identifier of an agent engine that the tenant registers. Write that identifier in place of `<engine>`. One engine, `replay`, plays back a recorded transcript and takes a `transcript` path in place of `prompt`.
+
+A workflow names no tool and no kind of work. It names validators, effects and areas by reference, and the project, the tenant and the binding supply what the names stand for. See [Bindings](/reference/bindings).
 
 ## Download
 
@@ -38,7 +40,7 @@ The workflow lives in the control plane. An agent cannot change it.
 
 ### Where a workflow comes from
 
-A workflow is a document in the tenant's catalogue. Each catalogue entry names the repository, the path and the commit the file is read from, and the tenant chooses that repository. It can be the repository the work is done on, but that repository does not assign the workflow to itself. The tenant config decides which workflows run on which repository. See [workflows](/reference/tenant-config#workflows) and [projects](/reference/tenant-config#projects).
+A workflow is a document in the tenant's catalogue. Each catalogue entry names the workspace, the path and the version the file is read from, and the tenant chooses that workspace. It can be the workspace the work is done on, but that workspace does not assign the workflow to itself. The tenant config decides which workflows run on which workspace. See [workflows](/reference/tenant-config#workflows) and [projects](/reference/tenant-config#projects).
 
 `daggry run --workflow <file>` supplies a workflow as a file: the file is read from the machine that starts the run. See [CLI](/reference/cli).
 
@@ -61,11 +63,11 @@ Every step requires `id` and `kind`. `kind` is one of the five values of the sta
 
 | Kind | What runs the step | What it does |
 |---|---|---|
-| `agent` | Agent runner | A coding-agent session that must deliver named artifact kinds. |
+| `agent` | Agent runner | A session of an agent engine that must deliver named artifact kinds. |
 | `command` | Deterministic runner | A shell line, limited by a `scope` of paths it may write. |
-| `verify` | Deterministic runner | Runs the project's check on the sealed commit, in a clean copy of the code. |
+| `verify` | Deterministic runner and control plane | Runs the validators it names on the last sealed version of the workspace. |
 | `human` | None. A person decides. | Releases the pod and waits. `daggry approve` completes it. |
-| `effect` | Control plane | An idempotent side effect, such as opening a pull request. |
+| `effect` | Control plane | An idempotent side effect that the tenant registers, such as handing a change over. |
 
 ### command
 
@@ -80,39 +82,41 @@ A shell line that the runner executes in the pod. A failed command step fails th
 
 ### agent
 
-A session of a coding-agent engine.
+A session of an agent engine.
 
 | Key | Type | Required | Constraints |
 |---|---|---|---|
 | `id` | string | yes | Non-empty. |
 | `kind` | string | yes | `agent`. |
-| `engine` | string | yes | Non-empty. The identifier of a coding-agent engine. See [Engine](#engine). |
+| `engine` | string | yes | Non-empty. The identifier of an agent engine. See [Engine](#engine). |
 | `prompt` | string | no | The control plane writes it to a read-only instruction file named for the step id. |
 | `transcript` | string | no | Non-empty. The path of the recorded transcript that the `replay` engine plays back, in place of `prompt`. |
 | `outputs` | array of strings | yes | Each non-empty. The kinds the step must deliver. |
-| `tests` | array of strings | no | Each non-empty. Globs that mark which of the step's changed paths are tests. |
+| `freeze` | array of strings | no | Each non-empty. Globs that mark which of the step's changed paths are frozen when the step is sealed. |
+| `tests` | array of strings | no | A second name for `freeze`, used by the software binding. A step holds one of the two. See [Bindings](/reference/bindings#frozen-tests). |
 | `scope` | scope | yes | See [Scope](#scope). |
 
 - The step succeeds when every declared output is accepted. It fails when the engine ends first or a limit is reached.
 - An output matches by bare name: `plan`, `evidence/plan@1` and `daggry/change@1` all work.
 - The control plane seals a `change` for every accepted `agent` or `command` step, so an output named `change` is never required from the runner.
-- A step can submit `observation` always, `measurement` from a `verify` step or a step with `tests`, and any other kind only if it is among `outputs`. Any other record rejects the step with ``record <n>: kind `<kind>` not admitted``.
-- A step with `tests` is the test step of a loop. When the control plane accepts it, its matching paths become the frozen set.
+- A step can submit `observation` always, `measurement` from a `verify` step or a step with `freeze`, and any other kind only if it is among `outputs`. Any other record rejects the step with ``record <n>: kind `<kind>` not admitted``.
+- A step with `freeze` is the proof step of a loop: it writes what proves a criterion. When the control plane accepts it, its matching paths become the frozen set.
 
 ### verify
 
-Measures a clean copy of the last sealed commit.
+Runs validators on the last sealed version of the workspace. A validator is the extension point of verification. See [Validators](/reference/validators).
 
 | Key | Type | Required | Constraints |
 |---|---|---|---|
 | `id` | string | yes | Non-empty. |
 | `kind` | string | yes | `verify`. |
-| `check` | check name | no | The name of one check in the project config. See [Checks by name](#checks-by-name). |
+| `validators` | array of references | yes | One or more, none twice. See [Validators by reference](#validators-by-reference). |
 
-A `verify` step has no command. It runs the checks that the base commit's [Project config](/reference/project-config) names. See [Checks by name](#checks-by-name).
+A `verify` step has no command. Every validator it names is resolved when the run starts.
 
-- Without `check`, the step submits one `head` measurement of the last sealed commit for each check it measures: the canonical check and each check in `verification.also`. The step passes when the verification is green. See [verification](/reference/project-config#verification).
-- With `check`, the step passes when that check passes.
+- A script validator runs in the deterministic runner, on a clean copy of the last sealed version. The step submits one `head` measurement for each, and the control plane derives a verdict from each measurement.
+- A built-in or a native validator runs with the control plane over sealed artifacts, and the control plane seals its verdict.
+- The step passes when every verdict has the status `pass`.
 - Inside a loop, a `verify` step that does not pass is red: the iteration ends and the run does not fail. Outside a loop, a failed `verify` step fails the run.
 
 ### human
@@ -125,7 +129,7 @@ Waits for a person.
 | `kind` | string | yes | `human`. |
 | `waiting_for` | string | yes | `approval` or `input-needed`. |
 
-The control plane marks the run `waiting` at the step boundary and releases the job's pod. `daggry approve <run-id>` completes the step, and the run continues in a new attempt from the last sealed commit. `approve` binds to the `plan` for `approval` and to the latest `change` for `input-needed`. A `human` step that some loop names in `on_exhausted` is skipped in normal flow and runs only when that loop is exhausted.
+The control plane marks the run `waiting` at the step boundary and releases the job's pod. `daggry approve <run-id>` completes the step, and the run continues in a new attempt from the last sealed version of the workspace. `approve` binds to the `plan` for `approval` and to the latest `change` for `input-needed`. A `human` step that some loop names in `on_exhausted` is skipped in normal flow and runs only when that loop is exhausted.
 
 ### effect
 
@@ -135,9 +139,9 @@ Runs in the control plane, never in the pod.
 |---|---|---|---|
 | `id` | string | yes | Non-empty. |
 | `kind` | string | yes | `effect`. |
-| `do` | string | yes | `open-pr`. |
+| `do` | string | yes | The name of an effect that the tenant registers in `extensions.effects` of the [Tenant config](/reference/tenant-config#extensions): a name, or `<namespace>/<name>`. |
 
-`open-pr` opens a pull request with head `daggry/<run-id>` and base `main`. The title and body come from the issue. The idempotency key is the run id plus the step id, so a retry returns the same pull request. A failing effect fails the run.
+The standard defines no effect. A binding defines the effects for its kind of work, such as handing a change over or publishing it. See [Bindings](/reference/bindings). The idempotency key of every effect is the run id plus the step id, so a retry has the same result. A failing effect fails the run. An effect the tenant has not registered refuses the run when it starts.
 
 ### Step kind registry
 
@@ -146,7 +150,7 @@ A step kind is an entry in a registry. Each entry names the kind, the keys a ste
 | Kind | What runs the step | Registered by |
 |---|---|---|
 | `command` | Deterministic runner | The standard. |
-| `verify` | Deterministic runner | The standard. |
+| `verify` | Deterministic runner, for script validators. Control plane, for built-in and native validators. | The standard. |
 | `agent` | Agent runner | The standard. |
 | `effect` | Control plane | The standard. |
 | `human` | None. A person decides, and the control plane seals the decision. | The standard. |
@@ -166,32 +170,37 @@ A workflow declares what runs a step through the step's `kind` and through nothi
 
 | What runs the step | Runs | Never |
 |---|---|---|
-| Deterministic runner | Code that a person wrote into the workflow or the project: a `command` step's `run` line and the project's checks. | Starts a model. |
-| Agent runner | A coding-agent engine, and whatever the engine generates. | Judges its own work. |
-| Control plane | Effects, seals and validators. | Runs a command or an agent. |
+| Deterministic runner | What a person wrote into the workflow, the project or the tenant: a `command` step's `run` line and script validators. | Starts a model. |
+| Agent runner | An agent engine, and whatever the engine generates. | Judges its own work. |
+| Control plane | Effects, seals, and built-in and native validators. | Runs a command or an agent. |
 | A person | The decision at a `human` step. | - |
 
 No key of a step changes what runs it. An `agent` step always runs in the agent runner, and a `command` step never does.
 
-### Checks by name
+### Validators by reference
 
-A workflow never holds a project's verification command. It names a `verify` step, and the [Project config](/reference/project-config) of the repository supplies the check. A workflow therefore runs unchanged on projects in different languages.
+A workflow never holds a verification command. A `verify` step names validators, and the project, the tenant and the platform supply them. A workflow therefore runs unchanged on projects of different kinds.
 
-| Step | Runs |
+| Reference | Resolves to |
 |---|---|
-| `verify` with no `check` key | The project's canonical check, `verification.canonical`, and each check in `verification.also`. The result is the verification evidence. |
-| `verify` with `check: <name>` | The one check of that name, as an optional run. The result decides the step and is not the verification evidence. |
+| `project` | The project's verification: the canonical validator, each validator in `verification.also` and the thresholds of the [Project config](/reference/project-config#verification). |
+| `project/<name>` | The script validator of that name in the project config. |
+| `tenant/<name>` | The script validator of that name in the [Tenant config](/reference/tenant-config#validators). |
+| `daggry/<name>` | A built-in validator. |
+| `<namespace>/<name>` | A native validator the tenant admits. |
 
 Rules:
 
-- The value of `check` is a check name: a lowercase letter, then lowercase letters, digits, `-` or `_`.
-- The name is looked up in the project config of the base commit when the run starts. A name the project config lacks refuses the run.
-- A `verify` step with no `check` key needs a project config with `verification.canonical`.
-- Every check a step runs is run by the deterministic runner, on a clean copy of the sealed commit.
+- A reference is `project`, or a namespace, a `/` and a validator name: a lowercase letter, then lowercase letters, digits, `-` or `_`.
+- A project reference is looked up in the project config of the baseline when the run starts. A reference that names nothing refuses the run.
+- A project's validator runs in a `verify` step only when the tenant admits it. See [Admission](/reference/project-config#admission).
+- `project` needs a project config with `verification.canonical`.
+
+The sources, the built-in validators and where each runs are in [Validators](/reference/validators).
 
 ### Engine
 
-`engine` is an open string, not a closed list, so a new coding-agent engine needs no change to the schema. The loader checks the value against the engines the tenant registers in `agents.engines` of the [Tenant config](/reference/tenant-config#agents). A value no registered engine has is refused.
+`engine` is an open string, not a closed list, so a new agent engine needs no change to the schema. The loader checks the value against the engines the tenant registers in `agents.engines` of the [Tenant config](/reference/tenant-config#agents). A value no registered engine has is refused.
 
 ## Scope
 
@@ -200,7 +209,7 @@ Rules:
 | Value | Meaning |
 |---|---|
 | `nothing` | The step may write no path. |
-| `anywhere` | Any path except protected paths and CI configuration folders such as `.github/**`. |
+| `anywhere` | Any path except protected paths and the automation folders a binding names. |
 | a list of entries | Only paths that an entry holds. Each entry is non-empty: a glob, or an area reference, `area:<name>`. `[]` is valid and holds no path. |
 
 Any other word, such as `everywhere`, is refused. A glob that does not compile is refused at run time.
@@ -209,7 +218,7 @@ How a scope is judged and enforced is in [Protected paths](/reference/protected-
 
 ### Areas by name
 
-A workflow can name a part of a repository without knowing its paths. An entry of a `scope` list is a glob or an area reference, and the [Project config](/reference/project-config#areas) of the repository supplies the paths.
+A workflow can name a part of a workspace without knowing its paths. An entry of a `scope` list is a glob or an area reference, and the [Project config](/reference/project-config#areas) of the workspace supplies the paths.
 
 | Entry | Stands for |
 |---|---|
@@ -218,7 +227,7 @@ A workflow can name a part of a repository without knowing its paths. An entry o
 
 Rules:
 
-- The name follows the rule for a check name. It is looked up in the project config of the base commit when the run starts. A name the project config lacks refuses the run.
+- The name follows the rule for a validator name. It is looked up in the project config of the baseline when the run starts. A name the project config lacks refuses the run.
 - A list can mix globs and area references. A path is in the scope of the step when one entry holds it.
 - An area reference never opens a protected path, and it applies inside the scope of the run. See [The scope of a run](/reference/protected-paths#the-scope-of-a-run).
 
@@ -228,12 +237,12 @@ steps:
   - id: fix
     kind: agent
     engine: <engine>
-    prompt: Fix the failing page.
+    prompt: Revise the page.
     outputs: [change]
     scope: ["area:app", "CHANGELOG.md"]
 ```
 
-Illustrative. `app` is an area in the project config of the repository, and `<engine>` is the identifier of a registered coding-agent engine.
+`app` is an area in the project config of the workspace, and `<engine>` is the identifier of a registered agent engine.
 
 ## Loop
 
@@ -258,8 +267,8 @@ A loop entry has an `id` and a `loop` object. A loop is not a sixth step kind.
 | Gate | `until` is evaluated at the end of every iteration, green or red. When it holds, the loop ends and the run continues after it. |
 | End | The loop also ends when the list is finished. |
 | Empty list | The loop and its exhaust target are skipped. |
-| Other failures | A failed step of any other kind in a loop fails the run. It is not red. A rejected boundary, a missing output or a failed red proof also fails the run. |
-| Repeat | An iteration that repeats skips every test step: an `agent` step with `tests`. A fresh iteration on a new item runs it. |
+| Other failures | A failed step of any other kind in a loop fails the run. It is not red. A rejected boundary, a missing output or a failed baseline proof also fails the run. |
+| Repeat | An iteration that repeats skips every proof step: an `agent` step with `freeze`. A fresh iteration on a new item runs it. |
 | Exhausted | When `max` is reached with the list unfinished, `on_exhausted` applies. |
 | `fail` | The run ends `failed` with the reason ``loop `<id>` ran out of iterations``. |
 | `<human id>` | The run waits at that step. `daggry approve <run-id>` gives up the unfinished item, and the run continues after the human step. `daggry approve <run-id> --unfreeze <path>` re-enters the loop on the same item with a fresh `max`, as a repeat iteration. |
@@ -268,7 +277,9 @@ A loop entry has an `id` and a `loop` object. A loop is not a sixth step kind.
 
 ### Red then green
 
-A red-then-green loop has three steps in an iteration: a test step (an `agent` step with `tests`) writes a test whose title carries the criterion id, an implementer (an `agent` step) makes it pass, and a `verify` step measures a clean copy of the code. The runner overlays the test step's new test paths on a clean copy of the base commit and runs the base commit's canonical check there. A test step in a loop that does not prove red is rejected. See [Red proof](/reference/kinds#red-proof). Frozen tests and unfreeze are defined in [Protected paths](/reference/protected-paths#frozen-tests).
+A red-then-green loop has three steps in an iteration. A proof step (an `agent` step with `freeze`) writes what proves the criterion: a check whose finding carries the criterion id. A second `agent` step does the work that makes it pass. A `verify` step runs the validators on a clean copy.
+
+The runner overlays the proof step's new frozen paths on a clean copy of the baseline and runs the baseline's canonical validator there. The built-in `daggry/baseline-proof` judges the result, and a proof step in a loop that does not prove red is rejected. See [Baseline proof](/reference/validators#baseline-proof). Frozen paths and unfreeze are defined in [Protected paths](/reference/protected-paths#frozen-paths).
 
 ## Extensibility
 
@@ -294,9 +305,9 @@ This workflow carries one extension key on the document, one on a step and one s
 format: daggry/workflow@1
 acme/owner: platform-team
 steps:
-  - id: build
+  - id: render
     kind: command
-    run: make
+    run: sh scripts/render.sh
     scope: anywhere
     acme/cost-centre: build
   - id: scan
@@ -307,18 +318,18 @@ steps:
     engine: <engine>
     prompt: Fix what the scan found.
     outputs: [change]
-    scope: ["src/**"]
+    scope: ["area:app"]
 ```
 
 | Value | Meaning |
 |---|---|
 | `acme/owner`, `acme/cost-centre` | Extension keys. A reader that does not know the `acme` namespace ignores them. |
 | `acme/scan` | An extension kind. The tenant registers it with the module that runs it and the schema that allows `level`. |
-| `<engine>` | The identifier of a registered coding-agent engine. |
+| `<engine>` | The identifier of a registered agent engine. |
 
 ## A full valid example
 
-This workflow plans, waits for approval, then runs a red-then-green loop over the plan's criteria. It builds, then opens a pull request. The loop ends when every criterion is covered, or when 5 iterations are spent, at which point the run waits at `ask`.
+This workflow plans, waits for approval, then runs a red-then-green loop over the plan's criteria. It then runs a command and hands the change over with an effect. The loop ends when every criterion is covered, or when 5 iterations are spent, at which point the run waits at `ask`.
 
 ```yaml
 format: daggry/workflow@1
@@ -340,45 +351,48 @@ steps:
       max: 5
       on_exhausted: ask
       steps:
-        - id: tests
+        - id: proof
           kind: agent
           engine: <engine>
-          prompt: Write the test for the criterion.
+          prompt: Write the check that proves the criterion.
           outputs: [change]
-          tests: ["tests/**"]
-          scope: ["tests/**"]
-        - id: impl
+          freeze: ["checks/**"]
+          scope: ["checks/**"]
+        - id: work
           kind: agent
           engine: <engine>
-          prompt: Make the test pass.
+          prompt: Do the work that makes the check pass.
           outputs: [change]
-          scope: ["src/**", "tests/**"]
+          scope: ["area:content", "checks/**"]
         - id: check
           kind: verify
+          validators: [project, daggry/criterion-coverage]
   - id: ask
     kind: human
     waiting_for: input-needed
-  - id: build
+  - id: render
     kind: command
-    run: make
+    run: sh scripts/render.sh
     scope: anywhere
-  - id: pr
+  - id: deliver
     kind: effect
-    do: open-pr
+    do: publish
 ```
 
-| Placeholder | Meaning |
+| Value | Meaning |
 |---|---|
-| `<engine>` | The identifier of a registered coding-agent engine. |
+| `<engine>` | The identifier of a registered agent engine. |
+| `area:content` | An area in the project config of the workspace. |
+| `publish` | An effect that the tenant registers. Under the software binding the effect is `open-pr`. |
 
-The smallest valid workflow is the header and one command step:
+The smallest valid workflow is the header and one command step.
 
 ```yaml
 format: daggry/workflow@1
 steps:
-  - id: build
+  - id: render
     kind: command
-    run: make
+    run: sh scripts/render.sh
     scope: anywhere
 ```
 
@@ -386,7 +400,7 @@ steps:
 
 Every YAML example on this page was checked against [workflow.json](/schemas/workflow.json) with a draft 2020-12 validator, and each one is valid.
 
-To check a file of your own, give the schema and the file to any validator that supports draft 2020-12. The schema does not check the rules that need another document: that an `engine` is registered, that an extension kind is registered, and that a check name and an area name are in the project config.
+To check a file of your own, give the schema and the file to any validator that supports draft 2020-12. The schema does not check the rules that need another document: that an `engine` is registered, that an extension kind and an effect are registered, that a validator reference resolves, and that an area name is in the project config.
 
 ## Load errors
 
@@ -409,7 +423,7 @@ A short, representative set. The first column shows the cause. The second names 
 
 | Input | Refusal |
 |---|---|
-| `steps:` followed by `- &a {id: v, kind: verify}` | Unsupported construct (anchor) |
+| `steps:` followed by `- &a {id: v, kind: human, waiting_for: approval}` | Unsupported construct (anchor) |
 | `steps: [` | Not YAML |
 | No `format` key | Schema (missing `format`) |
 | `format: daggry/workflow@2` | Schema at `/format` (unknown major) |
@@ -418,6 +432,10 @@ A short, representative set. The first column shows the cause. The second names 
 | `owner: platform-team` at the top level | Schema (a key without a namespace) |
 | A loop with `max: 0` | Schema at `/steps/0/loop/max` |
 | A `verify` step with `run: x` | Schema at `/steps/0` (extra key) |
+| A `verify` step with no `validators`, or with `validators: []` | Schema at `/steps/0` |
+| `validators: [Project Review]` | Schema at `/steps/0/validators/0` (not a reference) |
+| An `agent` step with both `freeze` and `tests` | Schema at `/steps/0` |
+| `do: Open PR` | Schema at `/steps/0/do` (not an effect name) |
 | `scope: ["area:Web App"]` | Schema at `/steps/0/scope` (not an area name) |
 | Two steps with `id: v` | Duplicate id `v` |
 | `on_exhausted: ask` with no `ask` step | Exhaust target `ask` |
@@ -429,7 +447,7 @@ The loader does not check these at load. Each fails later or does nothing:
 | Not checked | What happens |
 |---|---|
 | That `outputs` names real kinds. | An unknown output is never delivered, and the step fails. |
-| That `tests` and `scope` globs compile. | A bad glob fails at the boundary check. |
+| That `freeze` and `scope` globs compile. | A bad glob fails at the boundary check. |
 | A fact name after `verdict.` | A name no validator emits is not caught at load. |
 
 ::: details Schema: workflow file
@@ -465,9 +483,10 @@ This is the content of [workflow.json](/schemas/workflow.json).
       "type": "string",
       "minLength": 1
     },
-    "checkName": {
+    "validatorRef": {
       "type": "string",
-      "pattern": "^[a-z][a-z0-9_-]*$"
+      "pattern": "^(project|[A-Za-z0-9_-]+/[a-z][a-z0-9_-]*)$",
+      "description": "project, or daggry/<name>, tenant/<name>, project/<name> or <namespace>/<name>."
     },
     "scopeEntry": {
       "type": "string",
@@ -651,7 +670,7 @@ This is the content of [workflow.json](/schemas/workflow.json).
         "engine": {
           "type": "string",
           "minLength": 1,
-          "description": "The identifier of a coding-agent engine that the tenant registers."
+          "description": "The identifier of an agent engine that the tenant registers."
         },
         "prompt": {
           "type": "string"
@@ -661,6 +680,13 @@ This is the content of [workflow.json](/schemas/workflow.json).
           "minLength": 1
         },
         "outputs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "freeze": {
           "type": "array",
           "items": {
             "type": "string",
@@ -677,12 +703,19 @@ This is the content of [workflow.json](/schemas/workflow.json).
         "scope": {
           "$ref": "#/$defs/scope"
         }
+      },
+      "not": {
+        "required": [
+          "freeze",
+          "tests"
+        ]
       }
     },
     "verify": {
       "required": [
         "id",
-        "kind"
+        "kind",
+        "validators"
       ],
       "additionalProperties": false,
       "patternProperties": {
@@ -693,8 +726,13 @@ This is the content of [workflow.json](/schemas/workflow.json).
           "$ref": "#/$defs/id"
         },
         "kind": true,
-        "check": {
-          "$ref": "#/$defs/checkName"
+        "validators": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/validatorRef"
+          }
         }
       }
     },
@@ -737,9 +775,9 @@ This is the content of [workflow.json](/schemas/workflow.json).
         },
         "kind": true,
         "do": {
-          "enum": [
-            "open-pr"
-          ]
+          "type": "string",
+          "pattern": "^([A-Za-z0-9_-]+/)?[a-z][a-z0-9_-]*$",
+          "description": "The name of an effect that the tenant registers."
         }
       }
     },
