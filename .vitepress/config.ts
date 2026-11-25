@@ -60,13 +60,16 @@ export default defineConfig({
         { text: 'Formats', items: [
           { text: 'Envelope', link: '/reference/envelope' },
           { text: 'Kinds and schemas', link: '/reference/kinds' },
+          { text: 'Validators', link: '/reference/validators' },
           { text: 'Workflow schema', link: '/reference/workflow-schema' },
           { text: 'Gate expressions', link: '/reference/gates' },
           { text: 'Project config', link: '/reference/project-config' },
           { text: 'Tenant config', link: '/reference/tenant-config' },
           { text: 'Protected paths', link: '/reference/protected-paths' },
+          { text: 'Bindings', link: '/reference/bindings' },
         ] },
         { text: 'Standards', items: [
+          { text: 'Contracts', link: '/reference/contracts' },
           { text: 'Conformance', link: '/reference/conformance' },
         ] },
         { text: 'Terms', items: [
