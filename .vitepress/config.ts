@@ -6,7 +6,7 @@ const base = process.env.SITE_BASE ?? '/'
 export default defineConfig({
   base,
   title: 'Daggry',
-  description: 'A kit of modules and open standards for autonomous software factories where every step is re-checked by code and recorded in a signed, tamper-evident trail anyone can verify, so agents can work all night.',
+  description: 'A factory kit: modules and open standards for factories where coding agents do the work, code runs every check, and the result is a signed, tamper-evident trail anyone can verify.',
   cleanUrls: true,
   srcExclude: ['research/**', 'README.md'],
   // Light and dark, following the OS preference until the reader picks one.
@@ -34,6 +34,7 @@ export default defineConfig({
           { text: 'Open standards', link: '/guide/concepts/standards' },
           { text: 'The tenant defines the factory', link: '/guide/concepts/tenant' },
           { text: 'Why you can trust a run', link: '/guide/concepts/trust' },
+          { text: 'Validators: the extension point', link: '/guide/concepts/validators' },
           { text: 'Work graphs', link: '/guide/concepts/workflows' },
           { text: 'What an agent cannot change', link: '/guide/concepts/protection' },
           { text: 'Where it runs', link: '/guide/concepts/architecture' },

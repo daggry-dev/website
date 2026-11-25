@@ -56,12 +56,12 @@ const doors = [
       <h1>Agents do the work.<br /><em>Code checks it.</em></h1>
       <p class="lede">
         Agents can work all night. Daggry makes that safe to sleep through: every step an agent finishes is
-        re-checked by code and recorded in a signed, tamper-evident trail. It is a factory kit for any work that
-        has a deterministic check, built from open standards and replaceable parts.
+        re-checked by code and recorded in a signed, tamper-evident trail. It is a factory kit, built from modules
+        and open standards.
       </p>
       <p class="lede">
-        The factory is a control plane, a conductor and a stack that delivers verified evidence. Agents do the
-        non-deterministic work, code gives the deterministic judgement, and an agent never grades its own work.
+        You assemble the modules into your own factory, for any work that has a deterministic check. A binding is a
+        ready-made configuration of the kit for one kind of work. Software is the first.
       </p>
       <div class="cta">
         <a class="btn primary" :href="withBase('/guide/')">See one night</a>
@@ -75,7 +75,7 @@ const doors = [
       <p class="eyebrow">The problem</p>
       <h2>A night of work, and <em>only its word</em> for it.</h2>
       <p class="sub">
-        By morning, all you have is the agent's own report. The example is a run in the software binding.
+        By morning, all you have is the agent's own report.
       </p>
       <Compare />
     </section>
@@ -106,12 +106,12 @@ const doors = [
 
     <section class="wide">
       <p class="eyebrow">Modules and open standards</p>
-      <h2>Contracts, <em>not one machine</em>.</h2>
+      <h2>A factory kit, <em>not one machine</em>.</h2>
       <p class="sub">
-        Each part has one job and is defined by a contract: a conductor orders the work, a control plane seals it,
-        a runner runs commands and agents by two separate mechanisms, and validators judge the result in code. Four
-        open documents connect them. Any part can be replaced, and validators are where you plug in your own: a
-        script, or a native validator in any language.
+        Each module has one job: a conductor orders the work, a control plane seals it, a runner runs commands and
+        agents by two separate mechanisms, and validators judge the result in code. Four open documents connect
+        them, so nothing is tied to one kind of work, one coding agent, one cloud or one factory. Validators are
+        where you plug in a check of your own: a script, or a native validator in any language.
       </p>
       <Modules />
       <div class="proof four">
@@ -122,8 +122,7 @@ const doors = [
       </div>
       <p class="honest">
         Each document has a published schema, a version and a way to extend it. Any factory can implement the same
-        specification and the same signing and chaining of evidence. The reference implementation is one
-        implementation of the contracts.
+        specification and the same signing and chaining of evidence.
       </p>
       <p class="more">
         <a :href="withBase('/guide/concepts/modules')">See the modules</a>

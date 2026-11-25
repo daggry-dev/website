@@ -2,11 +2,9 @@
 
 An agent can do a night's work, but its own report is the only proof. Daggry runs the work as fixed steps, has code re-check each step, and keeps a signed record you can verify yourself.
 
-Daggry is a factory kit. A factory is a system that takes in work, puts agents on it and hands back checked results. The kit is a set of modules, each with one job, and four open standards that connect them.
+Daggry is a factory kit. A factory is a system that takes in work, puts agents on it and hands back checked results. The kit is a set of modules, each with one job, and four open standards that connect them. You assemble the modules into your own factory. Software is the first kind of work, not the only one.
 
-The factory itself is mainly a control plane, a conductor and a stack that delivers verified evidence. That is where non-deterministic work meets deterministic judgement: agents do the work, code runs every check, and an agent never grades its own work. Every part is defined by a contract, so you can replace it or plug in your own. See [Contracts](/reference/contracts).
-
-The work is any work that has a deterministic check: software, a document review, a data pipeline refresh, a design audit. The standards name no tool and no kind of work. A binding maps them onto one kind of work and its tools. See [Bindings](/reference/bindings).
+The work is any work that has a deterministic check: software, a document review, a data pipeline refresh, a design audit. The standards name no tool and no kind of work. A binding is a ready-made configuration of the kit for one kind of work and its tools. See [Bindings](/reference/bindings).
 
 Daggry is Danish for dawn. You start the work, go to sleep, and at first light it is done and checked.
 
@@ -33,7 +31,7 @@ Every part of that night has a neutral name. The table gives the name the standa
 | An issue | A work item: the request the work answers. |
 | A repository | A workspace: the versioned collection of files and data the work lives in. |
 | A range of commits | A change: a set of differences made to the workspace. |
-| A test that fails, then passes | A check that fails before the work and passes after. |
+| A test that fails, then passes | A baseline proof: a check that fails before the work and passes after. |
 | Opening a pull request | An effect: the step that hands the result over. |
 
 A check is any deterministic procedure that inspects the workspace and reports a result. It can check a program, a document, a dataset, a configuration or a design file. For a document review and a recurring data refresh written as workflows, see [Workflow patterns](/guide/how-to/workflow-patterns).
@@ -42,11 +40,11 @@ A check is any deterministic procedure that inspects the workspace and reports a
 
 Nothing in that night is built into Daggry. The plan, the check that fails first, the approval and the handover are steps in a workflow, a file you can read and change. Another file describes other work: a report, a review, a refresh, an audit.
 
-The same holds for the rest of the factory. Which agents work, on which engine, how many jobs run at a time and where a person must decide are data in the tenant config. What is true of one project, such as how to check it, is in its project config.
+The same holds for the rest of the factory. Which agents work, with which coding agent as their engine, how many jobs run at a time and where a person must decide are data in the tenant config. What is true of one project, such as how to check it, is in its project config.
 
 ## Built from modules and open standards
 
-**Modules.** A conductor orders the steps and schedules them across runners. A control plane holds the keys, seals and judges. A runner runs the steps in the pod in two ways: as the deterministic runner it runs commands and checks and never starts a model, and as the agent runner it runs an agent through an adapter, so the agent is replaceable. Each module is defined by a contract, and anything that meets the contract can replace it. See [The modules](/guide/concepts/modules).
+**Modules.** A conductor orders the steps and schedules them across runners. A control plane holds the keys, seals and judges. A runner runs the steps in the pod in two ways: as the deterministic runner it runs commands and checks and never starts a model, and as the agent runner it runs a coding agent through an engine adapter, so the coding agent is replaceable. An engine, a forge and a store complete the kit: the coding agent itself, the place work comes from and goes to, and the storage for the trail. Validators are the plug-in point, where a check of your own runs like one of the platform's. See [The modules](/guide/concepts/modules).
 
 **Open standards.** Four documents connect the modules: the workflow, the evidence, the project config and the tenant config. Each has a published schema, a version and a way to extend it. Any factory can implement the same specification and the same signing and chaining of evidence. See [Open standards](/guide/concepts/standards).
 
@@ -68,10 +66,10 @@ You put agents on work of your own and want the work to finish while you are awa
 
 You can only leave work alone if you do not need to trust whoever is doing it. Daggry never takes the agent's word.
 
-## Where to go next
+## Next steps
 
-1. To see the parts and what connects them, read [The modules](/guide/concepts/modules) and [Open standards](/guide/concepts/standards).
-2. To plug in a check of your own, read [Validators](/guide/concepts/validators).
-3. To check the record yourself, read [Why you can trust a run](/guide/concepts/trust).
-4. To run a workflow, follow [Getting started](/guide/getting-started).
-5. To look up a field, command or term, open the [Reference](/reference/).
+- To see the parts and what connects them, read [The modules](/guide/concepts/modules) and [Open standards](/guide/concepts/standards).
+- To check the record yourself, read [Why you can trust a run](/guide/concepts/trust).
+- To plug in a check of your own, read [Validators: the extension point](/guide/concepts/validators).
+- To run a workflow, follow [Getting started](/guide/getting-started).
+- To look up a field, command or term, open the [Reference](/reference/).
