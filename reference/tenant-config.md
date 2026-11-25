@@ -12,7 +12,7 @@ The documents on this page are illustrative. In examples, `<engine>` stands for 
 
 ## Download
 
-The tenant config has a published JSON Schema (draft 2020-12).
+The tenant config has a published JSON Schema (draft 2020-12). The table links the file.
 
 | Schema | File |
 |---|---|
@@ -34,6 +34,8 @@ Every object is closed: a key that is not listed on this page and is not an exte
 
 ### Header
 
+The header has one key.
+
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `format` | string | yes | Always `daggry/tenant@1`. |
@@ -42,29 +44,29 @@ A reader refuses a missing `format`, a malformed one and a major version it does
 
 ### workflows
 
-The catalogue: the workflows the tenant offers, and where each one comes from.
+The `workflows` section is the catalogue: the workflows the tenant offers, and where each one comes from. The table lists its keys.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `workflows` | array of objects | no | The catalogue. Names are unique. |
 | `workflows[].name` | string | yes | The name a project entry uses to assign the workflow. Non-empty. See [projects](#projects). |
 | `workflows[].source.workspace` | string | yes | The workspace that holds the workflow file. Non-empty. The tenant chooses it. |
-| `workflows[].source.path` | string | yes | The path of the workflow file in that workspace. |
+| `workflows[].source.path` | string | yes | The path of the workflow file in that workspace. Non-empty. |
 | `workflows[].source.revision` | string | yes | The version of the workspace the file is read from, in the form the binding gives. Non-empty. |
 
 A workflow is pinned to one version, so a catalogue entry names exactly one file content. The file itself follows the [Workflow schema](/reference/workflow-schema). A run uses only a workflow from the catalogue.
 
-A workflow is a document in the tenant's catalogue, wherever its file is kept. The source can be a workspace of workflows, or the workspace the work is done on. In both cases the tenant names it here, and the workspace itself assigns nothing.
+The source can be a workspace of workflows, or the workspace the work is done on. In both cases the tenant names it here, and the workspace itself assigns nothing.
 
 ### orchestration
 
-The rules the conductor follows when it gives work to runners.
+The `orchestration` section holds the rules the conductor follows when it gives work to runners. The table lists its keys.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `orchestration.concurrency_cap` | integer | no | 1 or more. The most attempts that run at one time for this tenant. |
 | `orchestration.lease_seconds` | integer | no | 1 or more. The length of a job lease. |
-| `orchestration.attempts.max` | integer | no | 1 or more. The most attempts one job may have. A job that needs one more fails the run. |
+| `orchestration.attempts.max` | integer | no | 1 or more. The most attempts one job can have. A job that needs one more fails the run. |
 | `orchestration.retry.backoff_seconds` | integer | no | 0 or more. The wait before a new attempt starts after a lapsed lease. |
 | `orchestration.parking.max_seconds` | integer | no | 1 or more. The longest a run stays `parked` before it fails. |
 
@@ -72,7 +74,7 @@ A run is `parked` when a limit is reached and the work waits for it to reset. Fo
 
 ### agents
 
-Which engines and agents work for the tenant, and when a person must decide.
+The `agents` section says which engines and agents work for the tenant, and when a person must decide. The table lists its keys.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
@@ -90,11 +92,9 @@ Two rules hold for this section:
 - **A credential is a reference, never a value.** `credential.ref` names a secret that the control plane stores. The document has no key that takes a secret value.
 - **Approval rules bind every workflow.** With `plan` in `agents.approval.require`, a workflow whose agent step delivers a `plan` must have a `human` step with `waiting_for: approval` before any later step. With `effect`, a `human` step must come before every `effect` step. A catalogue workflow that does not fit is refused.
 
-Autonomy is what is left: between the points where a person decides, the agents work without one.
-
 ### runners
 
-The images that run steps, and the isolation class of each kind of runner.
+The `runners` section holds the images that run steps, and the isolation class of each kind of runner. The table lists its keys.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
@@ -109,11 +109,11 @@ The images that run steps, and the isolation class of each kind of runner.
 | `runners.classes[].network` | string | yes | `none` or `open`: whether a pod of the class reaches the network. |
 | `runners.classes[].model_credential` | boolean | yes | Whether a pod of the class holds an engine's credential. `false` is required for `deterministic-runner`. |
 
-The two kinds of step execution are isolated differently because they run different things. The deterministic runner runs what a person wrote into the workflow, the project or the tenant, and never holds a model credential. The agent runner runs an agent engine and whatever that engine generates. No class gives a pod the signing key.
+The deterministic runner runs what a person wrote into the workflow, the project or the tenant, and never holds a model credential. The agent runner runs an agent engine and whatever that engine generates. No class gives a pod the signing key.
 
 ### validators
 
-Which validators count as evidence for this tenant, beyond the built-in ones. The validator contract and the three sources are defined in [Validators](/reference/validators).
+The `validators` section says which validators count as evidence for this tenant, beyond the built-in ones. The validator contract and the three sources are defined in [Validators](/reference/validators). The table lists the keys.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
@@ -128,7 +128,7 @@ Which validators count as evidence for this tenant, beyond the built-in ones. Th
 | `validators.native[].version` | string | yes | The exact version admitted. Non-empty. |
 | `validators.native[].digest` | string | yes | The SHA-256 of the validator as installed: 64 lowercase hex digits. |
 
-Rules:
+These rules apply to the section.
 
 - **A tenant's script validator runs on the project's workspace.** It runs in the deterministic runner, on a clean copy of the sealed version, with the files of its source beside it and read-only.
 - **A native validator is admitted, not installed, here.** The cluster admin installs it with the factory. The tenant admits it by name, version and digest, and one whose digest differs is refused.
@@ -136,7 +136,7 @@ Rules:
 
 ### projects
 
-The workspaces the tenant's factory works on, and what the tenant decided for each one. This section is where a workflow is assigned to a workspace.
+The `projects` section lists the workspaces the tenant's factory works on, and what the tenant decided for each one. This section is where a workflow is assigned to a workspace. The table lists the keys of a project entry.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
@@ -148,17 +148,17 @@ The workspaces the tenant's factory works on, and what the tenant decided for ea
 | `projects[].agents.engines` | array of strings | no | Names from `agents.engines` that can work on this workspace. Absent means every registered engine. |
 | `projects[].agents.roster` | array of strings | no | Names from `agents.roster` that can work on this workspace. Absent means the whole roster. |
 | `projects[].approval.require` | array of strings | no | Points where a run on this workspace always waits for a person, added to `agents.approval.require`. Each is `plan` or `effect`. |
-| `projects[].validators.admit` | string or array of names | no | Which of the project's own script validators count as evidence: `all`, `none`, or a list of validator names. Absent means `none`. |
+| `projects[].validators.admit` | string or array of names | no | Which of the project's own script validators count as evidence: `all`, `none`, or a list of validator names, none twice. Absent means `none`. |
 | `projects[].areas` | array of area names | no | Names of areas that the workspace's project config defines in [`areas`](/reference/project-config#areas). At least one name, none twice. Together they are the scope of every run on this workspace: a run changes paths inside those areas only. Absent means the tenant sets no scope for runs on the workspace. |
 | `projects[].image` | string | no | The name of a runner image from `runners.images`. Absent means the default image. |
 
-Rules for a project entry:
+These rules apply to a project entry.
 
 - **A run starts only for a listed workspace.**
 - **The tenant assigns, the project does not.** A run on a workspace uses a workflow from `workflows.allowed`. The workspace's own [Project config](/reference/project-config) has no key that names a workflow, an engine or an approval rule.
 - **The tenant decides which project scripts are evidence.** A `verify` step runs a project's validator only when `validators.admit` admits it, and a run that names one it does not admit is refused when it starts. A validator the tenant has not admitted still runs as a preview for the agent when the project exposes it. See [Admission](/reference/project-config#admission).
 - **A project entry narrows the tenant's own lists.** A name that the catalogue, the engines, the roster, the images or the bindings lack is refused.
-- **Approval rules only add.** A project entry can require one more approval point than the tenant-wide rule. It cannot remove one. Autonomy on a workspace is what is left between its approval points.
+- **Approval rules only add.** A project entry can require one more approval point than the tenant-wide rule. It cannot remove one.
 - **A workflow must fit the workspace.** A workflow whose `verify` step names `project` runs only on a workspace whose project config names a canonical validator. A run that does not fit is refused when it starts.
 - **An area must exist.** The names in `areas` are looked up in the project config of the baseline when a run starts. A run on a workspace whose project config lacks one of the names is refused. A run request can name areas from the list to narrow the scope of that run, and a name outside the list refuses the run. See [The scope of a run](/reference/protected-paths#the-scope-of-a-run).
 - **An image must hold what the validators need.** When a validator that a run uses names a tool in `needs.tools` that the workspace's image does not list, or a runner class in `needs.runner` that `runners.classes` lacks, the run is refused when it starts.
@@ -167,7 +167,7 @@ What is true of the workspace itself, such as its areas, its validators and the 
 
 ### extensions
 
-What the tenant registers beyond the standard. A binding brings most of these entries. See [Bindings](/reference/bindings).
+The `extensions` section holds what the tenant registers beyond the standard. A binding brings most of these entries. See [Bindings](/reference/bindings). The table lists the keys.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
@@ -186,6 +186,8 @@ This section is the registry. A binding, an adapter, an effect, a step kind or a
 
 ### Where it lives
 
+The table says where the document is held and who changes it.
+
 | Rule | Detail |
 |---|---|
 | Held by | The control plane, outside every pod and every workspace. |
@@ -193,9 +195,9 @@ This section is the registry. A binding, an adapter, an effect, a step kind or a
 
 ### Precedence
 
-Three documents set rules for a run. The order is tenant, then project, then workflow: the tenant's rule wins over the project's, and the project's wins over the workflow's.
+Three documents set rules for a run. The order is tenant, then project, then workflow: the tenant's rule wins over the project's, and the project's wins over the workflow's. The table lists what each document sets.
 
-| Document | Sets | May not |
+| Document | Sets | Cannot |
 |---|---|---|
 | Tenant config | Every limit: the catalogue, the engines, the images, the approval points and the orchestration limits. Which workflows, agents, approval points, areas and admitted validators apply to each workspace. | - |
 | [Project config](/reference/project-config) | What is true of one workspace: its areas, its validators, its canonical validator and the paths it protects. | Choose a workflow, an engine, an approval rule or the scope of a run. Admit its own validators. Widen a tenant rule. |
@@ -205,7 +207,7 @@ Only a person widens a rule: by changing the tenant config, by accepting a chang
 
 ### Worked example
 
-This tenant offers two workflows, runs at most four attempts at once, registers one engine and two agents, requires a person before work builds on a plan, and serves two workspaces under two bindings. It defines one script validator of its own and admits one native validator. For the first workspace it admits every validator the project declares. For the second it admits one, requires a person before any effect and sets the scope of every run to one area.
+This tenant offers two workflows, runs at most four attempts at once, registers one engine and two agents, requires a person before work builds on a plan, and serves two workspaces under two bindings. It defines one script validator of its own and admits one native validator. For the first workspace it admits every validator the project declares. For the second it admits three by name, requires a person before any effect and sets the scope of every run to one area.
 
 ```yaml
 format: daggry/tenant@1
@@ -261,6 +263,10 @@ runners:
       module: deterministic-runner
       network: none
       model_credential: false
+    - name: networked
+      module: deterministic-runner
+      network: open
+      model_credential: false
     - name: agents
       module: agent-runner
       network: open
@@ -301,7 +307,7 @@ projects:
     approval:
       require: [effect]
     validators:
-      admit: [test]
+      admit: [test, lint, types]
     areas: [app]
     image: programs
 
@@ -333,17 +339,22 @@ acme/billing:
   cost_centre: platform
 ```
 
-| Placeholder | Meaning |
+The table explains the values.
+
+| Value | Meaning |
 |---|---|
 | `<engine>` | The identifier of an agent engine your installation provides. |
 | `v-0017`, `v-0009` | Version ids in the form the workspace's binding gives. |
 | `tenant/licence-terms` | How a workflow refers to the tenant's script validator. |
-| `admit: [test]` | Of the validators that `example/shop-web` declares, only `test` counts as evidence. |
+| `admit: [test, lint, types]` | The validators of `example/shop-web` that count as evidence, by name. The reference `project` needs all three: the canonical validator and the two in `also`. |
+| `networked` | A class of deterministic runner that reaches the network. A script validator asks for it in `needs.runner`. |
 | `<digest>` | The 64-digit digest of the image. |
 | `model-credential` | The name of a stored secret. The document never holds the secret. |
 | `app` | The name of an area that the project config of `example/shop-web` defines. A run on that workspace changes paths inside `app` only. |
 
 ### Examples a reader refuses
+
+A reader refuses each input in the table.
 
 | Input | Refusal |
 |---|---|
@@ -367,6 +378,8 @@ acme/billing:
 | `retries: 3` at the top level | Unknown key without a namespace. |
 
 ## Next steps
+
+The list names the pages to read next.
 
 - For what a workspace says about itself, see [Project config](/reference/project-config).
 - For the validator contract and the three sources of a validator, see [Validators](/reference/validators).

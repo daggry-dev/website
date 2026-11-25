@@ -4,19 +4,21 @@
 
 For the idea, read [Open standards](/guide/concepts/standards) and [What an agent cannot change](/guide/concepts/protection).
 
-The project config is one YAML file in a workspace, `.daggry/project.yaml`. It describes the project itself: what it is, which areas it has, which validators check it and which paths it protects. It is the deterministic interface between a project and a factory. A workflow can assume that a verification step exists, and the factory knows how to run it, whether the work is a program, a set of documents, a dataset or a design.
+The project config is one YAML file in a workspace, `.daggry/project.yaml`. It describes the workspace: what the project is, which areas it has, which validators check it and which paths it protects. It names no tool, no kind of work, no workflow, no agent and no approval rule.
 
-The file says what exists and what is protected. It never says what a run may change: a workflow chooses the scope of each step, and the tenant or the run request chooses the scope of a run. The file also names no workflow, no agent and no approval rule. Those are the tenant's decisions. See [Tenant config](/reference/tenant-config).
+This page defines the sections of the file, the project's script validators, the result contracts and the extension rules. It is for people who set up a workspace and for people who write a reader of the file. The table names the pages that define what this file leaves out.
 
-The file names no tool and no kind of work. A project is the body of work a factory works on, and a workspace is the versioned collection of files and data the work lives in. What a workspace is made of, and which tools read a check's output, is set by a binding. See [Bindings](/reference/bindings).
-
-This page defines the sections of the file, the project's script validators, the result contracts and the extension rules. The validator interface, the three sources of a validator and the built-in validators are defined in [Validators](/reference/validators). It is for people who set up a workspace and for people who write a reader of the file.
+| Topic | Page |
+|---|---|
+| The validator interface, the three sources of a validator and the built-in validators | [Validators](/reference/validators) |
+| The workflows, agents, approval rules and scope of a run on a workspace | [Tenant config](/reference/tenant-config) |
+| What a workspace is made of, and which tools read a validator's output | [Bindings](/reference/bindings) |
 
 The files on this page are illustrative. Each one is valid against the published schema. See [Validation](#validation).
 
 ## Download
 
-The project config and the result document each have a published JSON Schema (draft 2020-12).
+The project config and the result document each have a published JSON Schema (draft 2020-12). The table links both files.
 
 | Schema | File |
 |---|---|
@@ -49,6 +51,8 @@ Every object is closed: a key that is not listed on this page and is not an exte
 
 ### Header
 
+The header has one key.
+
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `format` | string | yes | Always `daggry/project@1`. |
@@ -57,7 +61,7 @@ Every object is closed: a key that is not listed on this page and is not an exte
 
 ### project
 
-The project's identity and what a copy of it needs. A factory reads this section to orient and to prepare a copy of the workspace. It names no path group: the parts of the workspace are in [`areas`](#areas).
+The `project` section holds the project's identity and what a copy of the workspace needs. It names no path group: the parts of the workspace are in [`areas`](#areas). The table lists its keys.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
@@ -72,7 +76,7 @@ A command has the form defined in [Commands](#commands). On a clean copy, a read
 
 ### areas
 
-The parts of the workspace. An area is a named group of paths. `areas` is a map from an area name to an area, and it is the only place in the four standards that gives a group of paths a name. A name follows the rule for a [validator name](#validators).
+The `areas` section names the parts of the workspace. An area is a named group of paths. `areas` is a map from an area name to an area, and it is the only place in the four standards that gives a group of paths a name. A name follows the rule for a [validator name](#validators). The table lists the keys of an area.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
@@ -80,20 +84,20 @@ The parts of the workspace. An area is a named group of paths. `areas` is a map 
 | `role` | label | no | What the paths are for. Open vocabulary. A binding recommends a set of roles for its kind of work. See [Bindings](/reference/bindings). |
 | `description` | string | no | One or two sentences for a reader, person or agent. Non-empty. |
 
-An area has three uses. Each one refers to the area by its name.
+An area has three uses, and the table lists who names the area in each.
 
 | Use | Who names the area | Effect | Defined in |
 |---|---|---|---|
 | Orient | Nobody. The factory reads every name, `role` and `description`. | None. An area on its own grants and limits nothing. | This section. |
-| Scope | A workflow step, in `scope`, as `area:<name>`. | The step may change only the paths its scope holds. | [Areas by name](/reference/workflow-schema#areas-by-name) |
-| Scope | The tenant, in `projects[].areas`, or a run request. | The run may change only paths inside the named areas. | [projects](/reference/tenant-config#projects) |
-| Protect | The project, in `protect.paths`, as `area:<name>`. | No step may change a path the area holds. | [protect](#protect) |
+| Scope of a step | A workflow step, in `scope`, as `area:<name>`. | The step can change only the paths its scope holds. | [Areas by name](/reference/workflow-schema#areas-by-name) |
+| Scope of a run | The tenant, in `projects[].areas`, or a run request. | The run can change only paths inside the named areas. | [projects](/reference/tenant-config#projects) |
+| Protect | The project, in `protect.paths`, as `area:<name>`. | No step can change a path the area holds. | [protect](#protect) |
 
-Rules:
+These rules apply to areas.
 
-- **The project names, others choose.** The project says which areas exist. It never says which of them a run may change. A workflow chooses the scope of a step, and the tenant or the run request chooses the scope of a run.
+- **The project names, others choose.** The project says which areas exist. It never says which of them a run can change. A workflow chooses the scope of a step, and the tenant or the run request chooses the scope of a run.
 - **A name must exist.** A step, a tenant entry, a run request or a `protect.paths` entry that names an area this section lacks is refused. For the first three the run is refused when it starts.
-- **Areas may overlap.** A path can be in more than one area. A path is inside a scope when at least one named area holds it, and it is protected when at least one protected area holds it.
+- **Areas can overlap.** A path can be in more than one area. A path is inside a scope when at least one named area holds it, and it is protected when at least one protected area holds it.
 - **A path in no area** is outside the scope of every run that names areas.
 - **A role is a label.** A reader that does not know a role keeps it and applies nothing. No role freezes a path. Frozen paths come from a step's `freeze` key. See [Frozen paths](/reference/protected-paths#frozen-paths).
 
@@ -101,7 +105,7 @@ How a scope is judged, and how the scope of a run and the scope of a step combin
 
 ### Commands
 
-A command is written in one of two forms. Neither is a shell line.
+A command is written in one of the two forms in the table. Neither is a shell line.
 
 | Form | YAML | Meaning |
 |---|---|---|
@@ -112,33 +116,33 @@ A path is never absolute and never holds `..`. The working directory is the work
 
 ### validators
 
-The project's script validators. A check is any deterministic procedure that inspects the workspace and reports a result, and a script validator is a check the project declares: an executable or a script in the workspace. What it inspects is the project's choice: a program, a document, a dataset, a configuration or a design file. `validators` is a map from a validator name to a script validator. A name starts with a lowercase letter and holds lowercase letters, digits, `-` and `_`.
+The `validators` section holds the project's script validators. A script validator is a check the project declares: an executable or a script in the workspace. `validators` is a map from a validator name to a script validator. A name starts with a lowercase letter and holds lowercase letters, digits, `-` and `_`.
 
-A workflow refers to a validator of this section as `project/<name>`. A project's script validator counts as evidence only when the tenant admits it. See [Admission](#admission). What a validator is given, what it yields and where each source of validator runs is in [Validators](/reference/validators).
+A workflow refers to a validator of this section as `project/<name>`. A project's script validator counts as evidence only when the tenant admits it. See [Admission](#admission). What a validator is given, what it yields and where each source of validator runs is in [Validators](/reference/validators). The table lists the keys of a script validator.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `run` | command | yes | What runs. See [Commands](#commands). |
 | `kind` | label | yes | What the validator looks at. Open vocabulary. `custom` is the label for one that fits no other. A binding names the kinds of its work. See [Bindings](/reference/bindings). |
 | `result` | object | no | How the result is read. Absent means `contract: exit-code`. See [Result contracts](#result-contracts). |
-| `timeout` | integer | no | 1 or more. The longest the validator may run, in seconds. One that runs longer is stopped and counts as failed. |
-| `env` | array of names | no | The allow-list of environment variables the factory may pass to the validator's process. The file holds names, never values. |
+| `timeout` | integer | no | 1 or more. The longest the validator can run, in seconds. One that runs longer is stopped and counts as failed. |
+| `env` | array of names | no | The allow-list of environment variables the factory can pass to the validator's process. The file holds names, never values. |
 | `needs.tools` | array of labels | no | The tools the validator needs in its runner, by the same labels as `project.tools`. |
 | `needs.runner` | string | no | The class of runner the validator needs, by name. The factory matches the name to a runner class it offers. |
-| `expose` | string | no | Who may call the validator: `factory` or `agent`. Absent means `factory`. See [Who runs a validator](#who-runs-a-validator). |
+| `expose` | string | no | Who can call the validator: `factory` or `agent`. Absent means `factory`. See [Who runs a validator](#who-runs-a-validator). |
 
 A validator that names a tool or a runner class the factory does not offer cannot run. A reader refuses the run when a validator the run uses cannot run.
 
 ### Result contracts
 
-A result contract says how a factory reads what a script validator decided. The contract is what makes a script validator deterministic to a factory: the same output always gives the same result.
+A result contract says how a factory reads what a script validator decided. The table lists the keys of `result`.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `result.contract` | string | yes | `exit-code`, `document`, or the name of an adapter, `<namespace>/<adapter>`. |
 | `result.path` | path | no | The file the validator writes, relative to the workspace root. Absent means standard output. |
 
-The standard has three contracts. None of them names a tool.
+The standard has the three contracts in the table. None of them names a tool.
 
 | Contract | Reads | Gives |
 |---|---|---|
@@ -148,7 +152,7 @@ The standard has three contracts. None of them names a tool.
 
 An adapter is a deterministic program that turns one tool's own output format into a result document. The tenant registers each adapter by name in `extensions.adapters` of the [Tenant config](/reference/tenant-config#extensions). The format an adapter reads is defined by the binding that owns its namespace and is no part of this standard. See [Bindings](/reference/bindings).
 
-Rules for every contract:
+These rules apply to every contract.
 
 - The exit code is always recorded, whatever the contract.
 - Output that the contract cannot read gives no findings. A result document that is missing, does not parse or is not valid against the schema makes the result an `error`.
@@ -159,7 +163,7 @@ Rules for every contract:
 
 ### Result document
 
-A result document is the one standard form of a check's result. A script validator writes it directly under the `document` contract, and an adapter writes it for a tool that has a format of its own.
+A result document is the one standard form of a check's result. A script validator writes it directly under the `document` contract, and an adapter writes it for a tool that has a format of its own. The table lists its keys.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
@@ -172,14 +176,14 @@ A result document is the one standard form of a check's result. A script validat
 | `findings[].message` | string | yes | Any string, can be empty. |
 | `metrics` | map | no | Numbers the check measured, from a name to a number. A name starts with a lowercase letter and holds lowercase letters, digits and `_`. |
 
-Rules:
+These rules apply to a result document.
 
 - **The outcome is the check's decision.** Findings and metrics explain it and do not change it.
 - **`error` is no decision.** A check writes `error` when it could not inspect the workspace. An `error` counts as a failed check.
 - **An id can repeat.** Two findings can carry one id, for example one rule that fails in two places. A validator that compares findings by id takes the last one.
 - **The document is closed.** A key this section does not define and that is not an extension key is refused.
 
-Illustrative. A style check of a set of documents:
+A style check of a set of documents writes this result document.
 
 ```json
 {
@@ -196,7 +200,7 @@ Illustrative. A style check of a set of documents:
 
 ### verification
 
-The project's verification: which validator is canonical, which others are measured with it and which limits hold. A project has many validators and exactly one canonical validator.
+The `verification` section says which validator is canonical, which others are measured with it and which limits hold. A project has many validators and exactly one canonical validator. The table lists the keys.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
@@ -204,11 +208,11 @@ The project's verification: which validator is canonical, which others are measu
 | `verification.also` | array of validator names | no | Validators that run with the canonical one, as supporting evidence. No name appears twice, and none is the canonical validator. |
 | `verification.thresholds` | array of objects | no | Limits on numbers that those validators give. |
 | `verification.thresholds[].validator` | validator name | yes | The canonical validator or one in `also`. |
-| `verification.thresholds[].read` | string | yes | The number to read. See the table below. |
+| `verification.thresholds[].read` | string | yes | The number to read: `exit_code`, `findings`, `findings.<outcome>` or `metrics.<name>`. |
 | `verification.thresholds[].min` | number | one of the two | The lowest value that passes. |
 | `verification.thresholds[].max` | number | one of the two | The highest value that passes. |
 
-`read` names one number of the validator's result.
+`read` names one number of the validator's result, in one of the forms in the table.
 
 | `read` | The number | Contracts that give it |
 |---|---|---|
@@ -217,7 +221,7 @@ The project's verification: which validator is canonical, which others are measu
 | `findings.pass`, `findings.fail`, `findings.error`, `findings.skip` | The count of findings with that outcome. | `document` and every adapter. |
 | `metrics.<name>` | The metric of that name. | `document` and every adapter. |
 
-Rules:
+These rules apply to `verification`.
 
 - **`project` is the project's verification.** A [`verify` step](/reference/workflow-schema#verify) that names `project` runs the canonical validator and each validator in `also` on a clean copy of the sealed version of the workspace. Each result is sealed as a [measurement](/reference/kinds#evidence-measurement-1) of its own.
 - **A threshold is a finding.** The result of each threshold is sealed as a finding in the measurement of the validator it reads. See [Threshold findings](/reference/kinds#threshold-findings).
@@ -230,7 +234,7 @@ A workflow whose `verify` step names `project` needs this section.
 
 ### Admission
 
-The tenant decides whether a project's own scripts count as evidence. A project declares its validators here, and the tenant admits all of them, none of them or a named list in `projects[].validators.admit` of the [Tenant config](/reference/tenant-config#projects). The default is none.
+The tenant decides whether a project's own scripts count as evidence. A project declares its validators here, and the tenant admits all of them, none of them or a named list in `projects[].validators.admit` of the [Tenant config](/reference/tenant-config#projects). The default is none. The table lists what admission changes.
 
 | The validator is | In a `verify` step | As a preview |
 |---|---|---|
@@ -241,33 +245,31 @@ The tenant decides whether a project's own scripts count as evidence. A project 
 
 ### Who runs a validator
 
-A script validator is declared once and can be used in two ways. Only the first produces evidence.
+A script validator is declared once and is used in the two ways in the table. Only verification produces evidence.
 
 | Use | Started by | Where it runs | Evidence |
 |---|---|---|---|
 | Verification | A `verify` step that names `project` or `project/<name>`. See [Validators by reference](/reference/workflow-schema#validators-by-reference). | The deterministic runner, on a clean copy of the sealed version, as an unprivileged user, after any agent process has ended. | Yes: one measurement for each validator, and the verdict the control plane derives from it. |
 | Preview | An agent, for a validator with `expose: agent`. | The agent's pod, on the working copy. | Never. |
 
-`expose` says who may start a validator.
+`expose` says who can start a validator, with one of two values.
 
 | Value | Meaning |
 |---|---|
 | `factory` | Only the factory's deterministic components call the validator. The agent cannot start it. |
-| `agent` | The agent may also call the validator by name, as a preview. |
-
-A preview gives the agent fast feedback, for example the findings of a style check before it hands in its change. A preview is never evidence, because it runs where the agent can write. The factory runs the same validator again on a clean copy when the result counts.
+| `agent` | The agent can also call the validator by name, as a preview. |
 
 A validator with `expose: agent` can also be the canonical validator: the agent previews it, and the factory measures it.
 
 ### protect
 
-The paths this project adds to the protected set. The always-protected paths, the default protection of the files a script validator runs and the boundary check that enforces all of it are defined in [Protected paths](/reference/protected-paths). This section defines only the project's own additions.
+The `protect` section holds the paths this project adds to the protected set. The always-protected paths, the default protection of the files a script validator runs and the boundary check that enforces all of it are defined in [Protected paths](/reference/protected-paths). This section defines only the project's own additions, in one key.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `protect.paths` | array of entries | no | Each entry is a glob or an area reference, `area:<name>`. Added to the protected set for every run on this workspace. |
 
-Rules:
+These rules apply to `protect.paths`.
 
 - **An entry that starts with `area:` is an area reference.** It protects every path the area holds. A name that [`areas`](#areas) lacks is refused. Every other entry is a glob.
 - **This section only adds.** No key removes a path from the protected set.
@@ -275,7 +277,7 @@ Rules:
 
 ### Extension keys
 
-An extension key carries a section or a value that the standard does not define.
+An extension key carries a section or a value that the standard does not define. The table lists the rules.
 
 | Rule | Detail |
 |---|---|
@@ -296,6 +298,8 @@ The file uses the same strict subset of YAML as a workflow file: no anchors, ali
 
 ### Where it lives
 
+The table says where the file lives, where it is read from and who changes it.
+
 | Rule | Detail |
 |---|---|
 | Folder | `.daggry/` in the workspace. |
@@ -310,13 +314,13 @@ A step that edits the file changes nothing for its own run: the edit is put back
 
 Three documents set rules for a run: the tenant config, the project config and the workflow. The tenant's rule wins over the project's, and the project's wins over the workflow's. The full table is in [Precedence](/reference/tenant-config#precedence).
 
-The project config describes the workspace: its areas, its validators, its canonical validator and the paths it protects. It never chooses a workflow, an engine, an approval rule or the scope of a run, and it never widens a tenant rule.
+The project config never chooses a workflow, an engine, an approval rule or the scope of a run, and it never widens a tenant rule.
 
 ## Worked examples
 
 ### A set of documents
 
-This workspace holds a handbook, not a program. Its canonical validator is a script of its own that reviews every page against the house style and writes a result document. A second validator verifies the citations, and the agent may preview it. A third needs a variable from the factory and a runner that reaches the network. The file carries one extension key.
+This workspace holds a handbook, not a program. Its canonical validator is a script of its own that reviews every page against the house style and writes a result document. A second validator verifies the citations, and the agent can preview it. A third needs a variable from the factory and a runner that reaches the network. The file carries one extension key.
 
 ```yaml
 format: daggry/project@1
@@ -380,15 +384,17 @@ acme/review:
   owner: docs-team
 ```
 
+The table explains the values.
+
 | Value | Meaning |
 |---|---|
 | `review` | The canonical validator. It writes its result document to `reports/review.json`. `scripts/review-handbook.sh` is protected by default. See [What a project adds](/reference/protected-paths#what-a-project-adds). |
-| `citations` | A supporting validator, given as a script path. It writes its result document on standard output. The agent may run it as a preview. |
+| `citations` | A supporting validator, given as a script path. It writes its result document on standard output. The agent can run it as a preview. |
 | `links` | A validator with the `exit-code` contract. It is in neither `canonical` nor `also`, so it runs only when a `verify` step names `project/links`. |
 | `metrics.reading_grade` | A metric the `review` validator writes. The verification fails when it is above 9. |
 | `findings.skip` | The count of citations the validator did not inspect. The verification fails when it is above 0. |
 | `area:style` | An area reference. No step changes the house style the validators read. |
-| `LINK_CHECK_TOKEN` | The name of a variable the factory may pass. The file holds no value. |
+| `LINK_CHECK_TOKEN` | The name of a variable the factory can pass. The file holds no value. |
 | `networked` | The name of a runner class. The factory matches it to a class it offers. |
 | `acme/review` | A section defined under the namespace `acme`. A reader that does not know it ignores it and preserves it. |
 
@@ -408,7 +414,7 @@ verification:
 
 ## Examples under the software binding
 
-The three files below are for workspaces that hold programs. Each tool they name, each adapter in the `software` namespace, each `kind` and each `role` belongs to the software binding and is defined in [Bindings](/reference/bindings#the-software-binding). The standard on this page defines none of them.
+The three files in this section are for workspaces that hold programs. Each tool they name, each adapter in the `software` namespace, each `kind` and each `role` belongs to the software binding and is defined in [Bindings](/reference/bindings#the-software-binding). The standard on this page defines none of them.
 
 ### Software binding: a Node project
 
@@ -467,6 +473,8 @@ protect:
   paths:
     - "area:tooling"
 ```
+
+The table explains the values.
 
 | Value | Meaning |
 |---|---|
@@ -585,6 +593,8 @@ To check a file of your own, give the schema and the file to any validator that 
 
 ## Examples a reader refuses
 
+A reader refuses each input in the table.
+
 | Input | Refusal |
 |---|---|
 | No `format` key | Missing `format`. |
@@ -608,7 +618,7 @@ To check a file of your own, give the schema and the file to any validator that 
 | A threshold with neither `min` nor `max` | A threshold needs a limit. |
 | A threshold with `read: reading_grade` | Not a `read` form. A metric is read as `metrics.<name>`. |
 
-A result document a reader refuses makes the result an `error`:
+A result document that a reader refuses makes the result an `error`. The table lists such documents.
 
 | Input | Refusal |
 |---|---|
@@ -618,6 +628,8 @@ A result document a reader refuses makes the result an `error`:
 | `metrics:` with `pages: "12"` | A metric is a number. |
 
 ## Next steps
+
+The list names the pages to read next.
 
 - For the validator interface, the three sources of a validator and the built-in validators, see [Validators](/reference/validators).
 - For what a binding adds for one kind of work, including the adapters of the software binding, see [Bindings](/reference/bindings).
