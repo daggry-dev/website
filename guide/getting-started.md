@@ -1,20 +1,16 @@
-# Getting started
+# Run your first workflow
 
-On this page you run a small workflow, approve a wait, and check the sealed record on your own machine. It shows how Daggry stops for a person, seals a result and lets you verify it.
+Reading about a signed trail is not the same as checking one yourself.
+On this page you run a small workflow, approve it and verify its evidence trail, in about ten minutes.
+Read it if you have a running Daggry. If you do not, the cluster admin installs it first.
 
-The page is a worked example in the software binding: the workspace is a scratch repository on GitHub and the work item is an issue. The same steps hold for any work that has a deterministic check. See [Bindings](/reference/bindings).
-
-Daggry is built from modules and four open standards. On this page you touch two of the standards: you write a workflow, and you verify evidence. The file you write follows the published [Workflow schema](/reference/workflow-schema), and the records you verify follow the published [envelope](/reference/envelope). See [Open standards](/guide/concepts/standards).
-
-The first workflow has no agent step. Its two `command` steps are deterministic work, which runs with no model. That lets you see sealing, approval and verification without model cost or a model credential. When you are ready, [Write a workflow](/guide/how-to/write-a-workflow) shows how to add an agent step.
-
-The commands and outputs on this page are illustrative. Placeholders in angle brackets, such as `<owner>`, stand for values you choose.
+The workflow has no agent step, so you need no model credential. You write one file and run four commands. The example is software: the workspace is a Git repository and the work item is an issue. The commands and outputs on this page are illustrative. Placeholders in angle brackets, such as `<owner>`, stand for values you choose.
 
 ## Before you start
 
-You need a running Daggry, the `daggry` CLI, and two environment variables that point the CLI at it. The person who runs the cluster can follow [Deploy Daggry](/guide/how-to/deploy) to set these up. If that is you, do that page first, including its CLI section.
+You need a running Daggry and the CLI before any command works, with the two environment variables that point the CLI at Daggry. The cluster admin sets these up by following [Install Daggry](/guide/how-to/deploy).
 
-For the software binding you also need a scratch repository with one open issue. A run pushes a branch named `daggry/<run-id>` to its repository, so do not use a repository you care about. The GitHub App from the deploy page must be installed on it.
+You also need a scratch repository on GitHub with one open issue. A run pushes a branch named `daggry/<run-id>` to it, so do not use a repository you care about. The GitHub App from the install page must be installed on it.
 
 Check that the CLI is ready.
 
@@ -22,109 +18,96 @@ Check that the CLI is ready.
 daggry --help
 ```
 
-## 1. Write a workflow
+## Start a run
 
-A workflow is a file of steps in a standard layout. You supply it to `daggry run` as a file on your own machine, so it does not have to be in the workspace the work is done on. Its first line is the header, which names the workflow standard and its major version. This one runs a command, waits for you, and runs a second command. Save it as `first.yaml`.
+A run needs three things: a workflow, a workspace and a work item.
 
-```yaml
-format: daggry/workflow@1
-steps:
-  - id: build
-    kind: command
-    scope: anywhere
-    run: echo hello > hello.txt
-  - id: review
-    kind: human
-    waiting_for: input-needed
-  - id: finish
-    kind: command
-    scope: anywhere
-    run: echo done > done.txt
-```
+1. Save this workflow as `first.yaml`. It runs a command, waits for your approval, and runs a second command.
 
-The `scope` key says what a step may write. `anywhere` allows every path except [protected paths](/guide/concepts/protection).
+   ```yaml
+   format: daggry/workflow@1
+   steps:
+     - id: build
+       kind: command
+       scope: anywhere
+       run: echo hello > hello.txt
+     - id: review
+       kind: human
+       waiting_for: input-needed
+     - id: finish
+       kind: command
+       scope: anywhere
+       run: echo done > done.txt
+   ```
 
-## 2. Start a run
+   `scope` is the paths a step can write. `anywhere` allows every path except a [protected path](/guide/concepts/protection).
 
-To start a run, pass the workflow, the workspace and the work item. In the software binding the workspace is a repository, named `<owner>/<name>`, and the work item is an issue, named by its URL.
+2. Start the run. Name the repository as `<owner>/<name>` and the issue by its URL.
 
-```sh
-daggry run --workflow first.yaml --workspace <owner>/<name> --item https://github.com/<owner>/<name>/issues/<n>
-```
+   ```sh
+   daggry run --workflow first.yaml --workspace <owner>/<name> --item https://github.com/<owner>/<name>/issues/<n>
+   ```
 
-The command prints the run ID and nothing else.
+   The command prints the run ID.
 
-```text
-run-0123456789abcdef
-```
+   ```text
+   run-0123456789abcdef
+   ```
 
-If the command fails with `refused: ...`, the text after the colon names the cause. See the [CLI reference](/reference/cli).
+3. Read the state of the run.
 
-## 3. Check the status
+   ```sh
+   daggry status run-0123456789abcdef --json
+   ```
 
-To read the state of the run, use `daggry status` with `--json`.
+   ```json
+   {"state":"waiting","attempts":[{"job":"main","n":1,"state":"waiting"}],"waiting_for":"input-needed"}
+   ```
 
-```sh
-daggry status run-0123456789abcdef --json
-```
+If `daggry run` fails with `refused: ...`, the text after the colon names the cause. See the [CLI reference](/reference/cli).
 
-When the run reaches the `review` step, it prints one line of JSON.
+## Approve it
 
-```json
-{"state":"waiting","attempts":[{"job":"main","n":1,"state":"waiting"}],"waiting_for":"input-needed"}
-```
+The run has stopped because the workflow asks for your approval at the `review` step.
 
-The run is waiting for you, and `waiting_for` says why. For every value of `state`, see [States and reasons](/reference/api#states-and-reasons).
+4. List what Daggry sealed so far.
 
-## 4. Read the logs
+   ```sh
+   daggry logs run-0123456789abcdef
+   ```
 
-To list what Daggry sealed for the run, use `daggry logs`.
+   ```text
+   daggry/run-lock@1 run-lock control 7d3b0c91a4e2
+   daggry/work-item@1 work-item control c94c24f1751a
+   daggry/change@1 change-1 control 2019b48c668e
+   ```
 
-```sh
-daggry logs run-0123456789abcdef
-```
+   Each line is one record, and the last column starts its fingerprint. The first two records open every run. The `build` step sealed `change-1`: the commit it made and the paths it changed.
 
-Each line shows the kind of record, its ID, who produced it and the first 12 digits of its fingerprint.
+5. Approve the run.
 
-```text
-daggry/run-lock@1 run-lock control 7d3b0c91a4e2
-daggry/work-item@1 work-item control c94c24f1751a
-daggry/change@1 change-1 control 2019b48c668e
-```
+   ```sh
+   daggry approve run-0123456789abcdef
+   ```
 
-The first two lines open every run. The `build` step sealed `change-1`, which records the change the step made: in the software binding, the commit and the paths it changed.
+   The command prints nothing and exits with 0. Daggry seals your approval, and the job continues in a new runner. Run `daggry status` again, and `state` becomes `succeeded`. The run also pushed its commits to the branch `daggry/run-0123456789abcdef`.
 
-## 5. Approve the wait
+## Verify the trail
 
-To let the run continue past the `review` step, approve it.
+You do not have to trust the run: check it.
 
-```sh
-daggry approve run-0123456789abcdef
-```
+6. Verify everything Daggry sealed for your tenant.
 
-The command prints nothing and exits with 0. Daggry seals your approval and the job continues in a new pod. Run `daggry status run-0123456789abcdef --json` again. The `state` becomes `succeeded`.
+   ```sh
+   daggry verify
+   ```
 
-In the software binding, the run also pushed its commits to the branch `daggry/run-0123456789abcdef` on your repository.
+   ```text
+   verified 9 entries, 1 blobs
+   ```
 
-## 6. Verify the record
+   An entry is a record. The command computes every fingerprint and signature again on your machine. If anything does not match, it exits with 1 and prints a reason. To read a failure, see [Verify a run](/guide/how-to/verify-a-run).
 
-To check everything Daggry sealed for your tenant, run `daggry verify`.
+You have started a run, approved it and verified its trail. To put an agent to work, add an `agent` step: see [Write a workflow](/guide/how-to/write-a-workflow).
 
-```sh
-daggry verify
-```
-
-Expected output:
-
-```text
-verified 9 entries, 1 blobs
-```
-
-The command recomputes every fingerprint and signature on your machine. If anything does not match, it exits with 1 and prints a reason. To read the output in detail, see [Verify a run](/guide/how-to/verify-a-run).
-
-## Next steps
-
-- To add an agent step, a `verify` step with its validators and a bounded loop, read [Write a workflow](/guide/how-to/write-a-workflow).
-- To understand what you ran, read [Why you can trust a run](/guide/concepts/trust) and [Where it runs](/guide/concepts/architecture).
-- To see the parts Daggry is built from, read [The modules](/guide/concepts/modules) and [Open standards](/guide/concepts/standards).
-- To look up a flag or an exit code, read the [CLI reference](/reference/cli).
+Next: [Configure Daggry](/guide/configure)
