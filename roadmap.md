@@ -1,6 +1,6 @@
 # Roadmap
 
-Every other page of this site describes the complete platform. This page is the one place that states build status: what is built, what is not built, the order of the three waves and the points the design leaves open.
+Every other page of this site describes the complete platform. This page is the one place that states build status: what is built, what is not built, the three waves with their exit tests, the points the design leaves open and the specification choices that are not confirmed.
 
 Daggry is not publicly released. Installation is from source, for early users.
 
@@ -42,13 +42,15 @@ A wave is a milestone, accepted when its exit test passes. The exit test is writ
 
 ### Exit tests
 
+A wave is accepted when its exit test passes.
+
 - **Wave 1.** Under the software binding, a real issue becomes a pull request with no human input beyond approving the plan, a step cannot tamper with the log, the stored files or a protected path, the validator measures exactly the version that is delivered, and a runner that is killed mid-run is taken over by a second attempt.
 - **Wave 2.** A real work item runs with a lead and one delegate, a project specialist is admitted as a delegate only, and a plan dialogue of several turns ends in an approval bound to the plan's digest.
 - **Wave 3.** An approved plan with a `judged` criterion gates a delivered change, and a review of a finished run opens a work item whose citations code confirms.
 
 ### Beyond the waves
 
-The platform holds more than the three waves build. None of the items below belongs to a wave.
+The design holds more than the three waves build. No item in the table belongs to a wave.
 
 | Area | Design |
 |---|---|
@@ -72,14 +74,28 @@ The design lists these as non-goals: a web interface, a policy language, a code 
 
 ## Open points
 
-The owner has not decided these points. The other pages state none of them.
+The design leaves three points undecided. The other pages state none of them.
 
 - **Engine of a step.** An `agent` step names an engine in its `engine` key, and each agent on the tenant's roster has an engine. Which of the two chooses the engine a step runs on is open. See [agent](/reference/workflow-schema#agent) and [agents](/reference/tenant-config#agents).
 - **Tenant config in the run lock.** The fields of a run lock are the validators, the boundary rules, the image digest and the workflow digest. Whether a run also pins the tenant config it started under is open. See [run lock](/reference/kinds#daggry-run-lock-1) and [Where it lives](/reference/tenant-config#where-it-lives).
 - **Areas in a run request.** A run request can name areas to narrow the scope of a run. The key by which it names them is open. See [The scope of a run](/reference/protected-paths#the-scope-of-a-run) and [HTTP API](/reference/api#routes).
 
-Three more points are not defined on the reference pages:
+Three more points follow from these and are not defined on the reference pages.
 
 - **Areas in the run lock.** How an area reference and the scope of a run are written into the boundary rules of a [run lock](/reference/kinds#daggry-run-lock-1).
 - **A catalogue workflow in a run request.** The tenant config says a run uses a workflow from the catalogue, by name or by the workspace's default. `daggry run` and the run request take the workflow as a file. How a run request names a catalogue workflow is not defined.
 - **Gate reads of several measurements.** A `verify` step seals one measurement for each script validator it runs. Which of them a `steps.<id>.measurement` read in a gate takes is not defined.
+
+## Specification choices not confirmed
+
+The reference pages are complete, so they make a choice where the design gives a direction and no detail. The table lists those choices. Each one is inferred and not confirmed, and each can change before a wave builds it.
+
+| Choice | What the reference pages state | Where |
+|---|---|---|
+| The validator protocol and the native interface | Two operations, describe and validate, with JSON bodies, and the in-process form of the interface. | [Write a native validator](/reference/validators#write-a-native-validator) |
+| The facts of `daggry/result-gate` | `findings_fail`, `findings_error`, `findings_skip` and `thresholds_missed`. | [Built-in validators](/reference/validators#built-in-validators) |
+| The conductor, runner, forge and store contracts | The rules of each interface and the conformance test named for each. | [Contracts](/reference/contracts) |
+| `projects[].binding` | A project entry names its binding, and the key is optional when the tenant registers one binding. | [projects](/reference/tenant-config#projects) |
+| The version of a script validator | A project's script is versioned by the baseline, and a tenant's by `source.revision`. | [Versioning](/reference/validators#versioning) |
+| The forms of a finding id | `threshold:<read>` for a threshold, and `uncovered: <id>`, `removed: <id>` and `newly skipped: <id>` in a verdict. | [Threshold findings](/reference/kinds#threshold-findings) |
+| The outcomes of the SARIF adapter | A result at level `error` is a `fail`, and every other level is a `pass`. | [Adapters](/reference/bindings#adapters) |
