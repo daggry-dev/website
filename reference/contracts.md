@@ -27,7 +27,7 @@ The table lists each contract once. A part is replaceable when it passes the tes
 
 ## Conductor interface
 
-The conductor orders the steps of a run and leases job attempts to runners. It holds no key and seals nothing.
+The conductor orders the steps of a run and leases job attempts to runners. It holds no key and seals nothing. The table lists its rules.
 
 | The conductor | Rule |
 |---|---|
@@ -39,7 +39,7 @@ The conductor orders the steps of a run and leases job attempts to runners. It h
 
 ## Runner protocol
 
-A runner claims an attempt, runs its steps and reports. The deterministic runner and the agent runner speak the same protocol and implement different step kinds.
+A runner claims an attempt, runs its steps and reports. The deterministic runner and the agent runner speak the same protocol and implement different step kinds. The table lists the operations.
 
 | Operation | Rule |
 |---|---|
@@ -48,6 +48,8 @@ A runner claims an attempt, runs its steps and reports. The deterministic runner
 | Report | The runner hands in each step's records as drafts. The control plane checks and seals them. |
 | Release | The runner gives the attempt back when its steps end or when a step waits for a person. |
 
+The table lists what each runner implements.
+
 | Runner | Implements | Never |
 |---|---|---|
 | Deterministic runner | `command` and `verify` steps, script validators and adapters. | Starts a model or holds a model credential. |
@@ -55,7 +57,7 @@ A runner claims an attempt, runs its steps and reports. The deterministic runner
 
 ## Engine interface
 
-An agent engine does the work of an `agent` step. The agent runner drives every engine the same way, through an engine adapter, so an engine is replaceable for each tenant.
+An agent engine does the work of an `agent` step. The agent runner drives every engine the same way, through an engine adapter, so an engine is replaceable for each tenant. The table lists what the adapter gives the engine.
 
 | The adapter gives the engine | Rule |
 |---|---|
@@ -68,7 +70,7 @@ Whatever the engine hands in is a claim. An engine never seals, and never reache
 
 ## Forge and effect interface
 
-The forge is the part that reads work items and delivers a change. An effect is one operation it offers. In the software binding the forge is a git host.
+The forge is the part that reads work items and delivers a change. An effect is one operation it offers. In the software binding the forge is a git host. The table lists the operations.
 
 | Operation | Rule |
 |---|---|
@@ -79,7 +81,7 @@ The forge is the part that reads work items and delivers a change. An effect is 
 
 ## Store interfaces
 
-The control plane keeps two stores.
+The control plane keeps two stores, and the table gives the rule for each.
 
 | Store | Holds | Rule |
 |---|---|---|
@@ -87,6 +89,8 @@ The control plane keeps two stores.
 | Blobs | Bytes named by the SHA-256 of their content, such as a workflow file. | A blob read back hashes to its name. |
 
 ## Identity and credential references
+
+The table lists the rules for identity, credentials and the signing key.
 
 | Item | Rule |
 |---|---|
@@ -96,6 +100,8 @@ The control plane keeps two stores.
 | Signing key | The control plane holds it. It never enters a pod. A verifier needs the public key only. |
 
 ## Next steps
+
+The list names the pages to read next.
 
 - For what an implementation does to conform, see [Conformance](/reference/conformance).
 - For the validator contract in full, see [Validators](/reference/validators).

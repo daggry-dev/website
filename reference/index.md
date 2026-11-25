@@ -27,5 +27,7 @@ The table names each page and what to use it for.
 
 ## Next steps
 
+The list names the pages to read next.
+
 - To run Daggry for the first time, follow [Getting started](/guide/getting-started).
 - To see the build status, read the [Roadmap](/roadmap).

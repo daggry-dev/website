@@ -6,7 +6,7 @@ For the idea, read [Open standards](/guide/concepts/standards).
 
 Daggry is defined by open documents, so another factory can implement them. This page says what an implementation must do to conform, at three levels, with a checklist for each. It also says what is one platform's policy and no part of the standard. It is for people who build a verifier, a signer, a factory or a part of a factory of their own.
 
-A factory is a system that takes in work, puts agents on it and hands back checked results. The work can be of any kind: the standards name no tool and no kind of work. An implementation conforms when it accepts, refuses and produces what the rules below say, and passes the published test vectors.
+A factory is a system that takes in work, puts agents on it and hands back checked results. The work can be of any kind: the standards name no tool and no kind of work. An implementation conforms when it accepts, refuses and produces what the rules on this page say, and passes the published test vectors.
 
 ## The invariant
 
@@ -38,6 +38,8 @@ An implementation proves the five rules against the published vectors. They are 
 The signing key in the chain vector is for tests only. It signs nothing real.
 
 ## Kinds
+
+The table lists the rules for kinds.
 
 | Rule | Detail |
 |---|---|
@@ -115,7 +117,7 @@ Every row of the table in [Contracts](/reference/contracts) is a conformance sur
 
 ## What is not standard
 
-The standard says how to write things down. It does not say what a factory must decide. Each row below is one platform's policy, and a factory conforms whatever it chooses.
+The standard says how to write things down. It does not say what a factory must decide. Each row of the table is one platform's policy, and a factory conforms whatever it chooses.
 
 | Policy | Daggry's choice | Read more |
 |---|---|---|
@@ -131,6 +133,8 @@ The standard says how to write things down. It does not say what a factory must 
 | The text of an error message | The messages on the reference pages. The cases that are refused are standard. The wording is not. | [Envelope](/reference/envelope#verification-errors) |
 
 ## Next steps
+
+The list names the pages to read next.
 
 - For every field and rule of the envelope, see [Envelope](/reference/envelope).
 - For the kinds and their schemas, see [Kinds and schemas](/reference/kinds).

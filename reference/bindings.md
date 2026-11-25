@@ -10,7 +10,7 @@ Everything on the other reference pages holds for every binding. Text that is tr
 
 ## What a binding is
 
-A binding is a named set of adapters, validators, kinds, effects and conventions that maps the neutral core onto one kind of work and one set of tools. A tenant registers a binding and its parts in the [Tenant config](/reference/tenant-config#extensions), and each project entry names the binding its workspace uses.
+A binding is a named set of adapters, validators, kinds, effects and conventions that maps the neutral core onto one kind of work and one set of tools. A tenant registers a binding and its parts in the [Tenant config](/reference/tenant-config#extensions), and each project entry names the binding its workspace uses. The table lists what a binding gives.
 
 | A binding gives | Which is | Registered in |
 |---|---|---|
@@ -23,7 +23,7 @@ A binding is a named set of adapters, validators, kinds, effects and conventions
 | Labels | Recommended values of a validator's `kind` and an area's `role`. | Nowhere. Labels are an open vocabulary. |
 | Protected paths | Paths the binding adds to the always-protected set. | With the binding. See [Protected paths](/reference/protected-paths). |
 
-Rules:
+These rules hold for every binding.
 
 - **A binding adds and never changes.** It adds names in its own namespace. It changes no key, no kind and no rule of the standards.
 - **A binding owns its namespace.** The adapters of the `software` binding are `software/<adapter>`. Another party's binding uses another namespace.
@@ -35,6 +35,8 @@ Rules:
 The `software` binding is for workspaces that hold programs.
 
 ### Conventions
+
+The table maps each term of the core onto the software binding.
 
 | Core term | In the software binding |
 |---|---|
@@ -48,6 +50,8 @@ The `software` binding is for workspaces that hold programs.
 | Forge | The git host that holds the repository, the issues and the pull requests. The runner pushes to the run's branch with a token scoped to one repository, and the control plane rechecks a change from the forge's own view of the commits. The forge's application key never enters a pod. |
 
 ### Effects
+
+The software binding defines one effect.
 
 | Effect | What it does |
 |---|---|
@@ -92,13 +96,15 @@ The software binding adds no validator of its own. It uses the built-in validato
 | `daggry/baseline-proof` | The red proof: a new test fails on the base commit, which shows that the test says something about the change. A run with no test records, such as a compile failure, is not red. |
 | `daggry/base-relative` | `tests_removed` counts tests in the base commit's result that the head lacks. `tests_newly_skipped` counts tests that are skipped in the head and not in the base. |
 
-The definitions are in [Validators](/reference/validators#built-in-validators).
+The definitions are in [Built-in validators](/reference/validators#built-in-validators).
 
 ### Frozen tests
 
 In the software binding the frozen paths of a run are tests. A test step is an `agent` step whose `freeze` globs match test files. The step's `tests` key is a second name for `freeze` with the same meaning, and a step holds one of the two. After the step is sealed, no later step changes a frozen test. `daggry approve <run-id> --unfreeze <path>` frees one test path for one iteration. The rules are in [Frozen paths](/reference/protected-paths#frozen-paths).
 
 ### Labels
+
+The table lists the labels the software binding recommends.
 
 | Label of | Recommended values |
 |---|---|
@@ -135,6 +141,8 @@ A change that adds a gitlink is a violation. A scope of `anywhere` leaves out th
 
 ### Registration
 
+This fragment of a tenant config registers the binding and its parts. The versions are illustrative.
+
 ```yaml
 extensions:
   bindings:
@@ -154,11 +162,9 @@ extensions:
       version: "1.0.0"
 ```
 
-A fragment of a tenant config. The versions are illustrative.
-
 ## A binding for document review
 
-This sketch shows that the core carries work that is not software. It defines no adapter format in full.
+This sketch maps the core onto work that is not software. It defines no adapter format in full.
 
 | Core term | In a document-review binding |
 |---|---|
@@ -176,6 +182,8 @@ This sketch shows that the core carries work that is not software. It defines no
 The workflow is the same shape as for software: an agent plans, a person approves the plan, a loop works through the criteria, a `verify` step names the validators and an `effect` step publishes. The project config for such a workspace is in [A set of documents](/reference/project-config#a-set-of-documents).
 
 ## Next steps
+
+The list names the pages to read next.
 
 - For the result document every adapter writes, see [Project config](/reference/project-config#result-document).
 - For the validator contract and the built-in validators, see [Validators](/reference/validators).
