@@ -8,21 +8,19 @@ These paths are protected in every run. No workflow and no step widens the set.
 
 | Protected | Why |
 |---|---|
-| `.daggry/**` | the project config, or its earlier form the profile, `.daggry/profile.yaml`, and the project harness |
+| `.daggry/**` | the project config, `.daggry/project.yaml`, and the project harness |
 | `**/AGENTS.md`, `.agents/**`, `**/SKILL.md` | instruction files and skills for coding agents |
 | agent-specific instruction files and config directories | the same, for each supported engine |
 | `**/.mcp.json` | tool-server configuration |
 | `**/.gitmodules`, `**/.gitattributes`, `**/.mailmap` | git behaviour |
-| tests sealed in earlier loop iterations | the frozen tests |
-| the verification policy | the check that the base commit's [Project config](/reference/project-config) names, and the lint and coverage configuration (see the [Roadmap](/roadmap) for its status) |
+| tests sealed in previous loop iterations | the frozen tests |
+| the verification policy | the checks that the base commit's [Project config](/reference/project-config) names, and the lint and coverage configuration |
 
 A change that adds a symbolic link, a gitlink, a type change or a case collision is a violation too. A case collision is judged on every directory component, so `Docs/x.md` is refused where `docs/` exists.
 
 The project harness changes only through a pull request that a person merges. A run's own change to `.daggry/` takes effect in the next run after the merge.
 
 ## What a project adds
-
-Proposed standard; see the [Roadmap](/roadmap) for status.
 
 A [Project config](/reference/project-config) adds to the protected set in two ways. It never removes a path from it.
 
@@ -35,7 +33,7 @@ The default covers the files a command names, not the files those programs read.
 
 A scope is the set of paths that one step or one run may change. Each `command` and `agent` step declares its scope in the workflow. The values are defined in [Scope](/reference/workflow-schema#scope).
 
-Daggry judges the scope of a step on the step's own change, measured against the last sealed commit. A step does not fail on files that earlier steps sealed. Protected paths are judged against the base commit. No scope holds a protected path.
+Daggry judges the scope of a step on the step's own change, measured against the last sealed commit. A step does not fail on files that previous steps sealed. Protected paths are judged against the base commit. No scope holds a protected path.
 
 ```yaml
 - id: build
@@ -47,11 +45,9 @@ Daggry judges the scope of a step on the step's own change, measured against the
   scope: ["src/**", "tests/**"]
 ```
 
-Illustrative. `engine: <engine>` names the coding-agent engine the step uses.
+Illustrative. `<engine>` is the identifier of a registered coding-agent engine.
 
 ### The scope of a run
-
-Proposed standard; see the [Roadmap](/roadmap) for status.
 
 A run has a scope when the tenant or the run request names areas of the project. An area is a named group of paths that the project config defines. See [areas](/reference/project-config#areas) and [projects](/reference/tenant-config#projects).
 

@@ -2,8 +2,6 @@
 
 *Reference*
 
-Proposed standard; see the [Roadmap](/roadmap) for status.
-
 For the idea, read [Open standards](/guide/concepts/standards).
 
 Daggry is defined by open documents, so another factory can implement them. This page says what an implementation must do to conform, at three levels, with a checklist for each. It also says what is one platform's policy and no part of the standard. It is for people who build a verifier, a signer or a factory of their own.
@@ -93,11 +91,12 @@ A signer seals artifacts and appends them to a chain.
 A factory runs work and seals what the work produced.
 
 - Meets every item of level 2.
-- Reads a workflow by the [Workflow schema](/reference/workflow-schema): the same keys, the same refusals, the same strict YAML subset.
+- Reads a workflow by the [Workflow schema](/reference/workflow-schema): the same keys, the same refusals, the same strict YAML subset. Refuses a missing `format` and an unknown major.
 - Reads a gate by the grammar in [Gate expressions](/reference/gates), and lets a gate read derived fields only.
-- Reads a [Project config](/reference/project-config) from the base commit, and refuses an unknown major.
+- Reads a [Project config](/reference/project-config) from the base commit, and refuses a missing `format` and an unknown major.
 - Looks up every area name that a step, the tenant config or a run request gives in the project config of the base commit, and refuses the run when a name is unknown.
-- Reads a [Tenant config](/reference/tenant-config), and refuses an unknown major.
+- Reads a [Tenant config](/reference/tenant-config), and refuses a missing `format` and an unknown major.
+- Reads a check's output by its [result contract](/reference/project-config#result-contracts), refuses a contract it has no parser for, and seals each measured check as a [measurement](/reference/kinds#evidence-measurement-1).
 - Applies the precedence tenant, then project, then workflow, and lets only a person widen a rule.
 - Follows the extension rule in all three documents: ignores and preserves a namespaced key it does not know, and refuses an unknown key without a namespace.
 - Runs each step in what its kind names, the deterministic runner, the agent runner or the control plane, and refuses a kind that is not registered.

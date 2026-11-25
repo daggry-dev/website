@@ -4,7 +4,7 @@
 
 For the idea, read [Where it runs](/guide/concepts/architecture).
 
-This page lists the tenant API: the routes that a tenant client calls, their request and response fields, the status codes and the run states. The `daggry` CLI is the supported client and uses these routes. Details of the HTTP API may change. For a command-level view, see the [CLI reference](/reference/cli).
+This page lists the tenant API: the routes that a tenant client calls, their request and response fields, the status codes and the run states. The `daggry` CLI is the supported client and uses these routes. For a command-level view, see the [CLI reference](/reference/cli).
 
 ## Conventions
 
@@ -78,7 +78,7 @@ A run and an attempt share one set of seven states, written in lowercase.
 
 | State | Meaning |
 |---|---|
-| `queued` | The run is accepted and no job has started yet. |
+| `queued` | The run is accepted and no job has started. |
 | `running` | A job is running. A run never reads `queued` again. |
 | `waiting` | A person is needed. `waiting_for` names the reason. |
 | `parked` | A limit is reached, and the work waits for it to reset. |

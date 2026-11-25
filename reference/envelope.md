@@ -148,7 +148,7 @@ Each tenant has one chain of log entries. An entry's link ties it to the entry b
 | link | SHA-256 of the 32 raw bytes of `prev` followed by the 32 raw bytes of the artifact digest. 64 bytes go in. |
 | head | The link of the last entry. |
 
-A signed head kept outside the cluster lets a reader see that entries were dropped from the end of a chain. See the [Roadmap](/roadmap) for its status.
+A signed head kept outside the cluster lets a reader see that entries were dropped from the end of a chain.
 
 ### Lineage and log
 

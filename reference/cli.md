@@ -140,7 +140,7 @@ daggry logs run-0123456789abcdef
 daggry/run-lock@1 run-lock control 7d3b0c91a4e2
 daggry/work-item@1 work-item control c94c24f1751a
 daggry/change@1 change-1 control 2019b48c668e
-daggry/observation@1 build-restored-2 control 5be08f3a17c4 protected-restored .daggry/profile.yaml
+daggry/observation@1 build-restored-2 control 5be08f3a17c4 protected-restored .daggry/project.yaml
 ```
 
 The values are illustrative. The summary is a hint and can gain words. Only the kind and the ID are stable. For the ID of each kind, see [Kinds and schemas](/reference/kinds#who-seals-what).

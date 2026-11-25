@@ -39,7 +39,7 @@ These twelve words cover most of what you read on this site. The table after the
 | change | A sealed record of a commit, the paths it changed and the frozen test set. | [Kinds and schemas](/reference/kinds) |
 | check | Something code does to test a claim: a test run, a linter, a build or a script of the project's own. A project declares its checks by name in the project config. A check that judges sealed records is a validator. | [Project config](/reference/project-config#checks) |
 | claim | What an agent produced before code checked and sealed it. A claim is never evidence. | [Why you can trust a run](/guide/concepts/trust) |
-| cluster admin | The person who installs and runs Daggry on a Kubernetes cluster. | [Roadmap](/roadmap) |
+| cluster admin | The person who installs and runs Daggry on a Kubernetes cluster. | [Deploy Daggry](/guide/how-to/deploy) |
 | command step | A step that runs a shell line in the pod. | [Workflow schema](/reference/workflow-schema) |
 | conductor | The module that orders the steps of a run and schedules job attempts across runners. It holds no key and seals nothing. | [The modules](/guide/concepts/modules) |
 | conformance | What an implementation does to follow the standards: it accepts, refuses and produces what the rules say and passes the published test vectors. It has three levels: verifier, signer and factory. | [Conformance](/reference/conformance) |
@@ -58,10 +58,10 @@ These twelve words cover most of what you read on this site. The table after the
 | fact | A named value in a verdict, a boolean, an integer or a string, that a gate can read. | [Gate expressions](/reference/gates) |
 | fact class | Whether a field is `claimed`, `derived` or `judged`. | [Gate expressions](/reference/gates) |
 | factory | A system that takes in work, puts agents on it and hands back checked results. A tenant config says how one factory works. | [The tenant defines the factory](/guide/concepts/tenant) |
-| frozen test | A test path sealed in an earlier loop iteration, recorded with its file digest. A step cannot change it. | [Protected paths](/reference/protected-paths) |
+| frozen test | A test path sealed in a previous loop iteration, recorded with its file digest. A step cannot change it. | [Protected paths](/reference/protected-paths) |
 | gate | A rule over derived facts that a run must pass. It is written as an expression in a loop's `until`. | [Gate expressions](/reference/gates) |
 | genesis digest | The digest of no history: 64 zero characters. It is the `prev` of a chain's first entry. | [Envelope](/reference/envelope) |
-| head | In a chain, the link of the last entry. As a measurement label, the sealed commit's test run. | [Envelope](/reference/envelope) |
+| head | In a chain, the link of the last entry. As a measurement label, a measurement of the sealed commit. | [Envelope](/reference/envelope) |
 | human step | The step kind (`kind: human`) that holds an approval: it waits for a person. `daggry approve` completes it. | [Workflow schema](/reference/workflow-schema) |
 | job | A group of steps that share one pod and workspace. A run is one job by default. | [Workflow schema](/reference/workflow-schema) |
 | judge | The control plane's part of verification: it runs validators over sealed records and seals the verdicts that open gates. | [Kinds and schemas](/reference/kinds) |
@@ -73,17 +73,17 @@ These twelve words cover most of what you read on this site. The table after the
 | link | SHA-256 of the previous link and the entry's digest. The signature covers it. | [Envelope](/reference/envelope) |
 | log | The append-only, hash-chained record of everything the control plane sealed. It is the source of truth for state. Prose elsewhere calls it the evidence trail. | [Envelope](/reference/envelope) |
 | loop | A bounded sequential repeat of steps over a list, ended by a gate. It is an entry in a workflow, not a step kind. | [Workflow schema](/reference/workflow-schema) |
-| measure | The part of verification that runs the project's verification command on a clean copy of the code and records a measurement. | [Kinds and schemas](/reference/kinds) |
+| measure | The part of verification that runs the project's canonical check and its supporting checks on a clean copy of the code and records one measurement for each. | [Kinds and schemas](/reference/kinds) |
+| measurement | The sealed result of one check on one commit: the check, its result contract, the exit code, an outcome, the test records and the findings. | [Kinds and schemas](/reference/kinds#evidence-measurement-1) |
 | meta | The envelope's optional map from namespaced keys to scalar values, stamped by code at seal time. | [Envelope](/reference/envelope) |
 | observation | A sealed record that is not a verdict: `protected-restored` or `step-failed`. It is kept for the record. | [Kinds and schemas](/reference/kinds) |
 | parents | The digests of the artifacts an artifact builds on. | [Envelope](/reference/envelope) |
 | pod | The throwaway pod a job runs in. | [Where it runs](/guide/concepts/architecture) |
 | prev | The link of the entry before this one in the chain. | [Envelope](/reference/envelope) |
 | preview | The part of verification that runs in the pod for fast feedback: validators, or a check the project exposes to the agent. A preview is never evidence. | [Kinds and schemas](/reference/kinds) |
-| profile | The earlier name of the project config: the file `.daggry/profile.yaml`, which holds one test command. | [Project config](/reference/project-config#the-profile) |
 | project config | The standard document for what is true of one repository: what it is, its areas, its checks, its one canonical check and the paths it protects. It is the deterministic interface between a project and a factory, and names no workflow. It lives in the repository and is read from the base commit. | [Project config](/reference/project-config) |
 | protected path | A path that no step can change, whatever its scope and whatever a workflow says: the always-protected set, plus the paths a project config adds. | [Protected paths](/reference/protected-paths) |
-| result contract | The named, published format of a check's output and the parser that reads it, such as `exit-code`, `libtest-lines` or `junit-xml`. | [Project config](/reference/project-config#result-contracts) |
+| result contract | The named, published format of a check's output and the parser that reads it: `exit-code`, `libtest-lines`, `junit-xml`, `tap`, `sarif`, `json` or `<namespace>/<name>`. | [Project config](/reference/project-config#result-contracts) |
 | red proof | A test that fails on the base commit, which shows that the test says something about the change. | [Kinds and schemas](/reference/kinds) |
 | run | One execution of a workflow for a work item. | [Work graphs](/guide/concepts/workflows) |
 | run lock | The sealed record of what a run pinned at start: validators, boundary rules, image and workflow. | [Kinds and schemas](/reference/kinds) |
