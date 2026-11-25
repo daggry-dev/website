@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitepress'
 
-// GitHub Pages serves the site under /daggry-website/; the cluster image serves it at /.
+// GitHub Pages serves the site under /website/; the cluster image serves it at /.
 const base = process.env.SITE_BASE ?? '/'
 
 export default defineConfig({

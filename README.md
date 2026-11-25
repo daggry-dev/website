@@ -41,7 +41,7 @@ npm run build    # .vitepress/dist
 `.github/workflows/pages.yml` builds and deploys on every push to `main`, in parallel:
 
 - **Cloudflare Workers**, built with base `/` and deployed with `wrangler deploy` (see `wrangler.jsonc`). Needs the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repository secrets.
-- **GitHub Pages**, built with `SITE_BASE=/daggry-website/`.
+- **GitHub Pages**, at https://daggry-dev.github.io/website/, built with `SITE_BASE=/website/`.
 
 Pull requests build both and run `wrangler deploy --dry-run`.
 
