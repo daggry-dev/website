@@ -41,9 +41,6 @@ const snippet: { k?: string; v?: string; p?: string }[][] = [
   [{ p: '  - { ' }, { k: 'id' }, { p: ': ' }, { v: 'pr' }, { p: ', ' }, { k: 'kind' }, { p: ': ' }, { v: 'effect' }, { p: ', ' }, { k: 'do' }, { p: ': ' }, { v: 'open-pr' }, { p: ' }' }],
 ]
 
-// The seven modules, in the fixed order.
-const modules = ['Conductor', 'Control plane', 'Runner', 'Engine', 'Forge', 'Store', 'Validators']
-
 const doors = [
   { t: 'Understand it', time: '10 minutes', d: 'Read the story of one night, then what you can use Daggry for.', l: '/guide/' },
   { t: 'Try it', time: 'Hands on', d: 'Run a first workflow, approve it and verify its trail.', l: '/guide/getting-started' },
@@ -116,9 +113,7 @@ const doors = [
         You write three files and Daggry writes the fourth, the evidence trail. All four formats are published,
         so your own tools can read them.
       </p>
-      <ul class="chips mods">
-        <li v-for="m in modules" :key="m"><span>{{ m }}</span></li>
-      </ul>
+      <KitDiagram />
       <div class="proof four">
         <a v-for="f in formats" :key="f.t" class="card" :href="withBase(f.l)">
           <h3>{{ f.t }}</h3>
@@ -244,8 +239,6 @@ const doors = [
 .chips li { min-width: 0; max-width: 100%; }
 .chips li a { display: block; padding: 9px 16px; border-radius: 999px; font-size: .9rem; border: 1px solid var(--dg-btn-border); background: var(--dg-btn-bg); color: var(--dg-ink); text-decoration: none; transition: transform .2s; }
 .chips li a:hover { transform: translateY(-1px); }
-.chips.mods { margin: 0 0 28px; }
-.chips.mods span { display: block; padding: 9px 16px; border-radius: 999px; font-size: .9rem; border: 1px solid var(--dg-btn-border); color: var(--dg-ink); }
 .code { margin: 0; min-width: 0; }
 .code pre {
   margin: 0; padding: 20px 22px; border-radius: 18px; overflow-x: auto;
