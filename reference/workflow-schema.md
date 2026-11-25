@@ -1,16 +1,16 @@
-# Workflow schema
+# Workflow file
 
 *Reference*
 
-For the idea, read [Work graphs](/guide/concepts/workflows).
+A workflow that Daggry misread would run the wrong steps, so the file has a strict form and Daggry refuses anything else. This page defines every key, every value a key accepts, every file the loader refuses and how you add your own keys and step kinds. Read it when you write or review a workflow and need the exact rule. To write your first one, follow [Write a workflow](/guide/how-to/write-a-workflow).
 
-A workflow is one YAML file that lists steps and bounded loops. It is one of four open documents, with the evidence envelope, the [Project config](/reference/project-config) and the [Tenant config](/reference/tenant-config). This page defines every key, every value a key accepts, every case the loader refuses, and how a workflow is extended. It is for people who write or review workflow files. To write one, follow [Write a workflow](/guide/how-to/write-a-workflow).
+A workflow is one YAML file that lists steps and loops, each loop with a limit. It is one of the four [open formats](/reference/open-formats), with the [Project config](/reference/project-config), the [Tenant config](/reference/tenant-config) and evidence.
 
 The examples on this page are illustrative. Each one is valid against the published schema. See [Validation](#validation).
 
 In examples, `engine: <engine>` stands for the identifier of an agent engine that the tenant registers. Write that identifier in place of `<engine>`. One engine, `replay`, plays back a recorded transcript and takes a `transcript` path in place of `prompt`.
 
-A workflow names no tool and no kind of work. It names validators, effects and areas by reference, and the project, the tenant and the binding supply what the names stand for. See [Bindings](/reference/bindings).
+A workflow names validators, effects and areas by reference. The project, the tenant and the binding supply what the names stand for, so the same file works for any kind of work. See [Bindings](/reference/bindings).
 
 ## Download
 
@@ -147,7 +147,7 @@ The standard defines no effect. A binding defines the effects for its kind of wo
 
 ### Step kind registry
 
-A step kind is an entry in a registry. Each entry names the kind, the keys a step of that kind takes and what runs it: the runner, as the deterministic runner or the agent runner, or the control plane. See [The modules](/guide/concepts/modules). The table lists the entries.
+A step kind is an entry in a registry. Each entry names the kind, the keys a step of that kind takes and what runs it: the runner, as the deterministic runner or the agent runner, or the control plane. See [The modules and where they run](/guide/concepts/modules). The table lists the entries.
 
 | Kind | What runs the step | Registered by |
 |---|---|---|
@@ -181,7 +181,7 @@ No key of a step changes what runs it. An `agent` step always runs in the agent 
 
 ### Validators by reference
 
-A workflow never holds a verification command. A `verify` step names validators, and the project, the tenant and the platform supply them. The table lists the forms of a reference.
+A workflow never holds a verification command. A `verify` step names validators, and the project, the tenant and Daggry supply them. The table lists the forms of a reference.
 
 | Reference | Resolves to |
 |---|---|
@@ -281,7 +281,7 @@ The table lists how a loop counts, repeats and ends.
 
 ### Red then green
 
-A red-then-green loop has three steps in an iteration. A proof step (an `agent` step with `freeze`) writes what proves the criterion: a check whose finding carries the criterion id. A second `agent` step does the work that makes it pass. A `verify` step runs the validators on a clean copy.
+A red-then-green loop has three steps in an iteration. A proof step (an `agent` step with `freeze`) writes what proves the criterion: a proof whose finding carries the criterion id. A second `agent` step does the work that makes it pass. A `verify` step runs the validators on a clean copy. The guide calls this "fails first, then passes".
 
 The runner overlays the proof step's new frozen paths on a clean copy of the baseline and runs the baseline's canonical validator there. The built-in `daggry/baseline-proof` judges the result, and a proof step in a loop that does not prove red is rejected. See [Baseline proof](/reference/validators#baseline-proof). Frozen paths and unfreeze are defined in [Protected paths](/reference/protected-paths#frozen-paths).
 

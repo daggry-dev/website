@@ -2,9 +2,7 @@
 
 *Reference*
 
-For the idea, read [Where it runs](/guide/concepts/architecture).
-
-This page lists the tenant API: the routes that a tenant client calls, their request and response fields, the status codes and the run states. The `daggry` CLI is the supported client and uses these routes. For a command-level view, see the [CLI reference](/reference/cli).
+The `daggry` CLI does all its work through an HTTP API, and a tool of your own can call the same routes. This page lists the tenant API: the routes that a tenant client calls, their request and response fields, the status codes and the run states. Read it if you write a client or a script that starts or watches runs. If you use the CLI, the [CLI reference](/reference/cli) is enough.
 
 ## Conventions
 
@@ -104,4 +102,4 @@ The table lists the values of `waiting_for`.
 The list names the pages to read next.
 
 - For the commands built on these routes, see the [CLI reference](/reference/cli).
-- For the workflow that a run carries, see the [workflow schema](/reference/workflow-schema).
+- For the workflow that a run carries, see the [Workflow file](/reference/workflow-schema).

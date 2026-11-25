@@ -1,12 +1,12 @@
-# Envelope
+# Evidence record format
 
 *Reference*
 
-For the idea, read [Why you can trust a run](/guide/concepts/trust).
+A trail is a proof only if anyone can recompute it with a tool of their own. The envelope is the one JSON shape every sealed record has, and this page gives its exact rules. Read it if you write a reader, a verifier or a tool that checks a trail. To verify a run with the CLI, follow [Verify a run](/guide/how-to/verify-a-run).
 
-The envelope is the one JSON shape every sealed artifact has. It is an open standard: any factory that follows the field, canonical JSON, digest, chain link and signature rules on this page produces evidence that any verifier can check, whoever built either one. For what an implementation must do, see [Conformance](/reference/conformance).
+This page uses the specification's words: an artifact is a record, a digest is a fingerprint, and the log or the chain is the evidence trail. Any factory that follows the field, canonical JSON, digest, chain link and signature rules on this page produces evidence that any verifier can check, whoever built either one. For what an implementation must do, see [Conformance](/reference/conformance).
 
-This page lists every field, the rules for `meta`, the canonical JSON rules, and how the digest, the chain link and the signature are computed. It is for people who write a reader, a verifier or a tool that checks a log.
+This page lists every field, the rules for `meta`, the canonical JSON rules, and how the digest, the chain link and the signature are computed.
 
 The hand-written values on this page are illustrative. The test vector in [Worked example](#worked-example-recompute-a-digest-and-a-link) is copied from the published test vector.
 
@@ -27,7 +27,7 @@ An agent writes a draft that holds only `kind`, `id` and `body`. Code adds every
 | `format` | string | yes | seal | yes | Always `evidence/envelope@1`. |
 | `kind` | string | yes | draft | yes | `<namespace>/<name>@<major>`. Pattern `^[^/@]+/[^/@]+@[0-9]+$`. |
 | `id` | string | yes | draft | yes | Any string. |
-| `body` | any JSON value | yes | draft | yes | Validated against the kind's schema before sealing. See [Kinds and schemas](/reference/kinds). |
+| `body` | any JSON value | yes | draft | yes | Validated against the kind's schema before sealing. See [Record kinds](/reference/kinds). |
 | `parents` | array of digests | yes | seal | yes | Each a 64-digit lowercase hex digest. Can be empty. |
 | `producer` | string | yes | seal | yes | Any string. |
 | `time` | integer | yes | seal | yes | 0 or more. Unix milliseconds. |
@@ -50,7 +50,7 @@ A kind has three parts.
 
 | Part | Rule |
 |---|---|
-| namespace | Non-empty. No `@` and no `/`. `evidence` holds the language's kinds. `daggry` holds the platform's own. |
+| namespace | Non-empty. No `@` and no `/`. `evidence` holds the language's kinds. `daggry` holds Daggry's own. |
 | name | Non-empty. No `/` and no `@`. |
 | major | One or more ASCII digits. A breaking change to a kind is a new major. |
 
@@ -238,9 +238,9 @@ The table lists the error text for the `meta`, number and format rules.
 
 ## Worked example: recompute a digest and a link
 
-This example uses the published test vector: a two-entry chain. The signing key is a deterministic test key (32 bytes, each `07`). It is published for implementers and is for tests only. It is not a platform key and signs nothing real.
+This example uses the published test vector: a two-entry chain. The signing key is a deterministic test key (32 bytes, each `07`). It is published for implementers and is for tests only. It is not a key of any factory and signs nothing real.
 
-The bodies are not valid `measurement` bodies. They show the envelope only, where `body` accepts any JSON value. `acme/source` is a test `meta` key, not a platform key.
+The bodies are not valid `measurement` bodies. They show the envelope only, where `body` accepts any JSON value. `acme/source` is a test `meta` key, not a key Daggry stamps.
 
 Key id: `ed25519-fe812c12f3ab4ce6`.
 

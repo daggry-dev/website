@@ -2,9 +2,7 @@
 
 *Reference*
 
-For the idea, read [The tenant defines the factory](/guide/concepts/tenant) and [Where it runs](/guide/concepts/architecture).
-
-The tenant config is one YAML document that says how a tenant's factory works: which workflows it offers, how work is orchestrated, which agents work and with what autonomy, which runners run the steps, which validators count as evidence, which workspaces it serves and which workflows run on each workspace. This page defines the standard layout and the precedence rule. It is for people who run a tenant and for people who write a reader of the document.
+Two teams rarely work the same way: one lets agents deliver results all night, and another wants a person to approve every plan. The tenant config holds those choices as data. It is one YAML document that says how a tenant's factory works: which workflows it offers, how work is scheduled, which agents work and where a person must approve, which runners run the steps, which validators count as evidence, which projects it serves and which workflows run on each. This page defines the layout and the precedence rule. Read it if you are a tenant admin, or if you write a tool that reads the document. For the steps, follow [Set up a tenant](/guide/how-to/set-up-a-tenant).
 
 The format is open. It follows the same layout rules as the [Project config](/reference/project-config): a `format` header, named sections and namespaced extension keys.
 
@@ -54,7 +52,7 @@ The `workflows` section is the catalogue: the workflows the tenant offers, and w
 | `workflows[].source.path` | string | yes | The path of the workflow file in that workspace. Non-empty. |
 | `workflows[].source.revision` | string | yes | The version of the workspace the file is read from, in the form the binding gives. Non-empty. |
 
-A workflow is pinned to one version, so a catalogue entry names exactly one file content. The file itself follows the [Workflow schema](/reference/workflow-schema). A run uses only a workflow from the catalogue.
+A workflow is pinned to one version, so a catalogue entry names exactly one file content. The file itself follows the [Workflow file](/reference/workflow-schema). A run uses only a workflow from the catalogue.
 
 The source can be a workspace of workflows, or the workspace the work is done on. In both cases the tenant names it here, and the workspace itself assigns nothing.
 
@@ -178,7 +176,7 @@ The `extensions` section holds what the tenant registers beyond the standard. A 
 | `extensions.step_kinds[].kind` | string | yes | `<namespace>/<name>`. See [Extensibility](/reference/workflow-schema#extensibility). |
 | `extensions.step_kinds[].module` | string | yes | What runs the step: `deterministic-runner`, `agent-runner` or `control-plane`. |
 | `extensions.step_kinds[].schema` | string | yes | The URL of the JSON Schema for the step's keys. |
-| `extensions.artifact_kinds` | array of objects | no | Artifact kinds besides the eight in [Kinds and schemas](/reference/kinds). |
+| `extensions.artifact_kinds` | array of objects | no | Artifact kinds besides the eight in [Record kinds](/reference/kinds). |
 | `extensions.artifact_kinds[].kind` | string | yes | `<namespace>/<name>@<major>`, in a namespace other than `evidence` and `daggry`. |
 | `extensions.artifact_kinds[].schema` | string | yes | The URL of the JSON Schema for the kind's `body`. |
 
@@ -203,7 +201,17 @@ Three documents set rules for a run. The order is tenant, then project, then wor
 | [Project config](/reference/project-config) | What is true of one workspace: its areas, its validators, its canonical validator and the paths it protects. | Choose a workflow, an engine, an approval rule or the scope of a run. Admit its own validators. Widen a tenant rule. |
 | [Workflow](/reference/workflow-schema) | Narrower rules for one step: its scope inside the scope of the run, and the validators a `verify` step names. | Name a validator the tenant has not admitted. Widen a project or tenant rule. |
 
-Only a person widens a rule: by changing the tenant config, by accepting a change to the project config, or by a grant such as [unfreeze](/reference/protected-paths#unfreeze-grant). An agent, a workflow and an extension key narrow or add, and never widen.
+A project or a workflow can add limits. A project can protect more paths, and a workflow can give a step a smaller scope inside the scope of the run. The scope of a run is the tenant's choice among the areas the project defines.
+
+Only a person widens a rule. An agent, a workflow and an extension key narrow or add, and never widen. The table says who can widen each rule.
+
+| To widen | Who decides | How |
+|---|---|---|
+| A limit in the tenant config | The tenant admin | By changing the tenant config. |
+| A limit in the project config | The project owner, inside what the tenant allows | By an accepted change to the project config. It applies from the next run. |
+| A rule inside one run | A person, by a grant | By an approval that is sealed as evidence and opens one thing once, such as [unfreeze](/reference/protected-paths#unfreeze-grant). |
+
+An agent is never in that table. The control plane holds the tenant config outside every runner, and a run reads the project config from the baseline, so an edit by a step changes nothing for the run. Every run records the configuration it started under, and a later change applies to new runs only.
 
 ### Worked example
 
@@ -383,5 +391,5 @@ The list names the pages to read next.
 
 - For what a workspace says about itself, see [Project config](/reference/project-config).
 - For the validator contract and the three sources of a validator, see [Validators](/reference/validators).
-- For the workflow file a catalogue entry points to, see [Workflow schema](/reference/workflow-schema).
+- For the workflow file a catalogue entry points to, see [Workflow file](/reference/workflow-schema).
 - For what another factory implements to use the same documents, see [Conformance](/reference/conformance).

@@ -2,15 +2,13 @@
 
 *Reference*
 
-For the idea, read [Open standards](/guide/concepts/standards).
-
-The standards have a neutral core. They speak of a project, a workspace, a work item, a change, a validator, a result and a verdict, and they name no tool and no kind of work. A binding maps that core onto one kind of work and one set of tools. This page says what a binding is, defines the `software` binding in full and sketches a binding for work that is not software. It is for people who set up a factory for one kind of work and for people who write a binding of their own.
+Daggry's files work for any kind of work, so something must say what a workspace, a work item and a result are for your kind of work. A binding does that: it is a ready-made setup for one kind of work and one set of tools. This page says what a binding is, defines the `software` binding in full and sketches a binding for work that is not software. Read it if you set up a factory for one kind of work, or if you write a binding of your own.
 
 Everything on the other reference pages holds for every binding. Text that is true of one kind of work only is on this page.
 
 ## What a binding is
 
-A binding is a named set of adapters, validators, kinds, effects and conventions that maps the neutral core onto one kind of work and one set of tools. A tenant registers a binding and its parts in the [Tenant config](/reference/tenant-config#extensions), and each project entry names the binding its workspace uses. The table lists what a binding gives.
+A binding is a ready-made setup for one kind of work and one set of tools. It is a named set of adapters, validators, kinds, effects and conventions. A tenant registers a binding and its parts in the [Tenant config](/reference/tenant-config#extensions), and each project entry names the binding its workspace uses. The table lists what a binding gives.
 
 | A binding gives | Which is | Registered in |
 |---|---|---|
@@ -25,10 +23,22 @@ A binding is a named set of adapters, validators, kinds, effects and conventions
 
 These rules hold for every binding.
 
-- **A binding adds and never changes.** It adds names in its own namespace. It changes no key, no kind and no rule of the standards.
+- **A binding adds and never changes.** It adds names in its own namespace. It changes no key, no kind and no rule of the open formats.
 - **A binding owns its namespace.** The adapters of the `software` binding are `software/<adapter>`. Another party's binding uses another namespace.
-- **The core reads no tool's format.** A factory reads `exit-code` and `document` itself. Every other format is an adapter's.
-- **A workflow stays neutral.** A workflow names validators and effects by reference. The same workflow runs under two bindings when both give the names it uses.
+- **Daggry reads no tool's format.** A factory reads `exit-code` and `document` itself. Every other format is an adapter's.
+- **A workflow stays the same.** A workflow names validators and effects by reference. The same workflow runs under two bindings when both give the names it uses.
+
+### The same names for any work
+
+The open formats use general names, so one set of files describes any kind of work. The table gives the general name for each thing in a software run.
+
+| In the software binding | In every binding |
+|---|---|
+| An issue | A work item: the request the work answers. |
+| A repository | A workspace: the versioned collection of files and data the work lives in. |
+| A range of commits | A change: a set of differences made to the workspace. |
+| A test that fails, then passes | A baseline proof: a proof that fails before the work and passes after it. |
+| Opening a pull request | An effect: the step that delivers the result. |
 
 ## The software binding
 
@@ -36,15 +46,15 @@ The `software` binding is for workspaces that hold programs.
 
 ### Conventions
 
-The table maps each term of the core onto the software binding.
+The table says what each general term is in the software binding.
 
-| Core term | In the software binding |
+| General term | In the software binding |
 |---|---|
 | Workspace | A git repository on a forge, named `<owner>/<name>`. |
 | Version of the workspace | A commit, named by its 40 lowercase hex digits. This is the form of every `revision`. |
 | Baseline | The base commit: the commit a run starts from. |
 | Change | A commit range on the run's branch, `daggry/<run-id>`. A `change` record holds the last commit, the paths the range changed and the frozen set. A frozen path's digest is the file's git blob id. |
-| Work item | An issue on the forge, referred to by its URL: `https://github.com/<owner>/<name>/issues/<n>`. The `work-item` record holds `repository` and `issue`. See [Kinds and schemas](/reference/kinds#daggry-work-item-1). |
+| Work item | An issue on the forge, referred to by its URL: `https://github.com/<owner>/<name>/issues/<n>`. The `work-item` record holds `repository` and `issue`. See [Record kinds](/reference/kinds#daggry-work-item-1). |
 | Accepting a change | A person merges a pull request. The project config and the other protected files change this way only. |
 | Approval by comment | A verified comment on the issue or the pull request. Its id is the `source_ref` of the approval. |
 | Forge | The git host that holds the repository, the issues and the pull requests. The runner pushes to the run's branch with a token scoped to one repository, and the control plane rechecks a change from the forge's own view of the commits. The forge's application key never enters a pod. |

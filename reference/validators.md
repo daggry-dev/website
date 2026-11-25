@@ -2,19 +2,17 @@
 
 *Reference*
 
-For the idea, read [Why you can trust a run](/guide/concepts/trust).
-
-A validator is the part of a factory that checks work. It takes sealed artifacts, and for a script validator a clean copy of the workspace, and yields a result and a verdict. It is the extension point of verification: a `verify` step names one or more validators, the platform runs them, and you can plug in your own. This page defines the validator contract, the three sources of a validator, where each runs, how a workflow refers to one and how to write one. It is for people who write workflows, people who write validators and people who build a factory.
+An agent's word that the work is good proves nothing, so in Daggry only code decides. A validator is that code: it takes sealed artifacts, and for a script validator a clean copy of the workspace, and yields a result and a verdict. A `verify` step names one or more validators, Daggry runs them, and you can add your own. This page defines the validator contract, the three sources of a validator, where each runs, how a workflow refers to one and how to write one. Read it if you write workflows or validators, or if you build a factory. For the steps to add one, follow [Add a validator](/guide/how-to/add-a-validator).
 
 The examples on this page are illustrative.
 
-## The invariant
+## The one rule
 
-Code runs every check and judges every result. No agent and no model grades its own work.
+Code runs every validator and judges every result. No agent and no model grades its own work.
 
-- A verdict comes from code: a validator, run by the platform, over inputs the platform sealed.
+- A verdict comes from code: a validator, run by Daggry, over inputs Daggry sealed.
 - An agent's output is a claim. A claim is an input to a validator and never a verdict.
-- A model produces a validator's input only when a person or a check that code derives bounds what the model can say. The one such case is the `judged` fact class: a verdict under a rubric a person approved for one named criterion. See [Fact classes](/reference/gates#fact-classes).
+- A model produces a validator's input only when a person or a rule that code derives bounds what the model can say. The one such case is the `judged` fact class: a verdict under a rubric a person approved for one named criterion. See [Fact classes](/reference/gates#fact-classes).
 
 ## The validator contract
 
@@ -55,7 +53,7 @@ A validator comes from one of three sources.
 
 | Source | Reference | Declared in | Runs in | Reads |
 |---|---|---|---|---|
-| Built-in | `daggry/<name>` | The platform. See [Built-in validators](#built-in-validators). | The control plane. | Sealed artifacts only. |
+| Built-in | `daggry/<name>` | Daggry. See [Built-in validators](#built-in-validators). | The control plane. | Sealed artifacts only. |
 | Script | `project/<name>` or `tenant/<name>` | The `validators` section of the [Project config](/reference/project-config#validators), or `validators.scripts` of the [Tenant config](/reference/tenant-config#validators). | The deterministic runner, on a clean copy of the workspace, as an unprivileged user, after any agent process has ended. | The clean copy. Its output is read by its [result contract](/reference/project-config#result-contracts). |
 | Native | `<namespace>/<name>` | The party that owns the namespace. The tenant admits it by name, version and digest in `validators.native` of the [Tenant config](/reference/tenant-config#validators). | With the control plane, as a pure function. | Sealed artifacts only. Never the workspace. |
 
@@ -65,7 +63,7 @@ The table lists, for each source, who decides that a validator counts and what k
 
 | Source | Who decides that it counts | What keeps it honest |
 |---|---|---|
-| Built-in | The platform ships it. The run lock pins its version. | It reads sealed inputs only. |
+| Built-in | Daggry ships it. The run lock pins its version. | It reads sealed inputs only. |
 | Script, from the tenant | The tenant, by declaring it. | It is read from a pinned version of a workspace the tenant chooses. It runs where no agent can write. |
 | Script, from the project | The tenant, in `projects[].validators.admit`. The default admits none. | It is read from the baseline, and its files are protected paths. See [What a project adds](/reference/protected-paths#what-a-project-adds). |
 | Native | The cluster admin installs it, and the tenant admits it by name, version and digest. | A loaded validator whose digest differs from the admitted one is refused. It never reads the workspace. |
@@ -98,7 +96,7 @@ The table lists what the version of a validator is and what pins it.
 
 | Source | Version | Pinned by |
 |---|---|---|
-| Built-in | The version the platform ships. | The run lock. |
+| Built-in | The version Daggry ships. | The run lock. |
 | Script, from the project | The baseline it is read from. | The run, which reads the project config from the baseline only. |
 | Script, from the tenant | `source.revision` in its declaration. | The tenant config. |
 | Native | The exact version and digest in `validators.native`. | The tenant config and the run lock. |
@@ -107,7 +105,7 @@ A breaking change to what a validator reads or to the facts it emits is a new ve
 
 ## Built-in validators
 
-The platform ships these validators. This table is the one list of them.
+Daggry ships these validators. This table is the one list of them.
 
 | Validator | Reads | Facts | Status |
 |---|---|---|---|
@@ -124,7 +122,7 @@ The table lists when each one runs.
 | `daggry/baseline-proof` | When the control plane accepts a proof step in a loop. A workflow does not name it. See [Red then green](/reference/workflow-schema#red-then-green). |
 | `daggry/criterion-coverage`, `daggry/base-relative` | When a `verify` step names them. `daggry/base-relative` makes the step measure the baseline too. |
 
-The platform also ships the two readers of the standard result contracts, `exit-code` and `document`. Every other output format is read by an adapter. See [Result contracts](/reference/project-config#result-contracts).
+Daggry also ships the two readers of the standard result contracts, `exit-code` and `document`. Every other output format is read by an adapter. See [Result contracts](/reference/project-config#result-contracts).
 
 ### Coverage and the carry rule
 
@@ -134,7 +132,7 @@ A finding carries an id when, after lowercasing the criterion id and the finding
 
 ### Baseline proof
 
-A baseline proof shows that a criterion's check says something about the work: the check fails on the baseline and passes after the work. A `red` measurement is the canonical validator's result on the baseline with a proof step's new frozen paths overlaid. It is red when the exit code is not 0 and a finding that carries the criterion id has the outcome `fail`. A measurement with no findings is not red. The table lists the findings of a proof that is not red.
+A baseline proof shows that a criterion's proof says something about the work: the proof fails on the baseline and passes after the work. A `red` measurement is the canonical validator's result on the baseline with a proof step's new frozen paths overlaid. It is red when the exit code is not 0 and a finding that carries the criterion id has the outcome `fail`. A measurement with no findings is not red. The table lists the findings of a proof that is not red.
 
 | Finding | Meaning |
 |---|---|
@@ -248,7 +246,7 @@ pub trait Validator {
 
 The list names the pages to read next.
 
-- For the keys of a `verify` step, see [Workflow schema](/reference/workflow-schema#verify).
+- For the keys of a `verify` step, see [Workflow file](/reference/workflow-schema#verify).
 - For declaring a script validator, see [Project config](/reference/project-config#validators) and [Tenant config](/reference/tenant-config#validators).
 - For the adapters and validators one kind of work adds, see [Bindings](/reference/bindings).
-- For every interface a part of the platform is defined by, see [Contracts](/reference/contracts).
+- For every interface a module is defined by, see [Module contracts](/reference/contracts).

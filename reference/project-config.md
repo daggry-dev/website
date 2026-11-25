@@ -2,11 +2,9 @@
 
 *Reference*
 
-For the idea, read [Open standards](/guide/concepts/standards) and [What an agent cannot change](/guide/concepts/protection).
+Daggry cannot check a project until it knows how: which validators to run and which paths no agent can change. The project config says so. It is one YAML file in the workspace, `.daggry/project.yaml`, and it describes what the project is, which areas it has, which validators check it and which paths it protects. It holds no workflow, no agent and no approval rule: those are in the [Tenant config](/reference/tenant-config). Read this page if you are a project owner, or if you write a tool that reads the file. To write your first one, follow [Set up a project](/guide/how-to/set-up-a-project).
 
-The project config is one YAML file in a workspace, `.daggry/project.yaml`. It describes the workspace: what the project is, which areas it has, which validators check it and which paths it protects. It names no tool, no kind of work, no workflow, no agent and no approval rule.
-
-This page defines the sections of the file, the project's script validators, the result contracts and the extension rules. It is for people who set up a workspace and for people who write a reader of the file. The table names the pages that define what this file leaves out.
+This page defines the sections of the file, the project's script validators, the result contracts and the extension rules. The table names the pages that define what this file leaves out.
 
 | Topic | Page |
 |---|---|
@@ -116,7 +114,7 @@ A path is never absolute and never holds `..`. The working directory is the work
 
 ### validators
 
-The `validators` section holds the project's script validators. A script validator is a check the project declares: an executable or a script in the workspace. `validators` is a map from a validator name to a script validator. A name starts with a lowercase letter and holds lowercase letters, digits, `-` and `_`.
+The `validators` section holds the project's script validators. A script validator is a validator the project declares: an executable or a script in the workspace. `validators` is a map from a validator name to a script validator. A name starts with a lowercase letter and holds lowercase letters, digits, `-` and `_`.
 
 A workflow refers to a validator of this section as `project/<name>`. A project's script validator counts as evidence only when the tenant admits it. See [Admission](#admission). What a validator is given, what it yields and where each source of validator runs is in [Validators](/reference/validators). The table lists the keys of a script validator.
 

@@ -2,9 +2,9 @@
 
 *Reference*
 
-For the idea, read [How Daggry works](/guide/).
+You start, follow, approve and verify runs with one command, `daggry`. This page lists every command, flag, output format, exit code and environment variable. Read it when you need the exact form of a command. For a guided first use, follow [Run your first workflow](/guide/getting-started).
 
-The `daggry` command is the tenant CLI: a client for the control plane's [HTTP API](/reference/api). This page lists every command, flag, output format, exit code and environment variable. For a guided first use, see [Getting started](/guide/getting-started).
+The `daggry` command is the tenant CLI: a client for the control plane's [HTTP API](/reference/api).
 
 ## Synopsis
 
@@ -153,7 +153,7 @@ daggry/change@1 change-1 control 2019b48c668e
 daggry/observation@1 build-restored-2 control 5be08f3a17c4 protected-restored .daggry/project.yaml
 ```
 
-The values are illustrative. The summary is a hint and can gain words. Only the kind and the ID are stable. For the ID of each kind, see [Kinds and schemas](/reference/kinds#who-seals-what).
+The values are illustrative. The summary is a hint and can gain words. Only the kind and the ID are stable. For the ID of each kind, see [Record kinds](/reference/kinds#who-seals-what).
 
 ## daggry approve
 

@@ -2,9 +2,7 @@
 
 *Reference*
 
-For the idea, read [What an agent cannot change](/guide/concepts/protection).
-
-This page lists every path and scope rule that Daggry enforces on a step: which paths are protected, how a scope is judged and how the boundary check enforces both. It is for people who write workflows and people who set up a workspace.
+An agent that can edit its validators or its instructions can make any run pass. This page lists every path and scope rule that Daggry enforces on a step: which paths are protected, how a scope is judged and how the boundary check enforces both. Read it if you write workflows or own a project and need the exact list. For the reasons, read [What an agent cannot change](/guide/concepts/protection).
 
 ## Protected paths
 
@@ -114,5 +112,5 @@ These rules hold for every pod.
 
 The list names the pages to read next.
 
-- For the `approval` fields, see [Kinds and schemas](/reference/kinds#evidence-approval-1).
+- For the `approval` fields, see [Record kinds](/reference/kinds#evidence-approval-1).
 - For the paths one kind of work adds, see [Bindings](/reference/bindings).

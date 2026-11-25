@@ -2,9 +2,7 @@
 
 *Reference*
 
-For the idea, read [Work graphs](/guide/concepts/workflows).
-
-A gate is an expression in a loop's `until` that reads facts from sealed evidence. This page defines the grammar, the contexts, every read form, the fact classes and the functions. It is for people who write loops in workflows. For where `until` sits, see [Workflow schema](/reference/workflow-schema). For the facts that validators emit, see [Validators](/reference/validators).
+A loop must stop on a fact, not on an agent's word. A gate is an expression in a loop's `until` that reads facts from sealed evidence, and this page defines its grammar, the contexts, every read form, the fact classes and the functions. Read it when you write a loop and need to know what `until` can read. For where `until` sits, see [Workflow file](/reference/workflow-schema#loop). For the facts that validators emit, see [Validators](/reference/validators). For the steps, follow [Add a loop](/guide/how-to/add-a-loop).
 
 The expressions on this page are illustrative. Where an example is refused, the page names the refusal.
 
@@ -194,7 +192,7 @@ The evaluator reports one of four messages.
 
 ### Loader errors
 
-The loader refuses an `until` that does not parse, and one that reads a field that is not `derived`. See [Workflow schema](/reference/workflow-schema).
+The loader refuses an `until` that does not parse, and one that reads a field that is not `derived`. See [Workflow file](/reference/workflow-schema).
 
 ## Examples
 
