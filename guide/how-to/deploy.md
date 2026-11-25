@@ -1,6 +1,6 @@
 # Deploy Daggry
 
-For the person who runs the cluster. This page lists what Daggry needs, what runs on your cluster, how the pieces connect, and the steps to install it. Everyone else can skip to [Getting started](/guide/getting-started).
+This page is for the person who runs the cluster. It lists what Daggry needs, what runs on your cluster, how the pieces connect, and the steps to install it. Everyone else can skip to [Getting started](/guide/getting-started).
 
 This page installs the reference implementation, which is one implementation of the contracts ([Contracts](/reference/contracts)), with the software binding, where the workspace host is GitHub. The GitHub App, the repository and the issue on this page belong to that binding. See [Bindings](/reference/bindings).
 
@@ -14,7 +14,7 @@ The commands and outputs on this page are illustrative. Placeholders in angle br
 - `kubectl` and `helm` on the machine you work from.
 - A container registry your cluster can pull from.
 - A GitHub account or organization where you can create a GitHub App.
-- A credential for the agent engine, if your workflows have agent steps.
+- A credential for the coding agent, if your workflows have agent steps.
 - A scratch repository with one open issue, to try a first run.
 
 ## What runs on your cluster
@@ -25,7 +25,7 @@ Five pieces run on your cluster. Each has one job and a narrow set of rights.
 - **Conductor.** Orders the steps of a run and schedules job attempts. It holds no key and seals nothing. In a default install it runs inside the control plane process.
 - **Launcher.** Turns each job attempt into a pod, watches it and deletes it when it ends. It runs in the control plane process by default. It can manage pods and their Secrets in the release namespace only. It cannot read Secrets and never reads the workflow.
 - **Runner.** Runs inside the pod. It runs the steps, the engine, the script validators and git, with a token for one job attempt, a GitHub token for one repository and your model credential.
-- **Engine.** The agent program that does an agent step's work. Each agent step names it with `engine: <engine>`. It reaches Daggry only through a small tool server inside the pod, which offers the step's inputs and takes the agent's claims.
+- **Engine.** The coding agent that does an agent step's work. Each agent step names it with `engine: <engine>`. It reaches Daggry only through a small tool server inside the pod, which offers the step's inputs and takes the agent's claims.
 
 A pod holds a lease that its runner keeps alive. If the lease lapses, for example because the pod was killed, the launcher deletes the pod and the conductor starts a new attempt from the last sealed commit.
 
@@ -67,7 +67,10 @@ The chart creates one control-plane Deployment with a single replica, a Service,
 
 ### Set chart values
 
-The Daggry chart takes these values. Set only the ones you need to change. The chart holds what is true of the installation. How the factory works, such as the lease length, the concurrency cap, the job images and each engine's credential, is in the [tenant config](#write-the-tenant-config).
+Set only the chart values you need to change. The chart holds what is true of the installation. How the factory works, such as the lease length, the concurrency cap, the job images and each engine's credential, is in the [tenant config](#write-the-tenant-config).
+
+::: details Every chart value
+The Daggry chart takes these values.
 
 | Key | Default | Meaning |
 |---|---|---|
@@ -84,6 +87,7 @@ The Daggry chart takes these values. Set only the ones you need to change. The c
 | `github.installation` | `""` | App installation ID. Empty means look it up per repository |
 | `github.api` | `""` | GitHub API root. Empty means the public GitHub API |
 | `resources` | `{}` | Resource requests and limits for the control plane |
+:::
 
 Give the tokens with `--set-string`, not `--set`. If you leave them empty, the chart generates 40-character tokens on first install and keeps them on upgrade.
 
@@ -111,7 +115,7 @@ Without the Secret, the control plane starts but cannot fetch issues or mint tok
 
 ## Provide the model credential
 
-Agent steps need a credential for the agent engine. You store it in a Kubernetes Secret under the key `key`, in the release namespace. The tenant config names the Secret in the engine's `credential.ref` and never holds its value. Each job pod references the Secret and passes the value to the engine process only. A job with no agent step starts without it.
+Agent steps need a credential for the coding agent. You store it in a Kubernetes Secret under the key `key`, in the release namespace. The tenant config names the Secret in the engine's `credential.ref` and never holds its value. Each job pod references the Secret and passes the value to the engine process only. A job with no agent step starts without it.
 
 ```sh
 kubectl --namespace <namespace> create secret generic <model-secret> \
@@ -122,13 +126,13 @@ A pod never renews a credential. Replace the Secret before the credential expire
 
 ## Write the tenant config
 
-The tenant config says how the factory works: the workflow catalogue, the orchestration limits, the engines and agents, the job images, the validators it admits and the projects the factory serves, with the workflows that run on each. It opens with `format: daggry/tenant@1`. The control plane holds it outside every job pod, and only a person changes it. A run records the configuration it started under, so a change applies to new runs only.
+The tenant config says how the factory works: the workflow catalogue, the orchestration limits, the engines and agents, the job images, the validators it admits, the bindings and other extensions it registers, and the workspaces the factory serves, with the binding and the workflows of each. It opens with `format: daggry/tenant@1`. The control plane holds it outside every job pod, and only a person changes it. A run records the configuration it started under, so a change applies to new runs only.
 
 For every key and a worked example, see the [Tenant config reference](/reference/tenant-config). For the idea, see [The tenant defines the factory](/guide/concepts/tenant).
 
 ## Load native validators
 
-A native validator is loaded in-process or run as a service that speaks the validator protocol, in any language. Only the person who runs the cluster installs one, and the tenant config admits it by name, version and digest. Script validators need no step here: the tenant config and each project config declare them. See the [Validators reference](/reference/validators).
+A native validator runs in-process with the control plane, or as a service that speaks the validator protocol. Only the person who runs the cluster installs one, and the tenant config admits it by name, version and digest under `validators.native`. Script validators need no installation: the tenant config and each project config declare them. See the [Validators reference](/reference/validators).
 
 ## Reach the API
 

@@ -31,17 +31,17 @@ Stop when the last handover is something you can accept or reject. In the softwa
 
 For each handover, ask whether a script can say yes or no. A script can check that a file exists, a count matches, every link resolves or a field is present. A script cannot say whether prose reads well or a plan is the right plan.
 
-- If code can decide it, make it a validator. A gate can read the result of the canonical validator.
+- If code can decide it, make it a validator. A gate can read the facts that a validator derives.
 - If only a person can decide it, make it a `human` step.
 - If an agent can do it but nothing can check it, keep it small and put a person after it.
 
-Gates read only facts that code computed, never what an agent claims. So every pass or fail that moves the run must come from a validator. Use a built-in validator where one fits. Otherwise write a script validator: a script in the workspace that the project config, `.daggry/project.yaml`, declares, or one that the tenant config declares for every project. The `verify` step names the validators it runs, and it takes a project's validators from the baseline, the version of the workspace the run started from, so no step can weaken them. See [Validators](/guide/concepts/validators) and [Project config](/reference/project-config).
+Gates read only facts that code computed, never what an agent claims. So every pass or fail that moves the run must come from a validator. Use a built-in validator where one fits. Otherwise write a script validator: a script in the workspace that the project config, `.daggry/project.yaml`, declares, or one that the tenant config declares for every project. The `verify` step names the validators it runs, and it takes a project's validators from the baseline, the version of the workspace the run started from, so no step can weaken them. See [Validators: the extension point](/guide/concepts/validators) and [Project config](/reference/project-config).
 
 ## 3. Pick a step kind for each piece of work
 
-Use an `agent` step for judgment or writing, and a `command` step for a fixed script such as a scan or a build. Use `verify` to run your validators on the sealed result, `human` for a decision by a person, and `effect` to hand the result over. In the software binding, `do: open-pr` opens a pull request.
+Use an `agent` step for judgement or writing, and a `command` step for a fixed script such as a scan or a build. Use `verify` to run your validators on the sealed result, `human` for a decision by a person, and `effect` to hand the result over. In the software binding, `do: open-pr` opens a pull request.
 
-Put the judgment in an `agent` step and the checking in `verify`. An agent never judges its own work.
+Put the judgement in an `agent` step and the checking in `verify`. An agent never judges its own work.
 
 ## 4. Choose the gate and the loop limit
 
@@ -68,7 +68,7 @@ Wait with `approval` after the plan and before work starts. Wait with `input-nee
 
 ## Worked example: translate documentation
 
-The work: translate the pages named in a work item into Danish. A person owns the tone, and code can check structure. This example and its file are illustrative, and `engine: <engine>` names the agent engine a step uses. The pages live in a repository, so the example hands its result over with the software binding's `open-pr` effect. See [Bindings](/reference/bindings).
+The work: translate the pages named in a work item into Danish. A person owns the tone, and code can check structure. This example and its file are illustrative, and `engine: <engine>` names the coding-agent engine a step uses. The pages live in a repository, so the example hands its result over with the software binding's `open-pr` effect. See [Bindings](/reference/bindings).
 
 The handovers are three. The work item becomes a list of pages, which is a `plan`. Each page becomes a translated file, which is a `change`. All the files become a pull request.
 
@@ -78,7 +78,7 @@ Code and people split the questions as follows.
 - Code decides whether each translated file exists, has the same headings and links as the source, and uses the approved glossary terms.
 - A person decides whether it reads well in Danish, before the pull request.
 
-The check is a script validator, `scripts/check-translation.sh`, which the project config declares and names as canonical. It writes a result document with one passing finding for each translated page, and the finding's id is the page's criterion id. For the result document, see [Project config](/reference/project-config).
+The check is a script validator, `scripts/check-translation.sh`, which the project config declares under `validators` and names in `verification.canonical`. Its result contract is `document`: it writes a result document with one passing finding for each translated page, and the finding's id is the page's criterion id. For the result document, see [Result document](/reference/project-config#result-document).
 
 The loop walks the plan. One `agent` step translates the current page and one `verify` step runs the `project` validator and the built-in `daggry/criterion-coverage`. The gate is `verdict.all_covered`. If a work item names at most 12 pages, `max: 16` leaves room for four repeats. The plan step writes nothing, and the translate step writes only `translations/da/**`.
 
@@ -137,7 +137,7 @@ Before you write the file, answer each question.
 
 - Can you name the artifact at every handover?
 - Does a validator decide every pass or fail that moves the run?
-- Is every `max` above the number of items you expect?
+- Is every `max` greater than the number of items you expect?
 - Does every step have the smallest scope that works?
 - Do you decide at the points where code cannot?
 

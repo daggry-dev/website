@@ -46,10 +46,10 @@ The `scope` key says what a step may write. `anywhere` allows every path except 
 
 ## 2. Start a run
 
-To start a run, pass the workflow, the workspace and the work item. In the software binding they are a repository and an issue.
+To start a run, pass the workflow, the workspace and the work item. In the software binding the workspace is a repository, named `<owner>/<name>`, and the work item is an issue, named by its URL.
 
 ```sh
-daggry run --workflow first.yaml --repo <owner>/<name> --item https://github.com/<owner>/<name>/issues/<n>
+daggry run --workflow first.yaml --workspace <owner>/<name> --item https://github.com/<owner>/<name>/issues/<n>
 ```
 
 The command prints the run ID and nothing else.
@@ -125,6 +125,6 @@ The command recomputes every fingerprint and signature on your machine. If anyth
 ## Next steps
 
 - To add an agent step, a `verify` step with its validators and a bounded loop, read [Write a workflow](/guide/how-to/write-a-workflow).
-- To understand what you just ran, read [Why you can trust a run](/guide/concepts/trust) and [Where it runs](/guide/concepts/architecture).
+- To understand what you ran, read [Why you can trust a run](/guide/concepts/trust) and [Where it runs](/guide/concepts/architecture).
 - To see the parts Daggry is built from, read [The modules](/guide/concepts/modules) and [Open standards](/guide/concepts/standards).
 - To look up a flag or an exit code, read the [CLI reference](/reference/cli).

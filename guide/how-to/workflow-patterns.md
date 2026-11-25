@@ -1,6 +1,6 @@
 # Workflow patterns
 
-You rarely need to design a workflow from nothing. Pick the pattern below that matches your goal, copy its file and change the paths and scripts. Each pattern shows when to use it, what code checks, a sketch of the steps and the complete file.
+You rarely need to design a workflow from nothing. Pick the pattern that matches your goal, copy its file and change the paths and scripts. Each pattern shows when to use it, what code checks, a sketch of the steps and the complete file.
 
 The patterns are in two groups. The first group is work outside software: a document review and a recurring data refresh. The second group uses the software binding, where the workspace is a repository and the result is handed over as a pull request. A binding maps the standards onto one kind of work and its tools. See [Bindings](/reference/bindings).
 
@@ -16,7 +16,7 @@ This table maps a goal to a pattern.
 | Refresh a dataset and release it on a person's yes | Refresh data and approve before publish | Any work |
 | Deliver a change that a failing check proves | Ship a change from an issue | Software binding |
 | Produce a document with sources | Research a question | Software binding |
-| Apply the same judgment to many items | Process a batch of items | Software binding |
+| Apply the same judgement to many items | Process a batch of items | Software binding |
 | Change many files safely | Migrate files in bounded batches | Software binding |
 | Edit content that a person must read | Update documentation | Software binding |
 | Prepare a release | Run a gated release check | Software binding |
@@ -28,13 +28,13 @@ Patterns combine. For example, add the `inventory` command from the migration pa
 
 A sketch shows steps in order. `[agent]`, `[command]`, `[verify]` and `[effect]` are steps of that kind. `(human)` is a wait for a person. `{ ... }` is a loop that repeats once for each criterion of the sealed plan.
 
-Every `verify` step names the validators that judge the work, in `validators`. In these files the list holds `project`, the project's verification: the validator that `verification.canonical` names in `.daggry/project.yaml`, with the supporting validators and thresholds that file lists. A run reads that file from the baseline, the version of the workspace the run starts from, and the tenant config admits the project's validators as evidence. The two patterns for any work add a script validator that the tenant declares, named `tenant/<name>`. A `verify` step is green when every validator it names passes. See [Validators](/guide/concepts/validators) and [Project config](/reference/project-config).
+Every `verify` step names the validators that judge the work, in `validators`. In these files the list holds `project`, the project's verification: the validator that `verification.canonical` names in `.daggry/project.yaml`, with the supporting validators and thresholds that file lists. A run reads that file from the baseline, the version of the workspace the run starts from. The patterns assume that the tenant config admits the project's validators as evidence, in `projects[].validators.admit`. The two patterns for any work add a script validator that the tenant declares, named `tenant/<name>`. A `verify` step is green when every validator it names passes. See [Validators: the extension point](/guide/concepts/validators) and [Project config](/reference/project-config).
 
-A loop ends when its `until` gate holds. The gate `verdict.all_covered` reads a fact of the built-in validator `daggry/criterion-coverage`, so the `verify` step of each loop names it. The fact holds when every plan criterion has a passing finding that carries its id. Your validator reports those findings in a result document: one finding for each criterion it accepts, with the criterion id as the finding's id. In the software binding a finding is a test, and an adapter reads the test report. For the result document, see [Project config](/reference/project-config). For the adapters, see [Bindings](/reference/bindings).
+A loop ends when its `until` gate holds. The gate `verdict.all_covered` reads a fact of the built-in validator `daggry/criterion-coverage`, so the `verify` step of each loop names it. The fact holds when every plan criterion has a passing finding that carries its id. Your validator reports those findings in a result document: one finding for each criterion it accepts, with the criterion id as the finding's id. In the software binding a finding is a test, and an adapter reads the test report. For the result document, see [Result document](/reference/project-config#result-document). For the adapters, see [Bindings](/reference/bindings#adapters).
 
-Each loop's `max` limits the iterations of the whole loop. Set it above the number of items you expect.
+Each loop's `max` limits the iterations of the whole loop. Set it greater than the number of items you expect.
 
-The files are illustrative. Each one opens with the required header, `format: daggry/workflow@1`. In every `agent` step, `engine: <engine>` names the agent engine the step uses. Paths such as `reports/**` and scripts such as `scripts/audit.sh` are examples. Replace them with yours.
+The files are illustrative. Each one opens with the required header, `format: daggry/workflow@1`. In every `agent` step, `engine: <engine>` names the coding-agent engine the step uses. Paths such as `reports/**` and scripts such as `scripts/audit.sh` are examples. Replace them with yours.
 
 ## Patterns for any work
 
@@ -139,7 +139,7 @@ In these patterns the workspace is a repository, the work item is an issue and t
 
 **Use when** you want to turn an issue into a pull request with tests written first. It is the delivery workflow.
 
-**Code checks:** that each new test fails before the agent implements it, then that it passes on a clean copy of the repository. The `project` validator is the project's test suite.
+**Code checks:** The baseline proof: each new test fails on the baseline before the agent implements it, then passes on a clean copy of the workspace. The `project` validator is the project's test suite.
 
 ```text
 [agent plan] -> (human approves plan)
@@ -147,7 +147,7 @@ In these patterns the workspace is a repository, the work item is an issue and t
   -> (human, only if the loop runs out) -> [effect open-pr]
 ```
 
-The tests freeze once proven. See [Red, then green](/guide/how-to/write-a-workflow#red-then-green).
+The `test` step is the proof step: its `freeze` key freezes the test files when the step is sealed. See [Red, then green](/guide/how-to/write-a-workflow#red-then-green).
 
 ::: details Complete file
 ```yaml
@@ -177,7 +177,7 @@ steps:
           engine: <engine>
           prompt: "Write a failing test for the current criterion. Put the criterion id in the test name."
           outputs: [change]
-          tests: ["tests/**"]
+          freeze: ["tests/**"]
           scope: ["tests/**"]
         - id: implement
           kind: agent
@@ -203,14 +203,14 @@ steps:
 
 **Use when** the product of the work is a document and every claim needs a source. Code checks that the sources exist. A person judges whether the report answers the question.
 
-**Code checks:** Your canonical check, for example that every paragraph cites a source and every link resolves.
+**Code checks:** Your canonical validator, for example that every paragraph cites a source and every link resolves.
 
 ```text
 [agent plan] -> (human approves plan) -> [agent write report]
   -> [verify sources] -> (human reviews report) -> [effect open-pr]
 ```
 
-Your canonical check can fail a report that has an uncited paragraph or a dead link. Approval at `review-report` binds to the sealed report.
+Your canonical validator fails a report that has an uncited paragraph or a dead link. Approval at `review-report` binds to the sealed report.
 
 ::: details Complete file
 ```yaml
@@ -252,7 +252,7 @@ steps:
 
 **Use when** you want to work through a list one item at a time, such as triaging a backlog. The plan turns the list into criteria, and the loop handles one per iteration. This workflow writes a triage note for each item and opens a pull request with the notes.
 
-**Code checks:** Your check command, for example that each note has a label, a priority and a reason.
+**Code checks:** Your canonical validator, for example that each note has a label, a priority and a reason.
 
 ```text
 [agent plan] -> (human approves plan)
@@ -260,7 +260,7 @@ steps:
   -> (human, only if the loop runs out) -> [effect open-pr]
 ```
 
-Your check command accepts a note only when it has all three parts. A note that fails the check repeats the same item, up to the bound in `max`. The pull request is how the labels reach a person for review.
+Your canonical validator accepts a note only when it has all three parts. A note that fails the check repeats the same item, up to the bound in `max`. The pull request is how the labels reach a person for review.
 
 ::: details Complete file
 ```yaml
@@ -309,7 +309,7 @@ steps:
 
 **Use when** you have a large mechanical change that you want to land in small, checked pieces. A command lists the files, the plan groups them into batches, and the loop migrates one batch per iteration.
 
-**Code checks:** Your check command on each batch, for example that the build and tests pass.
+**Code checks:** Your canonical validator on each batch, for example that the build and tests pass.
 
 ```text
 [command inventory] -> [agent plan batches] -> (human approves plan)
@@ -415,7 +415,7 @@ steps:
   -> [verify] -> (human signs off) -> [effect open-pr]
 ```
 
-Each `verify` step runs the same canonical check, read from the commit the run started from. Make that check cover both the build output and the changelog format. A failed check stops the run before the sign-off.
+Each `verify` step runs the same canonical validator, read from the baseline. Make that validator cover both the build output and the changelog format. A failed `verify` step stops the run before the sign-off.
 
 ::: details Complete file
 ```yaml
