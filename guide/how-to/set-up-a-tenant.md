@@ -55,6 +55,8 @@ extensions:
       version: "1.0.0"
 ```
 
+<FileTree kind="tenant" />
+
 ## Write your tenant config
 
 Each step answers one question about how your team works. Every section is optional, so add them one at a time.

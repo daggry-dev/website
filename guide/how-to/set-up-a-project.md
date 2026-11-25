@@ -18,6 +18,8 @@ verification:
   canonical: review
 ```
 
+<FileTree kind="project" />
+
 1. Write the script, here `check.sh`, in the project. It looks at the files and exits with 0 when the work is good.
 2. Create `.daggry/project.yaml` with the content shown. `validators` names each script, and `verification.canonical` picks the main validator.
 3. Commit both files. A run reads the project config from the version of the workspace it starts from, so the file applies from the next run.

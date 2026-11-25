@@ -22,13 +22,9 @@ A project config never names a workflow. The project says how to check it and wh
 
 Each file has one owner, so you know whom to ask for a change.
 
-| File | Who writes it | Where it lives |
-|---|---|---|
-| Workflow | You, or whoever designs the work | A YAML file you pass to `daggry run`, or one the tenant offers |
-| Project config | The project owner | `.daggry/project.yaml` in the project |
-| Tenant config | The tenant admin | One YAML file for the tenant |
+<ConfigFiles />
 
-The tenant config wins over the project config, which wins over the workflow; an agent can change none of them. A project or a workflow can add limits. Only a person can remove one.
+A project or a workflow can add limits. Only a person can remove one.
 
 A new way of working is an edit to one file, not a new release.
 
