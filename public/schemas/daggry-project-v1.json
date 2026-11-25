@@ -24,25 +24,13 @@
         "name": {
           "$ref": "#/$defs/name"
         },
-        "languages": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/label"
-          }
-        },
-        "toolchains": {
+        "tools": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/label"
           }
         },
         "setup": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/command"
-          }
-        },
-        "build": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/command"
@@ -66,12 +54,12 @@
         "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
       }
     },
-    "checks": {
+    "validators": {
       "type": "object",
       "additionalProperties": false,
       "patternProperties": {
         "^[a-z][a-z0-9_-]*$": {
-          "$ref": "#/$defs/check"
+          "$ref": "#/$defs/validator"
         },
         "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
       }
@@ -84,12 +72,12 @@
       },
       "properties": {
         "canonical": {
-          "$ref": "#/$defs/checkName"
+          "$ref": "#/$defs/validatorName"
         },
         "also": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/checkName"
+            "$ref": "#/$defs/validatorName"
           },
           "uniqueItems": true
         },
@@ -102,11 +90,12 @@
               "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
             },
             "properties": {
-              "check": {
-                "$ref": "#/$defs/checkName"
+              "validator": {
+                "$ref": "#/$defs/validatorName"
               },
               "read": {
-                "$ref": "#/$defs/name"
+                "type": "string",
+                "pattern": "^(exit_code|findings|findings\\.(pass|fail|error|skip)|metrics\\.[a-z][a-z0-9_]*)$"
               },
               "min": {
                 "type": "number"
@@ -116,7 +105,7 @@
               }
             },
             "required": [
-              "check",
+              "validator",
               "read"
             ],
             "anyOf": [
@@ -163,7 +152,7 @@
       "type": "string",
       "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
     },
-    "checkName": {
+    "validatorName": {
       "type": "string",
       "pattern": "^[a-z][a-z0-9_-]*$"
     },
@@ -226,7 +215,7 @@
         }
       ]
     },
-    "check": {
+    "validator": {
       "type": "object",
       "additionalProperties": false,
       "patternProperties": {
@@ -237,7 +226,7 @@
           "$ref": "#/$defs/command"
         },
         "kind": {
-          "$ref": "#/$defs/name"
+          "$ref": "#/$defs/label"
         },
         "result": {
           "type": "object",
@@ -251,11 +240,7 @@
                 {
                   "enum": [
                     "exit-code",
-                    "libtest-lines",
-                    "junit-xml",
-                    "tap",
-                    "sarif",
-                    "json"
+                    "document"
                   ]
                 },
                 {
@@ -266,49 +251,10 @@
             },
             "path": {
               "$ref": "#/$defs/path"
-            },
-            "schema": {
-              "$ref": "#/$defs/name"
             }
           },
           "required": [
             "contract"
-          ],
-          "allOf": [
-            {
-              "if": {
-                "properties": {
-                  "contract": {
-                    "const": "junit-xml"
-                  }
-                },
-                "required": [
-                  "contract"
-                ]
-              },
-              "then": {
-                "required": [
-                  "path"
-                ]
-              }
-            },
-            {
-              "if": {
-                "properties": {
-                  "contract": {
-                    "const": "json"
-                  }
-                },
-                "required": [
-                  "contract"
-                ]
-              },
-              "then": {
-                "required": [
-                  "schema"
-                ]
-              }
-            }
           ]
         },
         "timeout": {
@@ -329,7 +275,7 @@
             "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
           },
           "properties": {
-            "toolchains": {
+            "tools": {
               "type": "array",
               "items": {
                 "$ref": "#/$defs/label"

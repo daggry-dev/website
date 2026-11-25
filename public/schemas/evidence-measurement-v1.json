@@ -1,13 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "evidence/measurement@1",
-  "title": "evidence/measurement@1: what a measuring step recorded",
+  "title": "evidence/measurement@1: the result of one check on one version of the workspace",
   "type": "object",
   "required": [
     "label",
     "revision",
-    "exit_code",
-    "tests"
+    "exit_code"
   ],
   "additionalProperties": false,
   "properties": {
@@ -93,8 +92,13 @@
             "enum": [
               "pass",
               "fail",
-              "error"
+              "error",
+              "skip"
             ]
+          },
+          "locator": {
+            "type": "string",
+            "minLength": 1
           },
           "path": {
             "type": "string",
@@ -105,6 +109,16 @@
           }
         }
       }
+    },
+    "metrics": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "type": "number"
+      },
+      "x-fact-class": "derived"
     }
   }
 }

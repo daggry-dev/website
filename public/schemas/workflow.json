@@ -27,9 +27,10 @@
       "type": "string",
       "minLength": 1
     },
-    "checkName": {
+    "validatorRef": {
       "type": "string",
-      "pattern": "^[a-z][a-z0-9_-]*$"
+      "pattern": "^(project|[A-Za-z0-9_-]+/[a-z][a-z0-9_-]*)$",
+      "description": "project, or daggry/<name>, tenant/<name>, project/<name> or <namespace>/<name>."
     },
     "scopeEntry": {
       "type": "string",
@@ -213,7 +214,7 @@
         "engine": {
           "type": "string",
           "minLength": 1,
-          "description": "The identifier of a coding-agent engine that the tenant registers."
+          "description": "The identifier of an agent engine that the tenant registers."
         },
         "prompt": {
           "type": "string"
@@ -223,6 +224,13 @@
           "minLength": 1
         },
         "outputs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "freeze": {
           "type": "array",
           "items": {
             "type": "string",
@@ -239,12 +247,19 @@
         "scope": {
           "$ref": "#/$defs/scope"
         }
+      },
+      "not": {
+        "required": [
+          "freeze",
+          "tests"
+        ]
       }
     },
     "verify": {
       "required": [
         "id",
-        "kind"
+        "kind",
+        "validators"
       ],
       "additionalProperties": false,
       "patternProperties": {
@@ -255,8 +270,13 @@
           "$ref": "#/$defs/id"
         },
         "kind": true,
-        "check": {
-          "$ref": "#/$defs/checkName"
+        "validators": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/validatorRef"
+          }
         }
       }
     },
@@ -299,9 +319,9 @@
         },
         "kind": true,
         "do": {
-          "enum": [
-            "open-pr"
-          ]
+          "type": "string",
+          "pattern": "^([A-Za-z0-9_-]+/)?[a-z][a-z0-9_-]*$",
+          "description": "The name of an effect that the tenant registers."
         }
       }
     },

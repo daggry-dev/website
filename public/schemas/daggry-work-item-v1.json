@@ -1,14 +1,37 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "daggry/work-item@1",
-  "title": "daggry/work-item@1: the repository and the issue a run is for",
+  "title": "daggry/work-item@1: the workspace and the request a run is for",
   "type": "object",
-  "required": [
-    "repository",
-    "issue"
-  ],
   "additionalProperties": false,
   "properties": {
+    "workspace": {
+      "type": "string",
+      "minLength": 1,
+      "x-fact-class": "claimed"
+    },
+    "request": {
+      "x-fact-class": "claimed",
+      "type": "object",
+      "required": [
+        "ref",
+        "title",
+        "body"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        }
+      }
+    },
     "repository": {
       "type": "string",
       "pattern": "^[^/\\s]+/[^/\\s]+$",
@@ -41,5 +64,27 @@
         }
       }
     }
-  }
+  },
+  "oneOf": [
+    {
+      "required": [
+        "workspace",
+        "request"
+      ],
+      "properties": {
+        "repository": false,
+        "issue": false
+      }
+    },
+    {
+      "required": [
+        "repository",
+        "issue"
+      ],
+      "properties": {
+        "workspace": false,
+        "request": false
+      }
+    }
+  ]
 }

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "daggry/change@1",
-  "title": "daggry/change@1: a commit, its paths and the frozen test set",
+  "title": "daggry/change@1: a version of the workspace, the paths it changed and the frozen set",
   "type": "object",
   "required": [
     "revision",
@@ -12,7 +12,7 @@
   "properties": {
     "revision": {
       "type": "string",
-      "pattern": "^[0-9a-f]{40}$",
+      "minLength": 1,
       "x-fact-class": "claimed"
     },
     "paths": {
