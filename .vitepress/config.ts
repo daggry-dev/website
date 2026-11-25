@@ -75,7 +75,7 @@ export default defineConfig({
         ] },
         { text: 'Specification', items: [
           { text: 'Open formats', link: '/reference/open-formats' },
-          { text: 'Evidence record format (Envelope)', link: '/reference/envelope' },
+          { text: 'Evidence record format', link: '/reference/envelope' },
           { text: 'Record kinds', link: '/reference/kinds' },
           { text: 'Module contracts', link: '/reference/contracts' },
           { text: 'Conformance', link: '/reference/conformance' },
