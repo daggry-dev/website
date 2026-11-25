@@ -2,7 +2,7 @@
 
 For the person who runs the cluster. This page lists what Daggry needs, what runs on your cluster, how the pieces connect, and the steps to install it. Everyone else can skip to [Getting started](/guide/getting-started).
 
-Daggry runs on Kubernetes as ordinary pods. Job pods run in the same namespace as the release. Every connection is outbound from the pod or the launcher, and nothing dials into a pod. For how the parts fit, see [Where it runs](/guide/concepts/architecture). For availability, see the [Roadmap](/roadmap).
+Daggry runs on Kubernetes as ordinary pods. Job pods run in the same namespace as the release. Every connection is outbound from the pod or the launcher, and nothing dials into a pod. For how the parts fit, see [Where it runs](/guide/concepts/architecture).
 
 The commands and outputs on this page are illustrative. Placeholders in angle brackets, such as `<namespace>`, stand for values you choose.
 
@@ -35,7 +35,7 @@ The CLI on your machine talks to the control plane's API. The control plane talk
 
 The steps are the same whichever way you obtain the images.
 
-1. Build or obtain the three images: the control plane, the runner and the default job image. Push them to your registry. Reference each one by digest.
+1. Build or obtain the images: the control plane, the runner and each job image the tenant config offers. Push them to your registry. Reference each one by digest.
 2. Create a namespace for the release.
 
    ```sh
@@ -44,8 +44,9 @@ The steps are the same whichever way you obtain the images.
 
 3. Create the GitHub App and give the chart its credentials. See [Connect the GitHub App](#connect-the-github-app).
 4. Create the model credential Secret. See [Provide the model credential](#provide-the-model-credential).
-5. Install the Daggry chart with your values.
-6. Wait for the control plane.
+5. Write the tenant config. See [Write the tenant config](#write-the-tenant-config).
+6. Install the Daggry chart with your values.
+7. Wait for the control plane.
 
    ```sh
    kubectl --namespace <namespace> rollout status deployment/<fullname>
@@ -57,22 +58,19 @@ The steps are the same whichever way you obtain the images.
    deployment "<fullname>" successfully rolled out
    ```
 
-7. Reach the API. See [Reach the API](#reach-the-api).
-8. Install the CLI and set `DAGGRY_URL` and `DAGGRY_TOKEN`. See [Install the CLI](#install-the-cli).
+8. Reach the API. See [Reach the API](#reach-the-api).
+9. Install the CLI and set `DAGGRY_URL` and `DAGGRY_TOKEN`. See [Install the CLI](#install-the-cli).
 
 The chart creates one control-plane Deployment with a single replica, a Service, a data volume and two token Secrets.
 
 ### Set chart values
 
-The Daggry chart takes these values. Set only the ones you need to change.
+The Daggry chart takes these values. Set only the ones you need to change. The chart holds what is true of the installation. How the factory works, such as the lease length, the concurrency cap, the job images and each engine's credential, is in the [tenant config](#write-the-tenant-config).
 
 | Key | Default | Meaning |
 |---|---|---|
 | `images.controlPlane` | placeholder | Control-plane and launcher image, by digest |
 | `images.runnerInstall` | placeholder | Runner image, by digest |
-| `images.job` | placeholder | Default image for every job, by digest |
-| `leaseSeconds` | `60` | Length of a job lease |
-| `concurrencyCap` | `1` | Global cap on concurrent attempts |
 | `controlPlane.port` | `8080` | API port of the Service and probes |
 | `controlPlane.url` | `""` | In-cluster URL the runners use. Empty means the Service's cluster address |
 | `storage.className` | `local-path` | Storage class of the data volume |
@@ -80,7 +78,6 @@ The Daggry chart takes these values. Set only the ones you need to change.
 | `launcher.separatePod` | `false` | `true` runs the launcher as its own pod |
 | `tokens.tenantToken` | `""` | The tenant token. Empty means generate one on first install |
 | `tokens.launcherToken` | `""` | Launcher token. Empty means generate one on first install |
-| `modelSecret` | a Secret name | Secret that holds the model credential |
 | `github.secret` | a Secret name | Secret that holds the GitHub App ID and key |
 | `github.installation` | `""` | App installation ID. Empty means look it up per repository |
 | `github.api` | `""` | GitHub API root. Empty means the public GitHub API |
@@ -112,7 +109,7 @@ Without the Secret, the control plane starts but cannot fetch issues or mint tok
 
 ## Provide the model credential
 
-Agent steps need a credential for the coding-agent engine. You store it in a Kubernetes Secret under the key `key`, in the release namespace. The name must match the chart value `modelSecret`. Each job pod references the Secret and passes the value to the engine process only. A job with no agent step starts without it.
+Agent steps need a credential for the coding-agent engine. You store it in a Kubernetes Secret under the key `key`, in the release namespace. The tenant config names the Secret in the engine's `credential.ref` and never holds its value. Each job pod references the Secret and passes the value to the engine process only. A job with no agent step starts without it.
 
 ```sh
 kubectl --namespace <namespace> create secret generic <model-secret> \
@@ -120,6 +117,12 @@ kubectl --namespace <namespace> create secret generic <model-secret> \
 ```
 
 A pod never renews a credential. Replace the Secret before the credential expires.
+
+## Write the tenant config
+
+The tenant config says how the factory works: the workflow catalogue, the orchestration limits, the engines and agents, the job images and the repositories the factory serves, with the workflows that run on each. It opens with `format: daggry/tenant@1`. The control plane holds it outside every job pod, and only a person changes it. A run records the configuration it started under, so a change applies to new runs only.
+
+For every key and a worked example, see the [Tenant config reference](/reference/tenant-config). For the idea, see [The tenant defines the factory](/guide/concepts/tenant).
 
 ## Reach the API
 

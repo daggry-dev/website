@@ -30,7 +30,7 @@ daggry verify
 daggry: entry 2: digest does not match the content
 ```
 
-The trail is tamper-evident, not tamper-proof. `daggry verify` takes the public key from the same control plane that serves the trail. So it proves this: nobody without the seal key changed, reordered or removed a record in the middle of the trail. Dropping the newest records, or someone with the seal key rewriting everything, is caught only against a signed head kept outside the cluster (see the [Roadmap](/roadmap) for its status). For every field, see the [envelope reference](/reference/envelope).
+The trail is tamper-evident, not tamper-proof. `daggry verify` takes the public key from the same control plane that serves the trail. So it proves this: nobody without the seal key changed, reordered or removed a record in the middle of the trail. Dropping the newest records, or someone with the seal key rewriting everything, is caught only against a signed head kept outside the cluster. For every field, see the [envelope reference](/reference/envelope).
 
 ## Checks: a model cannot be talked into a pass
 

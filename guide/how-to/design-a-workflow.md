@@ -31,11 +31,11 @@ Stop when the last handover is something you can accept or reject. For most work
 
 For each handover, ask whether a script can say yes or no. A script can check that a file exists, a count matches, every link resolves, a field is present or a build passes. A script cannot say whether prose reads well or a plan is the right plan.
 
-- If code can decide it, put it in your `verify.test` command. A gate can read the result.
+- If code can decide it, make it a check in the project config. A gate can read the result of the canonical check.
 - If only a person can decide it, make it a `human` step.
 - If an agent can do it but nothing can check it, keep it small and put a person after it.
 
-Gates read only facts that code computed, never what an agent claims. So every pass or fail that moves the run must come from a check you wrote. Write the check as a script in the repository. The `verify` step runs it from the base commit, so no step can weaken it. See [Project config](/reference/project-config#the-profile).
+Gates read only facts that code computed, never what an agent claims. So every pass or fail that moves the run must come from a check you wrote. Write the check as a script in the repository and name it in the project config, `.daggry/project.yaml`. The `verify` step runs the canonical check from the base commit, so no step can weaken it. See [Project config](/reference/project-config).
 
 ## 3. Pick a step kind for each piece of work
 
@@ -78,12 +78,13 @@ Code and people split the questions as follows.
 - Code decides whether each translated file exists, has the same headings and links as the source, and uses the approved glossary terms.
 - A person decides whether it reads well in Danish, before the pull request.
 
-The check is a script, `scripts/check-translation.sh`, named in `verify.test`. It reports one passing test for each translated page, named with the page's criterion id. The exact lines it prints are in the [`libtest-lines` contract](/reference/project-config#libtest-lines).
+The check is a script, `scripts/check-translation.sh`, which the project config names as the canonical check. It reports one passing test for each translated page, named with the page's criterion id. The exact lines it prints are in the [`libtest-lines` contract](/reference/project-config#libtest-lines).
 
 The loop walks the plan. One `agent` step translates the current page and one `verify` step runs the check. The gate is `verdict.all_covered`. If an issue names at most 12 pages, `max: 16` leaves room for four repeats. The plan step writes nothing, and the translate step writes only `translations/da/**`.
 
 ::: details The complete file
 ```yaml
+format: daggry/workflow@1
 steps:
   - id: plan
     kind: agent

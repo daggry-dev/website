@@ -32,7 +32,7 @@ daggry: entry 2: prev does not match the link of the entry before it
 
 For each mismatch reason and what it means, see [Verification errors](/reference/envelope#verification-errors). For a line that starts with `refused:` or `transport failure:`, see [Error output](/reference/cli#error-output).
 
-A `prev`, digest, key or signature failure means the record was altered or damaged. Treat the affected entry and every later one as untrusted. A `refused` or `transport failure` message means the check could not finish, for example because a blob does not exist or the CLI could not reach the control plane. That is different from a mismatch. Fix the connection and run the command again.
+A `prev`, digest, key or signature failure means the record was altered or damaged. Treat the affected entry and every later one as untrusted. A `refused` or `transport failure` message means the check could not finish, for example because a blob is missing or the CLI could not reach the control plane. That is different from a mismatch. Fix the connection and run the command again.
 
 ## Check a record against its schema
 
@@ -89,13 +89,13 @@ The CLI fetches raw data and recomputes the result on your machine.
 4. It checks each entry's signature against the public key.
 5. It fetches every blob the log references, hashes it and compares the hash with the recorded digest. The blobs include the workflow file of each run.
 
-`daggry verify` takes the public key from the same control plane that serves the trail. So it proves this: nobody without the seal key changed, reordered or removed a record in the middle of the trail. Dropping the newest records, or someone with the seal key rewriting everything, is caught only against a signed head kept outside the cluster (see the [Roadmap](/roadmap) for its status).
+`daggry verify` takes the public key from the same control plane that serves the trail. So it proves this: nobody without the seal key changed, reordered or removed a record in the middle of the trail. Dropping the newest records, or someone with the seal key rewriting everything, is caught only against a signed head kept outside the cluster.
 
 For how sealing works, see [Why you can trust a run](/guide/concepts/trust).
 
 ## Know what the command is not
 
-The `verify` command is not the `verify` step of a workflow. The step measures a clean copy of the code with the project's test command while a run is in progress. The command checks the sealed record after the fact. For the step, see [Write a workflow](/guide/how-to/write-a-workflow).
+The `verify` command is not the `verify` step of a workflow. The step measures a clean copy of the code with the project's canonical check while a run is in progress. The command checks the sealed record after the fact. For the step, see [Write a workflow](/guide/how-to/write-a-workflow).
 
 The check proves that the record is intact and was signed by the key. It does not prove that the work in a run was good. For that, read the gates and the measurements in the log with `daggry logs <run-id>`.
 

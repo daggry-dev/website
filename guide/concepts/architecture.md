@@ -44,7 +44,6 @@ For example, `daggry verify` recomputes every fingerprint and signature itself. 
 
 - To install the parts on your cluster, follow [Deploy Daggry](/guide/how-to/deploy).
 - To see each module's job and interface, read [The modules](/guide/concepts/modules).
-- For which modules exist today, see the [Roadmap](/roadmap).
 - To see what the control plane seals, read [Why you can trust a run](/guide/concepts/trust).
 - To see how steps are ordered, read [Work graphs](/guide/concepts/workflows).
 - For every command and endpoint, see the [CLI](/reference/cli) and [HTTP API](/reference/api) references.

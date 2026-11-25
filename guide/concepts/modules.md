@@ -35,7 +35,7 @@ The conductor's interface is the job attempt: the steps to run, the commit to st
 
 The control plane is the one backend. It holds the signing key and the key for the repository host. It takes in claims, runs the checks, seals the results and serves the API. It keeps each tenant's state, including the tenant's evidence trail.
 
-There is one control plane so that there is one place where a claim becomes evidence. A key that exists in one module can be guarded in one module.
+There is one control plane so that there is one place where a claim becomes evidence. A key held in one module can be guarded in one module.
 
 Its interfaces are the [HTTP API](/reference/api) and the evidence standard. See [Where it runs](/guide/concepts/architecture).
 
@@ -74,4 +74,3 @@ Nothing in the platform is specific to one kind of work, one agent, one cloud or
 - To read what each standard says, see [Open standards](/guide/concepts/standards).
 - To see what the tenant config captures, read [The tenant defines the factory](/guide/concepts/tenant).
 - To see where the modules run, read [Where it runs](/guide/concepts/architecture).
-- For which modules exist today, see the [Roadmap](/roadmap).

@@ -10,7 +10,7 @@ Daggry is Danish for dawn. You start the work, go to sleep, and at first light i
 
 **22:00.** You write an issue. An agent drafts a plan from it, and you approve the plan before bed.
 
-**Overnight.** Each job runs in its own throwaway pod (a container that exists for one job). It holds a token for one repository and never the signing key. The agent takes the plan one item at a time. It writes a test, Daggry shows that the test fails, the agent makes it pass, and Daggry runs it again on a clean copy of the code. If a machine dies at 3 a.m., a new pod starts from the last commit Daggry sealed and repeats the interrupted step.
+**Overnight.** Each job runs in its own throwaway pod (a container that lives for one job). It holds a token for one repository and never the signing key. The agent takes the plan one item at a time. It writes a test, Daggry shows that the test fails, the agent makes it pass, and Daggry runs it again on a clean copy of the code. If a machine dies at 3 a.m., a new pod starts from the last commit Daggry sealed and repeats the interrupted step.
 
 **06:30.** The pull request is open, with the record of each check that passed beside it. A run that needed you stopped and says why. Reviewing the pull request is normally your second decision.
 
@@ -32,7 +32,7 @@ The same holds for the rest of the factory. Which agents work, on which engine, 
 
 **The tenant defines the factory.** How workflows are chosen, how they are orchestrated and how agents are put to work is captured in the tenant config, not in code. See [The tenant defines the factory](/guide/concepts/tenant).
 
-## Four ideas, and why each exists
+## Four ideas, and the reason for each
 
 **Fixed steps.** An agent left to choose its own process can skip testing or loop all night. You describe the work as a short file of steps. The agent follows it and cannot change it. See [Work graphs](/guide/concepts/workflows).
 
@@ -54,5 +54,3 @@ You can only leave work alone if you do not need to trust whoever is doing it. D
 2. To check the record yourself, read [Why you can trust a run](/guide/concepts/trust).
 3. To run a workflow, follow [Getting started](/guide/getting-started).
 4. To look up a field, command or term, open the [Reference](/reference/).
-
-For what exists today and what comes next, see the [Roadmap](/roadmap).

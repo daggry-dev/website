@@ -1,6 +1,6 @@
 # Getting started
 
-By the end of this page you will have run a small workflow on a scratch repository, approved a wait, and checked the sealed record on your own machine. You will see how Daggry stops for a person, seals a result and lets you verify it.
+On this page you run a small workflow on a scratch repository, approve a wait, and check the sealed record on your own machine. It shows how Daggry stops for a person, seals a result and lets you verify it.
 
 Daggry is built from modules and four open standards. On this page you touch two of the standards: you write a workflow, and you verify evidence. The file you write follows the published [Workflow schema](/reference/workflow-schema), and the records you verify follow the published [envelope](/reference/envelope). See [Open standards](/guide/concepts/standards).
 
@@ -22,9 +22,10 @@ daggry --help
 
 ## 1. Write a workflow
 
-A workflow is a file of steps in a standard layout. You supply it to `daggry run` as a file on your own machine, so it does not have to be in the repository the work is done on. This one runs a command, waits for you, and runs a second command. Save it as `first.yaml`.
+A workflow is a file of steps in a standard layout. You supply it to `daggry run` as a file on your own machine, so it does not have to be in the repository the work is done on. Its first line is the header, which names the workflow standard and its major version. This one runs a command, waits for you, and runs a second command. Save it as `first.yaml`.
 
 ```yaml
+format: daggry/workflow@1
 steps:
   - id: build
     kind: command
@@ -125,4 +126,3 @@ The command recomputes every fingerprint and signature on your machine. If anyth
 - To understand what you just ran, read [Why you can trust a run](/guide/concepts/trust) and [Where it runs](/guide/concepts/architecture).
 - To see the parts Daggry is built from, read [The modules](/guide/concepts/modules) and [Open standards](/guide/concepts/standards).
 - To look up a flag or an exit code, read the [CLI reference](/reference/cli).
-- For what exists today, see the [Roadmap](/roadmap).

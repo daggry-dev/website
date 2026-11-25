@@ -8,17 +8,18 @@ This page is for anyone who starts runs with `daggry run`. The snippets are illu
 
 The diagram shows the delivery workflow that the section [Add a bounded loop](#add-a-bounded-loop) builds: a plan, your approval, a bounded loop of test, fix and check, and a pull request. Other kinds of work use the same parts in a different order.
 
-A workflow is one YAML file with one key, `steps`: an ordered list of steps and loops. A workflow is a document in the tenant's catalogue, and the tenant decides which repositories it runs on. `daggry run --workflow <file>` supplies one as a file from your machine. See [The tenant defines the factory](/guide/concepts/tenant), and the [Roadmap](/roadmap) for which way is in use. Workflows use strict-subset YAML, with no anchors, tags or merge keys. For the ideas behind it, see [Work graphs](/guide/concepts/workflows). To decide what the workflow should contain before you write it, see [Design a workflow](/guide/how-to/design-a-workflow). To start from a complete file for a kind of work, see [Workflow patterns](/guide/how-to/workflow-patterns).
+A workflow is one YAML file with a `format` header and one body key, `steps`: an ordered list of steps and loops. A workflow is a document in the tenant's catalogue, and the tenant decides which repositories it runs on. `daggry run --workflow <file>` supplies one as a file from your machine. See [The tenant defines the factory](/guide/concepts/tenant). Workflows use strict-subset YAML, with no anchors, tags or merge keys. For the ideas behind it, see [Work graphs](/guide/concepts/workflows). To decide what the workflow should contain before you write it, see [Design a workflow](/guide/how-to/design-a-workflow). To start from a complete file for a kind of work, see [Workflow patterns](/guide/how-to/workflow-patterns).
 
 ## Step kinds at a glance
 
-The set of kinds is closed: `agent`, `command`, `verify`, `human` and `effect`. A step does one thing, and you combine steps to describe the work. Nothing in the kinds is specific to code: an `agent` step can draft a report or a triage note, and a `command` step can run any script. For where each kind runs and what it does, see [Steps](/reference/workflow-schema#steps).
+The standard defines five kinds: `agent`, `command`, `verify`, `human` and `effect`. A tenant can register more, each named `<namespace>/<name>`; see [Step kind registry](/reference/workflow-schema#step-kind-registry). A step does one thing, and you combine steps to describe the work. Nothing in the kinds is specific to code: an `agent` step can draft a report or a triage note, and a `command` step can run any script. For where each kind runs and what it does, see [Steps](/reference/workflow-schema#steps).
 
 ## Write a one-step workflow
 
 1. Create a file named `flow.yaml` with one `command` step.
 
    ```yaml
+   format: daggry/workflow@1
    steps:
      - id: build
        kind: command
@@ -26,9 +27,9 @@ The set of kinds is closed: `agent`, `command`, `verify`, `human` and `effect`. 
        run: make
    ```
 
-   Each step needs an `id` that is unique in the file. A `command` step needs `run`, the shell line, and `scope`, the paths it may write.
+   The first line is the header. Every workflow file has it, and it is always `format: daggry/workflow@1`. Each step needs an `id` that is unique in the file. A `command` step needs `run`, the shell line, and `scope`, the paths it may write.
 
-2. Choose a `scope`: `nothing`, `anywhere`, or a list of globs such as `["src/**"]`. For what each value allows, see [Scope](/reference/workflow-schema#scope).
+2. Choose a `scope`: `nothing`, `anywhere`, or a list of globs such as `["src/**"]` and area references such as `area:app`, which name an area of the project config. For what each value allows, see [Scope](/reference/workflow-schema#scope).
 
    No scope can include a [protected path](/guide/concepts/protection).
 
@@ -39,6 +40,7 @@ An `agent` step runs a coding-agent session. It must deliver the artifact kinds 
 1. Add the step before the command.
 
    ```yaml
+   format: daggry/workflow@1
    steps:
      - id: plan
        kind: agent
@@ -52,17 +54,18 @@ An `agent` step runs a coding-agent session. It must deliver the artifact kinds 
        run: make
    ```
 
-   `<engine>` is the coding-agent engine the step uses. The control plane writes the `prompt` to a read-only instruction file for the engine. The step succeeds when every kind in `outputs` is accepted.
+   `<engine>` is the coding-agent engine the step uses, by a name the tenant config registers. The control plane writes the `prompt` to a read-only instruction file for the engine. The step succeeds when every kind in `outputs` is accepted.
 
 2. Limit the scope to what the step needs. This step only reads, so its scope is `nothing`.
 
 ## Add a verify step
 
-A `verify` step measures the last sealed commit in a clean copy of the code. It has no command of its own. It runs the project's canonical check, which is the command named in the base commit's `.daggry/profile.yaml`, so a step cannot weaken its own check. The command does not have to run tests: any deterministic check that exits with 0 when the work is good can be the command.
+A `verify` step measures the last sealed commit in a clean copy of the code. It has no command of its own. It runs the project's canonical check, which is the check that `verification.canonical` names in the base commit's `.daggry/project.yaml`, so a step cannot weaken its own check. The check does not have to run tests: any deterministic program the project can run can be a check.
 
 1. Add the step after the work it checks.
 
    ```yaml
+   format: daggry/workflow@1
    steps:
      - id: build
        kind: command
@@ -72,14 +75,21 @@ A `verify` step measures the last sealed commit in a clean copy of the code. It 
        kind: verify
    ```
 
-2. Make sure the repository's base commit holds `.daggry/profile.yaml`. For the file format, see [Project config](/reference/project-config#the-profile).
+2. Make sure the repository's base commit holds `.daggry/project.yaml` with a canonical check. This one names one check, a script that prints one result line for each test, and makes it canonical. For the file format, see [Project config](/reference/project-config).
 
    ```yaml
-   verify:
-     test: sh check.sh
+   format: daggry/project@1
+   checks:
+     test:
+       run: [sh, check.sh]
+       kind: tests
+       result:
+         contract: libtest-lines
+   verification:
+     canonical: test
    ```
 
-A `verify` step is green when the command exits with 0. Outside a loop, a failed `verify` step fails the run.
+A `verify` step is green when the canonical check passes, every check in `verification.also` passes and every threshold holds. Outside a loop, a failed `verify` step fails the run.
 
 ## Add a human approval
 
@@ -88,6 +98,7 @@ A `human` step releases the pod and waits. The run reads `waiting` until someone
 1. Add the step where a person must decide.
 
    ```yaml
+   format: daggry/workflow@1
    steps:
      - id: plan
        kind: agent
@@ -111,7 +122,7 @@ A `human` step releases the pod and waits. The run reads `waiting` until someone
    | `approval` | the sealed `plan` |
    | `input-needed` | the latest sealed `change` |
 
-   If nothing is sealed yet, `daggry approve` is refused. Put the `human` step after the step that seals what the person reviews.
+   If no such record is sealed, `daggry approve` is refused. Put the `human` step after the step that seals what the person reviews.
 
 3. To continue the run, run `daggry approve <run-id>`. The job continues in a new attempt.
 
@@ -122,6 +133,7 @@ A loop repeats steps for each criterion of an approved plan, and it always ends.
 1. Add a loop entry after the approval. A loop entry has an `id` and a `loop` key, and no `kind`.
 
    ```yaml
+   format: daggry/workflow@1
    steps:
      - id: plan
        kind: agent

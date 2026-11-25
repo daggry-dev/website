@@ -19,13 +19,13 @@ For each document in detail, see the [Workflow schema](/reference/workflow-schem
 
 ## Why the project does not choose workflows
 
-A project describes itself and how to check it. It does not know that it runs in a factory, and the same repository can be worked on by two factories that do different work on it. The project config therefore holds only what is true of the repository: its areas (named groups of paths), its checks, the one canonical check that is the verification evidence and the paths it protects. It says what exists and what is protected, and never what a run may change. What work is done on the repository is the tenant's decision: the tenant config assigns workflows, agents, approval points and areas to each repository. The split gives a workflow a fixed interface. It says `verify` and the project supplies the check, whether that is `cargo test`, vitest, `dotnet test` or a script. See [Project config](/reference/project-config) and [Tenant config](/reference/tenant-config#projects).
+A project describes itself and how to check it. It does not know that it runs in a factory, and the same repository can be worked on by two factories that do different work on it. The project config therefore holds only what is true of the repository: its areas (named groups of paths), its checks, the one canonical check that is the verification evidence and the paths it protects. It says what the repository has and what is protected, and never what a run may change. What work is done on the repository is the tenant's decision: the tenant config assigns workflows, agents, approval points and areas to each repository. The split gives a workflow a fixed interface. It says `verify` and the project supplies the check, whether that is `cargo test`, vitest, `dotnet test` or a script. See [Project config](/reference/project-config) and [Tenant config](/reference/tenant-config#projects).
 
 ## What every standard has
 
 **A published schema.** Each document is described by a JSON Schema under `/schemas/` on this site. Any tool that supports draft 2020-12 can check a file against it.
 
-**A version.** Each document names the standard it follows and its major version, in the form `<namespace>/<name>@<major>`. A project config opens with `format: daggry/project@1`, and a record names its kind the same way. A reader refuses a major version it does not know and never guesses.
+**A version.** Each document names the standard it follows and its major version, in the form `<namespace>/<name>@<major>`. A project config opens with `format: daggry/project@1`, a tenant config with `format: daggry/tenant@1` and a workflow with `format: daggry/workflow@1`. A record names its kind the same way. The header is required: a reader refuses a file without one, a malformed one and a major version it does not know, and never guesses.
 
 **An extension mechanism.** A standard that cannot grow gets forked. Each of the four grows in the same two ways.
 
@@ -65,4 +65,3 @@ Daggry's own policy is one such set of decisions. For example, Daggry runs each 
 - To see the modules that read and write these documents, read [The modules](/guide/concepts/modules).
 - To see what a tenant config captures, read [The tenant defines the factory](/guide/concepts/tenant).
 - To check an implementation, see [Conformance](/reference/conformance).
-- For which standards exist today, see the [Roadmap](/roadmap).

@@ -36,6 +36,7 @@ The tests freeze once proven. See [Red, then green](/guide/how-to/write-a-workfl
 
 ::: details Complete file
 ```yaml
+format: daggry/workflow@1
 steps:
   - id: plan
     kind: agent
@@ -86,29 +87,30 @@ steps:
 
 A sketch shows steps in order. `[agent]`, `[command]`, `[verify]` and `[effect]` are steps of that kind. `(human)` is a wait for a person. `{ ... }` is a loop that repeats once for each criterion of the sealed plan.
 
-Every pattern that uses `verify` needs a check in the repository's base commit, set in `.daggry/profile.yaml` as `verify.test`. See [Project config](/reference/project-config#the-profile). A `verify` step is green when that command exits with 0.
+Every pattern that uses `verify` needs a canonical check in the repository's base commit, named by `verification.canonical` in `.daggry/project.yaml`. See [Project config](/reference/project-config). A `verify` step is green when that check passes.
 
 A loop ends when its `until` gate holds. The gate `verdict.all_covered` holds when every plan criterion has a passing test that carries its id. In a workflow that does not deliver code, your check command reports one passing test for each criterion it accepts, named with the criterion id. The exact lines it prints are in the [`libtest-lines` contract](/reference/project-config#libtest-lines).
 
 Each loop's `max` limits the iterations of the whole loop. Set it above the number of items you expect.
 
-The files are illustrative. Each one is valid against the [workflow schema](/reference/workflow-schema). In every `agent` step, `engine: <engine>` names the coding-agent engine the step uses. Paths such as `reports/**` and scripts such as `scripts/audit.sh` are examples. Replace them with yours.
+The files are illustrative. Each one opens with the required header, `format: daggry/workflow@1`, and is valid against the [workflow schema](/reference/workflow-schema). In every `agent` step, `engine: <engine>` names the coding-agent engine the step uses. Paths such as `reports/**` and scripts such as `scripts/audit.sh` are examples. Replace them with yours.
 
 ## Research a question and commit a sourced report
 
 **Use when** the product of the work is a document and every claim needs a source. Code checks that the sources exist. A person judges whether the report answers the question.
 
-**Code checks:** Your `verify.test` command, for example that every paragraph cites a source and every link resolves.
+**Code checks:** Your canonical check, for example that every paragraph cites a source and every link resolves.
 
 ```text
 [agent plan] -> (human approves plan) -> [agent write report]
   -> [verify sources] -> (human reviews report) -> [effect open-pr]
 ```
 
-Your `verify.test` command can fail a report that has an uncited paragraph or a dead link. Approval at `review-report` binds to the sealed report.
+Your canonical check can fail a report that has an uncited paragraph or a dead link. Approval at `review-report` binds to the sealed report.
 
 ::: details Complete file
 ```yaml
+format: daggry/workflow@1
 steps:
   - id: plan
     kind: agent
@@ -157,6 +159,7 @@ Your check command accepts a note only when it has all three parts. A note that 
 
 ::: details Complete file
 ```yaml
+format: daggry/workflow@1
 steps:
   - id: plan
     kind: agent
@@ -212,11 +215,12 @@ The bound is the safety here. If a batch does not pass after the iterations in `
 
 ::: details Complete file
 ```yaml
+format: daggry/workflow@1
 steps:
   - id: inventory
     kind: command
     scope: ["migration/**"]
-    run: "git ls-files legacy > migration/inventory.txt"
+    run: "git ls-files v1 > migration/inventory.txt"
 
   - id: plan
     kind: agent
@@ -242,7 +246,7 @@ steps:
           engine: <engine>
           prompt: "Migrate the files in the current batch to the new API. Touch no other file."
           outputs: [change]
-          scope: ["src/**", "legacy/**"]
+          scope: ["src/**", "v1/**"]
         - id: check-batch
           kind: verify
 
@@ -258,7 +262,7 @@ steps:
 
 ## Update documentation with a human review
 
-**Use when** you edit content where wording matters more than structure. Code checks what it can, such as links and required headings. A person reads the draft before a pull request exists.
+**Use when** you edit content where wording matters more than structure. Code checks what it can, such as links and required headings. A person reads the draft before a pull request opens.
 
 **Code checks:** Links and required headings, before a person reads the draft.
 
@@ -270,6 +274,7 @@ A failed `check-docs` outside a loop fails the run, so the person only reviews d
 
 ::: details Complete file
 ```yaml
+format: daggry/workflow@1
 steps:
   - id: draft
     kind: agent
@@ -302,10 +307,11 @@ steps:
   -> [verify] -> (human signs off) -> [effect open-pr]
 ```
 
-Each `verify` step runs the same `verify.test` command from the base commit. Make that command cover both the build output and the changelog format. A failed check stops the run before the sign-off.
+Each `verify` step runs the same canonical check from the base commit. Make that check cover both the build output and the changelog format. A failed check stops the run before the sign-off.
 
 ::: details Complete file
 ```yaml
+format: daggry/workflow@1
 steps:
   - id: build
     kind: command
@@ -347,6 +353,7 @@ steps:
 
 ::: details Complete file
 ```yaml
+format: daggry/workflow@1
 steps:
   - id: scan
     kind: command

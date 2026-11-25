@@ -50,7 +50,7 @@ The three documents are layered. The tenant config is the outer layer, the proje
 
 The rule has two halves.
 
-- **An inner layer can narrow.** A project can protect more paths. A workflow can give a step a smaller scope inside the scope of the run. The scope of a run is the tenant's choice among the areas the project defines: the project says which areas exist, and never which of them a run may change.
+- **An inner layer can narrow.** A project can protect more paths. A workflow can give a step a smaller scope inside the scope of the run. The scope of a run is the tenant's choice among the areas the project defines: the project names the areas, and never says which of them a run may change.
 - **An inner layer never widens.** A project cannot choose a workflow, an engine or an approval rule, and a workflow cannot open a path the project protects or replace the project's canonical check. Where two layers disagree, the outer one wins: the tenant's rule over the project's, and the project's over the workflow's.
 
 An extension key follows the same rule. It narrows or adds, and never widens.
@@ -77,4 +77,3 @@ Every run records the configuration it started under. A later change applies to 
 
 - To see the modules that read the tenant config, read [The modules](/guide/concepts/modules).
 - To look up a key, see the [Tenant config](/reference/tenant-config) and [Project config](/reference/project-config) references.
-- For what exists today, see the [Roadmap](/roadmap).

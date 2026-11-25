@@ -24,9 +24,10 @@ const kinds = [
   { t: 'Run a release check', a: 'run-a-gated-release-check' },
 ]
 
-// An eight-line workflow with no agent step: run a script, re-check, wait for you, open a pull request.
+// A nine-line workflow with no agent step: run a script, re-check, wait for you, open a pull request.
 // Valid against public/schemas/workflow.json. Split into key/value pieces for colouring.
 const snippet: { k?: string; v?: string; p?: string }[][] = [
+  [{ k: 'format' }, { p: ': ' }, { v: 'daggry/workflow@1' }],
   [{ k: 'steps' }, { p: ':' }],
   [{ p: '  - ' }, { k: 'id' }, { p: ': ' }, { v: 'migrate' }],
   [{ p: '    ' }, { k: 'kind' }, { p: ': ' }, { v: 'command' }],
@@ -40,7 +41,7 @@ const snippet: { k?: string; v?: string; p?: string }[][] = [
 const doors = [
   { t: 'Understand it', time: '10 minutes', d: 'Read the story of one night, and why each part is there.', l: '/guide/' },
   { t: 'Try it', time: 'Hands on', d: 'Run a first workflow on a scratch repository and verify its trail.', l: '/guide/getting-started' },
-  { t: 'See the status', time: '2 minutes', d: 'What works today and what comes next.', l: '/roadmap' },
+  { t: 'See the build status', time: '2 minutes', d: 'The roadmap is the one page that states what is built.', l: '/roadmap' },
 ]
 </script>
 
@@ -152,7 +153,7 @@ Any work that lives in a repository and has a check a script can run. A pull req
           <li v-for="k in kinds" :key="k.a"><a :href="withBase(`/guide/how-to/workflow-patterns#${k.a}`)">{{ k.t }}</a></li>
         </ul>
         <figure class="code">
-          <pre tabindex="0" aria-label="Example workflow file, eight lines"><code><template v-for="(line, i) in snippet" :key="i"><span v-for="(s, j) in line" :key="j" :class="s.k ? 'k' : s.v ? 'v' : 'p'">{{ s.k ?? s.v ?? s.p }}</span>{{ '\n' }}</template></code></pre>
+          <pre tabindex="0" aria-label="Example workflow file, nine lines"><code><template v-for="(line, i) in snippet" :key="i"><span v-for="(s, j) in line" :key="j" :class="s.k ? 'k' : s.v ? 'v' : 'p'">{{ s.k ?? s.v ?? s.p }}</span>{{ '\n' }}</template></code></pre>
           <figcaption>A complete workflow. The check itself is set in the repository, where the run cannot change it.</figcaption>
         </figure>
       </div>
