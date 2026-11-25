@@ -1,50 +1,35 @@
 <p align="center">
-  <img src="public/logo.svg" alt="Daggry" width="96">
+  <a href="https://daggry.dev">
+    <img src="public/logo.svg" alt="Daggry" width="96">
+  </a>
 </p>
 
-<h1 align="center">Daggry website</h1>
+<h1 align="center">Daggry</h1>
 
 <p align="center">
-  <em>Start the work, go to sleep, and at first light it is done and checked.</em>
+  <strong>Start the work, go to sleep. At first light it is done, and checked.</strong>
 </p>
 
 <p align="center">
-  <a href="https://daggry.dev"><strong>daggry.dev</strong></a>
+  <a href="https://daggry.dev"><strong>Visit daggry.dev →</strong></a>
 </p>
 
 ---
 
-The website and documentation for Daggry, a factory kit for unattended agent work: agents do the work, code checks every step, and each result is sealed in a signed evidence trail you can verify yourself.
+An agent can do a night's work, but its own report is the only proof. **Daggry changes that.**
 
-Built with [VitePress](https://vitepress.dev).
+It runs the work as fixed steps, has code check every one, and seals the result in a signed evidence trail you can verify yourself. You never have to take an agent's word for it.
 
-## Run it locally
+- **Wake up to finished work.** Write an issue, approve the plan, and go to bed. In the morning there's a pull request, with a record of everything that was checked.
+- **Trust the result, not the agent.** Tests must fail before they pass, and every step is re-run on a clean copy.
+- **Build your own factory.** Workflows and rules are files you can read and change, for software or any work a script can check.
 
-```sh
-npm ci
-npm run dev      # http://localhost:5173
-npm run build    # .vitepress/dist
-```
+*Daggry is Danish for dawn.*
 
-## What is here
+<p align="center">
+  <a href="https://daggry.dev"><strong>See how a night with Daggry goes →</strong></a>
+</p>
 
-| Path | Contents |
-| --- | --- |
-| `guide/` | Start here, how-to pages and concepts |
-| `reference/` | Commands, API, bindings and schemas |
-| `roadmap.md` | What is built and what is next |
-| `public/schemas/` | The published JSON Schemas |
-| `.vitepress/` | Site config and theme (the light "airy" look and the diagram components) |
-
-## Deploy
-
-`.github/workflows/pages.yml` builds and deploys on every push to `main`, in parallel:
-
-- **Cloudflare Workers**, built with base `/` and deployed with `wrangler deploy` (see `wrangler.jsonc`). Needs the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repository secrets.
-- **GitHub Pages**, at https://daggry-dev.github.io/website/, built with `SITE_BASE=/website/`.
-
-Pull requests build both and run `wrangler deploy --dry-run`.
-
-## License
-
-Apache 2.0. See [LICENSE](LICENSE).
+<p align="center">
+  <sub>Sponsored by <a href="https://thinkability.dk">thinkability</a> · <a href="LICENSE">Apache 2.0</a></sub>
+</p>
