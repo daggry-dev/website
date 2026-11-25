@@ -1,18 +1,18 @@
 # The modules
 
-A factory is mainly three things: a control plane, a conductor and a stack that delivers verified evidence. It pairs two kinds of work. Agents do the non-deterministic work, and code gives the deterministic judgement: code runs every check, and an agent never grades its own work.
+Daggry is a factory kit. Its parts are modules that you assemble into your own factory: a conductor, a control plane, a runner, an engine, a forge, a store and validators. Four open standards connect them. A factory pairs two kinds of work. Agents do the non-deterministic work, and code gives the deterministic judgement: code runs every check, and an agent never grades its own work.
 
-A platform built as one piece can do one thing. If the scheduler, the agent and the checks are welded together, a new kind of work, a new agent or a new cluster means a new platform. Daggry is built as modules instead. Each module has one job, a contract that defines it and a stated list of what it never does. Anything that meets the contract can replace the module. The checks are plug-ins too: a validator is the platform's extension point for judging work.
+A platform built as one piece can do one thing. If the scheduler, the coding agent and the checks are one piece, a new kind of work, a new coding agent or a new cluster means a new platform. Daggry is built as modules instead. Each module has one job and a stated list of what it never does, and you can replace any one of them. The checks are plug-ins too: a validator is the platform's extension point for judging work.
 
 A workflow is the unit all the modules serve: one document that describes a piece of work as steps.
 
 <Modules />
 
-The diagram shows the four open standards on top and the three running modules below: the conductor, the runner, drawn as its two kinds of step execution, and the control plane. The conductor reads the tenant config and the workflow and hands each job attempt to a runner. The runner reads the project config and sends claims to the control plane. The control plane writes evidence. Validators are the plug-in point: script validators run in the deterministic runner, and built-in and native validators judge beside the control plane. The forge and the store are drawn as parts of their own. Each box is a contract, and any part can be replaced.
+The diagram shows the kit's parts: the four open standards and the modules. Three modules run a job: the conductor, the runner, drawn as its two kinds of step execution, and the control plane. The conductor reads the tenant config and the workflow and hands each job attempt to a runner. The runner reads the project config and sends claims to the control plane. The control plane writes evidence. Validators are the plug-in point: script validators run in the deterministic runner, and built-in and native validators judge beside the control plane. The forge and the store are drawn as parts of their own.
 
 ## Seven modules
 
-Three modules run. Four are documents, each an open standard. The table lists each module's one job. The runner has two rows, one for each kind of step execution it provides.
+The kit has seven modules. The table lists each module's one job. The runner has two rows, one for each kind of step execution it provides.
 
 | Module | Its one job | What it never does |
 |---|---|---|
@@ -20,26 +20,23 @@ Three modules run. Four are documents, each an open standard. The table lists ea
 | Control plane | The one backend: holds the keys, seals, judges, serves the API and keeps tenant state. It runs the built-in validators. | Runs a command or an agent, or seals a claim that code has not checked. |
 | Runner, as the deterministic runner | Runs commands and script validators. | Starts a model. |
 | Runner, as the agent runner | Runs agentic or model-generated work through an engine adapter. | Judges its own work, or changes what instructs, constrains or judges it. |
-| Evidence | The standard for sealed records: one envelope, signed and linked. | Names a cluster, a forge, a tool or an agent. |
-| Workflow | The standard for describing work as steps, outputs, gates, loops and human waits. | Changes during a run. |
-| Project config | The standard for what is true of one project. | Widens a limit the tenant set. |
-| Tenant config | The standard for how a factory works. | Holds a secret. It names a credential, and the secret stays in the cluster. |
+| Engine | The coding agent that does the work of an agent step. | Seals a record or reaches the signing key. |
+| Forge | Keeps the workspace and its work items, and takes the result. | Seals a record or judges a result. |
+| Store | Keeps the trail and each tenant's state. | Changes or removes a sealed entry. |
+| Validators | Judge the work in code. | Read anything but their inputs, or start a model. |
 
-## Every part is a contract
+## Replace a module
 
-Each part of the factory is defined by a contract, and anything that meets the contract can replace it. The table names each part, its role and an example of what replaces it. For each contract, see [Contracts](/reference/contracts).
+You can replace any module with one of your own. These examples show what a replacement looks like:
 
-| Part | Its role | Defined by | Replace it with |
-|---|---|---|---|
-| Conductor | Orders the steps and schedules job attempts. | The conductor interface | A scheduler of your own that hands out job attempts under leases. |
-| Control plane | Seals, judges and holds the keys. | The evidence envelope and kinds, and each interface it meets another part through | An implementation of your own that seals evidence by the same rules. |
-| Runner | Runs the steps of a job. | The runner protocol | A runner for a different execution environment. |
-| Engine | The agent program that does the work of an agent step. | The engine interface | An engine for another agent. |
-| Forge | Keeps the workspace and its work items, and takes the result. | The forge and effect interface | A forge for another kind of work source. |
-| Store | Keeps the trail and the tenant state. | The store interfaces | A store for another database. |
-| Validator | Judges the work in code. | The validator contract | A validator in any language. |
+- An engine for another coding agent.
+- A forge for another source of work.
+- A store for another database.
+- A runner for a different execution environment.
+- A scheduler of your own as the conductor.
+- A validator in any language.
 
-The reference implementation is one implementation. Nothing in a contract depends on its language, its database or its cluster.
+A contract defines each module, and a replacement is one that passes the contract's tests. The reference implementation is one implementation, and nothing in a contract depends on its language, its database or its cluster. See [Contracts](/reference/contracts).
 
 ## The conductor orders and schedules
 
@@ -63,9 +60,9 @@ The runner is the part that runs a job's steps, and the module of that name. It 
 
 The **deterministic runner** runs what gives the same result for the same input: a command, a script validator or a script of the project's own. It never starts a model. A script validator runs on a clean copy of the workspace, after any agent process has ended.
 
-The **agent runner** runs work whose result a model produces. It starts an agent through an engine adapter. The engine (the agent program that does the work) is replaceable: the adapter gives every engine the same prompt, the same tools and the same way to hand in a result. Whatever the agent hands in is a claim.
+The **agent runner** runs work whose result a model produces. It starts a coding agent through an engine adapter. The engine (the coding agent that does the work) is replaceable: the adapter gives every engine the same prompt, the same tools and the same way to hand in a result. Whatever the agent hands in is a claim.
 
-Both kinds have the same interface to the rest of the platform. Each accepts a job attempt and sends back claims. Neither holds the signing key. A tenant config may name more than one runner class; see the [Tenant config reference](/reference/tenant-config).
+Both kinds have the same interface to the rest of the platform. Each accepts a job attempt and sends back claims. Neither holds the signing key. A tenant config can name more than one runner class. See the [Tenant config reference](/reference/tenant-config#runners).
 
 ## Validators: the extension point
 
@@ -75,35 +72,35 @@ A validator comes from one of three sources.
 
 - **Built-in.** Shipped with the platform, in the `daggry` namespace. It runs in the control plane.
 - **Script.** A script or an executable that the tenant config declares as `tenant/<name>`, or the project config as `project/<name>`. It runs in the deterministic runner, on a clean copy of the workspace.
-- **Native.** A validator loaded in-process or run as a service that speaks the validator protocol, in any language. The cluster admin installs it, and the tenant admits it by name, version and digest. It is a pure function over sealed inputs.
+- **Native.** A validator in any language, named `<namespace>/<name>`, that runs in-process with the control plane or as a service that speaks the validator protocol. The cluster admin installs it, and the tenant admits it by name, version and digest. It is a pure function over sealed inputs.
 
 See [Validators: the extension point](/guide/concepts/validators).
 
 ## Four standards connect them
 
-The running modules never call each other through private formats. They read and write four documents.
+The modules never call each other through private formats. They read and write four documents, each an open standard.
 
-- **Workflow.** The work, as steps. The conductor reads it. See [Work graphs](/guide/concepts/workflows).
-- **Evidence.** The sealed records. The control plane writes them, and anyone can verify them. See [Why you can trust a run](/guide/concepts/trust).
+- **Workflow.** The work, as steps, outputs, gates, loops and human waits. The conductor reads it, and it never changes during a run. See [Work graphs](/guide/concepts/workflows).
+- **Evidence.** The sealed records: one envelope, signed and linked. The control plane writes them, and anyone can verify them. See [Why you can trust a run](/guide/concepts/trust).
 - **Project config.** What is true of one project: its areas, its validators, the one canonical validator whose result is the verification evidence, and the paths it protects. The runner reads it. See [Project config](/reference/project-config).
-- **Tenant config.** How the factory works: which workflows run on which project, how they are orchestrated, which agents work and under which rules. The conductor and the control plane read it. See [The tenant defines the factory](/guide/concepts/tenant).
+- **Tenant config.** How the factory works: which workflows run on which workspace, how they are orchestrated, which agents work and under which rules. The conductor and the control plane read it. See [The tenant defines the factory](/guide/concepts/tenant).
 
 Each document has a published schema, a version and an extension mechanism. See [Open standards](/guide/concepts/standards).
 
 ## Why modules
 
-Nothing in the platform is specific to one kind of work, one set of checks, one agent, one cluster, one implementation or one factory.
+Nothing in the platform is specific to one kind of work, one set of checks, one coding agent, one cluster, one implementation or one factory.
 
 - **Not one kind of work.** The work lives in a workflow file, and the standards name no tool. A binding maps them onto one kind of work: in the software binding an issue becomes a pull request. A document review or a data refresh is another file. See [Workflow patterns](/guide/how-to/workflow-patterns) and [Bindings](/reference/bindings).
-- **Not one set of checks.** A `verify` step names its validators. Add a script validator or a native validator and the platform runs it like its own. See [Validators](/guide/concepts/validators).
-- **Not one agent.** The agent runner knows an engine adapter, not an engine. Another agent needs another adapter and nothing else.
+- **Not one set of checks.** A `verify` step names its validators. Add a script validator or a native validator and the platform runs it like its own. See [Validators: the extension point](/guide/concepts/validators).
+- **Not one coding agent.** The agent runner knows an engine adapter, not an engine. Another coding agent needs another adapter and nothing else.
 - **Not one cluster.** The conductor schedules onto runners through the job attempt, so a runner for a different execution environment changes nothing else.
-- **Not one implementation.** Every part is defined by a contract. See [Contracts](/reference/contracts).
+- **Not one implementation.** A contract defines each module, so another implementation can take its place. See [Contracts](/reference/contracts).
 - **Not one factory.** How a factory works is data in its tenant config. Another tenant writes its own tenant config and uses the same modules. Another platform can implement the same standards and produce evidence the same tools verify. See [Conformance](/reference/conformance).
 
 ## Next steps
 
 - To read what each standard says, see [Open standards](/guide/concepts/standards).
-- To plug in a check of your own, read [Validators](/guide/concepts/validators).
+- To plug in a check of your own, read [Validators: the extension point](/guide/concepts/validators).
 - To see what the tenant config captures, read [The tenant defines the factory](/guide/concepts/tenant).
 - To see where the modules run, read [Where it runs](/guide/concepts/architecture).

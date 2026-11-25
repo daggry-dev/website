@@ -8,7 +8,7 @@ The workflow is one of Daggry's four open standards. The file has a standard lay
 
 A workflow is a document in the tenant's catalogue. Its file is kept in a workspace the tenant chooses, which can be the workspace the work is done on. The tenant decides which workflows run on which project, and the project does not. `daggry run --workflow <file>` supplies a workflow as a file from the machine that starts the run. A new kind of work needs a new file, not a new release of Daggry. For a picture of the delivery workflow, see [Write a workflow](/guide/how-to/write-a-workflow).
 
-- A **step** is one unit of work: an agent session, a script, a verification by validators, a wait for a person, or an effect that hands the result over.
+- A **step** is one unit of work: a session of a coding agent, a script, a verification by validators, a wait for a person, or an effect that hands the result over.
 - An **output** is what a step hands to the next one. Daggry seals it: code checks it, then signs it so it cannot be quietly changed.
 - A **gate** is a rule over facts that code computed. It decides whether a loop can stop.
 - A **loop** repeats steps for each item of an approved plan, with a hard limit.
@@ -22,9 +22,9 @@ A loop is where an agent can spin, so each loop has a limit and a gate. After ev
 
 <LoopGate />
 
-The diagram shows one loop iteration in the software binding, the gate after it, and the exit when the limit is spent: the run fails, or a person decides.
+The diagram shows one loop iteration, the gate after it and the exit when the limit is spent. In the iteration, an agent writes a check for the next item, code shows that the check fails on the baseline, the agent does the work, and code runs every validator on a clean copy. When the limit is spent, the run fails or a person decides.
 
-The general idea is this: a criterion's check fails before the work and passes after. A check that already passes says nothing about the work. In the software binding's delivery loop, an iteration is a test, a fix and a verification. The agent cannot edit the test it is trying to pass.
+The first two steps of that iteration are the baseline proof: a criterion's check fails on the baseline, the version of the workspace the run started from, and passes after the work. A check that already passes says nothing about the work. The step that writes the check is the proof step. When Daggry seals it, the paths it wrote become frozen paths, so the agent cannot edit the check it is trying to pass. In the software binding the check is a test, and the loop is called red, then green.
 
 ## You decide where a person is needed
 
@@ -61,13 +61,13 @@ A `verify` step names no command. It names one or more validators, and the platf
   validators: [project, tenant/house-style]
 ```
 
-`project` is the project's verification: the validator that the project config calls canonical, whatever tool it runs, with the supporting validators and thresholds it lists. The same workflow therefore works on projects with different tools and different kinds of work. `tenant/house-style` is a script validator that the tenant declares. A name in the `daggry` namespace is a validator that ships with the platform, and a native validator is loaded in-process or run as a service that speaks the validator protocol, in any language. See [Validators: the extension point](/guide/concepts/validators) and [Project config](/reference/project-config).
+`project` is the project's verification: the validator that the project config calls canonical, whatever tool it runs, with the supporting validators and thresholds it lists. The same workflow therefore works on projects with different tools and different kinds of work. `tenant/house-style` is a script validator that the tenant declares. A name in the `daggry` namespace is a validator that ships with the platform, and any other namespace names a native validator that the tenant admits. See [Validators: the extension point](/guide/concepts/validators) and [Project config](/reference/project-config).
 
 The conductor orders the steps and hands each job to a runner. How many jobs run at a time, how long a lease lasts and where a person must decide come from the tenant config. See [The modules](/guide/concepts/modules) and [The tenant defines the factory](/guide/concepts/tenant).
 
-## Extending the workflow
+## How a workflow extends the standard
 
-The standard grows without changing. A step kind that the standard does not define is named `<namespace>/<name>`, and a tenant admits it by name in its tenant config. A key the standard does not define is written `<namespace>/<key>`. A key or a kind without a namespace that the standard does not define is refused. See the [Workflow schema](/reference/workflow-schema).
+A workflow can hold more than the standard defines, and the standard does not change. A step kind that the standard does not define is named `<namespace>/<name>`, and a tenant registers it in its tenant config. A key the standard does not define is written `<namespace>/<key>`. A key or a kind without a namespace that the standard does not define is refused. See the [Workflow schema](/reference/workflow-schema).
 
 ## Limits that keep a run readable
 
@@ -80,6 +80,6 @@ Daggry fits work that you can break into steps with named outputs, check with a 
 - To turn your kind of work into a workflow, read [Design a workflow](/guide/how-to/design-a-workflow).
 - To write the file, read [Write a workflow](/guide/how-to/write-a-workflow).
 - To see what an agent cannot change, read [What an agent cannot change](/guide/concepts/protection).
-- To plug in a check of your own, read [Validators](/guide/concepts/validators).
+- To plug in a check of your own, read [Validators: the extension point](/guide/concepts/validators).
 - To see which module runs each step, read [The modules](/guide/concepts/modules).
 - To see where each step runs, read [Where it runs](/guide/concepts/architecture).

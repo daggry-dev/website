@@ -20,38 +20,38 @@ This step runs two validators. `project` is the project's verification: the vali
 
 ## Three sources
 
-A validator comes from one of three sources. The table says how each is named, who adds it and where it runs.
+A validator comes from one of three sources. The source decides how the validator is named, who adds it and where it runs.
 
-| Source | Name | Who adds it | Where it runs |
-|---|---|---|---|
-| Built-in | `daggry/<name>` | Nobody. It ships with the platform. | In the control plane, over sealed inputs. |
-| Script | `tenant/<name>` or `project/<name>` | A person, as a script or an executable declared in the tenant config or the project config. | In the deterministic runner, on sealed inputs and a clean copy of the workspace. |
-| Native | `<namespace>/<name>` | The cluster admin installs it. The tenant admits it by name, version and digest. | In-process with the control plane, or as a service that speaks the validator protocol. A pure function over sealed inputs. |
+- **Built-in validators** cover what every factory needs. They ship with the platform, are named `daggry/<name>` and run in the control plane, over sealed inputs.
+- **Script validators** are the short way to plug in a check of your own. A script validator is any script or executable that inspects the workspace and reports a result. A tenant declares the ones that hold for every workspace it serves, as `tenant/<name>`. A project declares the ones that are true of that project, as `project/<name>`. A script validator runs in the deterministic runner, on a clean copy of the workspace.
+- **Native validators** are for a check that judges sealed inputs alone, with no workspace. A native validator is named `<namespace>/<name>` and is written in any language. It runs in-process with the control plane, or as a service that speaks the validator protocol. The cluster admin installs it, and the factory accepts only a native validator that the tenant admits by name, version and digest.
 
-**Built-in validators** cover what every factory needs. For the list, see [Validators](/reference/validators).
-
-**Script validators** are the short way to plug in a check of your own. A script validator is any script or executable that inspects the workspace and reports a result. A tenant declares the ones that hold for every project it serves. A project declares the ones that are true of that project.
-
-**Native validators** are for a check that judges sealed inputs alone, with no workspace. A native validator is loaded in-process or run as a service that speaks the validator protocol, in any language. The factory accepts only a native validator that the tenant admits by name, version and digest.
+For the built-in validators and the rules for each source, see the [Validators reference](/reference/validators#the-three-sources).
 
 ## Code judges, never a script's own claim
 
-A script validator does not announce its own verdict. It reports a result in one of the standard forms: an exit code, a result document, or a format that a registered adapter reads. The platform reads the result, and a built-in validator, `daggry/result-gate`, derives the verdict from it. The same result always gives the same verdict. The result and the verdict are sealed as evidence. See [Why you can trust a run](/guide/concepts/trust).
+A script validator does not announce its own verdict. It reports a result, and its result contract says how the factory reads that result. The standard has three result contracts:
 
-A validator names no tool and no kind of work. The same interface checks a program, a document, a dataset, a configuration or a design file. Formats that belong to one toolset are adapters in a binding. See [Bindings](/reference/bindings).
+- `exit-code` reads the exit code alone.
+- `document` reads a result document: the one standard form of a check's result, with an outcome, findings and metrics. A finding is one thing the check reports, with an id and an outcome.
+- `<namespace>/<adapter>` names an adapter, a program that turns one tool's own output into a result document.
+
+The platform reads the result, and a built-in validator, `daggry/result-gate`, derives the verdict from it. The same result always gives the same verdict. The result and the verdict are sealed as evidence. See [Why you can trust a run](/guide/concepts/trust).
+
+A validator names no tool and no kind of work. The same interface checks a program, a document, a dataset, a configuration or a design file. A binding is a named set of adapters, validators, kinds, effects and conventions that maps the standards onto one kind of work, so the formats of one toolset are adapters in a binding. See [Bindings](/reference/bindings).
 
 ## Who admits a validator
 
 A validator judges the work, so an agent never adds or changes one.
 
-- **The tenant** declares its own script validators in the tenant config. It also decides whether a project's own validators count as evidence. By default they do not. A project validator that does not count as evidence can still run as a preview for the agent. A preview is never evidence.
-- **The project's owner** declares the project's script validators in the project config. The files of a script validator are protected by default. See [What an agent cannot change](/guide/concepts/protection).
-- **The cluster admin** installs native validators. The tenant admits each one by name, version and digest.
+- **The tenant** declares its own script validators in the tenant config, under `validators.scripts`. It also decides whether a project's own validators count as evidence, in `projects[].validators.admit`. By default they do not. A project validator that does not count as evidence can still run as a preview for the agent. A preview is never evidence.
+- **The project's owner** declares the project's script validators in the project config, under `validators`. The files of a script validator are protected by default. See [What an agent cannot change](/guide/concepts/protection).
+- **The cluster admin** installs native validators. The tenant admits each one by name, version and digest, in `validators.native`.
 
-See [The tenant defines the factory](/guide/concepts/tenant).
+For how the tenant config captures these decisions, see [The tenant defines the factory](/guide/concepts/tenant).
 
 ## Next steps
 
 - To name validators in a workflow, read [Write a workflow](/guide/how-to/write-a-workflow).
 - To see validators in complete workflows, read [Workflow patterns](/guide/how-to/workflow-patterns).
-- For the interface, the built-in validators and the rules for each source, see [Validators](/reference/validators).
+- For the validator contract, the built-in validators and how to write a validator, see the [Validators reference](/reference/validators).

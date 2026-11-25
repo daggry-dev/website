@@ -6,13 +6,13 @@ A tenant is a party whose runs an installation hosts. A factory is what the tena
 
 ## What the tenant config captures
 
-The tenant config answers four questions. It also names the runner images the tenant offers, the projects the factory serves, the validators it admits and the extensions it admits. For every key, see the [Tenant config reference](/reference/tenant-config).
+The tenant config answers four questions. It also names the runner images the tenant offers, the workspaces the factory serves and the binding each one uses, and the extensions the tenant registers: bindings, adapters, effects and added kinds. For every key, see the [Tenant config reference](/reference/tenant-config).
 
 ### Which workflows
 
 The tenant config holds a catalogue: the workflows the factory offers, each with a name and the workspace, path and version its file is read from. A workflow is still a file of steps. A run uses only a workflow from the catalogue, and the version pins exactly one content of the file. See [Work graphs](/guide/concepts/workflows).
 
-The tenant config also assigns the workflows. For each project the factory serves, it lists the workflows that may run there and the one that runs by default. A project never assigns a workflow to itself. See [Why the project does not choose workflows](/guide/concepts/standards#why-the-project-does-not-choose-workflows).
+The tenant config also assigns the workflows. For each workspace the factory serves, it lists the workflows that can run there and the one that runs by default. A project never assigns a workflow to itself. See [Why the project does not choose workflows](/guide/concepts/standards#why-the-project-does-not-choose-workflows).
 
 ### How they are orchestrated
 
@@ -34,11 +34,11 @@ The tenant config says which agents work, with what, and how far they go alone.
 
 ### Which validators judge the work
 
-A validator is a check written as code, and a `verify` step names the ones it runs. The tenant config says which validators a run may name.
+A validator is a check written as code, and a `verify` step names the ones it runs. The tenant config says which validators a run can name.
 
-- **Its own script validators.** The tenant declares a script or an executable as `tenant/<name>`. It holds for every project the factory serves.
-- **A project's validators.** A project declares its own as `project/<name>`. The tenant decides whether they count as evidence. By default they do not, and they still run as previews.
-- **Native validators.** A native validator is loaded in-process or run as a service that speaks the validator protocol, in any language. The cluster admin installs it, and the tenant admits it by name, version and digest.
+- **Its own script validators.** The tenant declares a script or an executable under `validators.scripts`, and a workflow names it `tenant/<name>`. It holds for every workspace the factory serves.
+- **A project's validators.** A project declares its own, and a workflow names one `project/<name>`. The tenant decides whether they count as evidence, for each workspace, in `projects[].validators.admit`. By default they do not, and they still run as previews.
+- **Native validators.** A native validator is written in any language and judges sealed inputs alone. The cluster admin installs it, and the tenant admits it by name, version and digest under `validators.native`.
 
 See [Validators: the extension point](/guide/concepts/validators).
 
@@ -48,11 +48,11 @@ The tenant config is one of three documents that shape a run. Each answers a dif
 
 | Document | The question it answers | Example |
 |---|---|---|
-| Tenant config | How does this factory work? | At most four job attempts at a time. Plans need approval. This project gets the review workflow. |
+| Tenant config | How does this factory work? | At most four job attempts at a time. Plans need approval. This workspace gets the review workflow. |
 | Project config | What is true of this project? | These are its areas. This validator is the verification evidence. These paths are protected. |
 | Workflow | What is this piece of work? | Write a plan, wait for approval, then do the work and verify it for each item. |
 
-A setting that holds for every project belongs to the tenant. A setting that is true of one project whatever the work, and whichever factory works on it, belongs to the project. A decision about one project, such as which workflows run on it, belongs to the tenant. A setting that holds for one kind of work belongs to the workflow. See [Project config](/reference/project-config) and the [Workflow schema](/reference/workflow-schema).
+A setting that holds for every project belongs to the tenant. A setting that is true of one project whatever the work, and whichever factory works on it, belongs to the project. A decision about one workspace, such as which workflows run on it, belongs to the tenant. A setting that holds for one kind of work belongs to the workflow. See [Project config](/reference/project-config) and the [Workflow schema](/reference/workflow-schema).
 
 ## Precedence: narrow freely, widen by a person
 
@@ -86,4 +86,5 @@ Every run records the configuration it started under. A later change applies to 
 ## Next steps
 
 - To see the modules that read the tenant config, read [The modules](/guide/concepts/modules).
+- To plug in a check of your own, read [Validators: the extension point](/guide/concepts/validators).
 - To look up a key, see the [Tenant config](/reference/tenant-config) and [Project config](/reference/project-config) references.

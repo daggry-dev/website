@@ -1,12 +1,12 @@
 # Where it runs
 
-A factory is mainly a control plane, a conductor and a stack that delivers verified evidence. This page shows where each part runs and what each part can reach. The split has one purpose: agents do the non-deterministic work, code gives the deterministic judgement, and an agent never grades its own work.
+Daggry is a factory kit, and you assemble its modules into your own factory. This page shows where each part runs and what each part can reach. The split has one purpose: agents do the non-deterministic work, code gives the deterministic judgement, and an agent never grades its own work.
 
 Whatever an agent can reach, it can misuse: another workspace, the signing key, the record of the run. So the place where an agent works holds none of them. Each job runs in a runner that lives for that one job, and the keys stay in the control plane.
 
 <Architecture />
 
-The diagram shows the forge on the left, the control plane and the conductor in the middle and a runner on the right. The forge is the part that keeps the workspace and its work items and takes the result. The runner dials the control plane. Nothing dials into the runner. Each box is a contract, and any part can be replaced. For each part's job and contract, see [The modules](/guide/concepts/modules) and [Contracts](/reference/contracts).
+The diagram shows three parts: the forge, the control plane with the conductor, and a runner. The forge is the part that keeps the workspace and its work items and takes the result. The runner dials the control plane. Nothing dials into the runner. The boxes are the kit's parts. For each part's job and contract, see [The modules](/guide/concepts/modules) and [Contracts](/reference/contracts).
 
 In the software binding the forge is a service that hosts repositories, the work item is an issue and the result is a pull request. See [Bindings](/reference/bindings).
 
@@ -18,7 +18,7 @@ The reference implementation is one implementation of these contracts. It runs o
 
 The control plane is the one backend. It takes in work, judges and seals the results, serves the API and keeps each tenant's state in the store. It holds the keys: the key that signs the record and the key for the forge. Both stay there. An agent's output reaches the control plane as a claim, and only the control plane turns it into a sealed record.
 
-The control plane runs the built-in validators, which read only sealed inputs. A native validator is loaded in-process or runs as a service that speaks the validator protocol. See [Validators](/guide/concepts/validators).
+The control plane runs the built-in validators, which read only sealed inputs. A native validator runs in-process with the control plane, or as a service that speaks the validator protocol. See [Validators: the extension point](/guide/concepts/validators).
 
 ## The conductor orders and schedules
 
@@ -34,7 +34,7 @@ Each job runs in its own throwaway runner. It holds three things:
 - A short-lived token for one workspace. It never carries permission to change what instructs, constrains or judges the run.
 - Your model credential, passed to the engine only.
 
-The runner starts from the version of the workspace the conductor names, then runs the steps one after another in the same workspace. It provides two kinds of step execution, and a tenant config may name more than one runner class (see the [Tenant config reference](/reference/tenant-config)). As the deterministic runner it runs commands and script validators and never starts a model. As the agent runner it starts the engine, the agent program that does the work, through an engine adapter, so the engine is replaceable. A script validator measures a clean copy of the workspace after the agent process has ended. A step that waits for you releases the runner, and the job continues in a new runner when you approve.
+The runner starts from the version of the workspace the conductor names, then runs the steps one after another in the same workspace. It provides two kinds of step execution, and a tenant config can name more than one runner class. See the [Tenant config reference](/reference/tenant-config#runners). As the deterministic runner it runs commands and script validators and never starts a model. As the agent runner it starts the engine, the coding agent that does the work, through an engine adapter, so the engine is replaceable. A script validator measures a clean copy of the workspace after the agent process has ended. A step that waits for you releases the runner, and the job continues in a new runner when you approve.
 
 A runner never restarts. If a machine dies at 3 a.m., its lease lapses, and the conductor asks for a new runner from the last sealed change, to repeat the step that was interrupted. A shell in a step cannot write the record or a [protected path](/guide/concepts/protection).
 

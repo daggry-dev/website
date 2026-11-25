@@ -4,9 +4,9 @@ An agent says "all checks pass". That sentence is a claim. The agent can be wron
 
 <Compare />
 
-The comparison shows a run in the software binding, where the checks are tests. On the left, the agent's own words are the only record. On the right, code re-ran the checks, reduced the output to a record and sealed it into a trail you can check.
+The comparison shows two records of the same work. Without Daggry, the agent's own words are the only record. With Daggry, code ran the checks again, reduced the output to a record and sealed it into a trail you can check.
 
-The three guarantees:
+Daggry gives three guarantees:
 
 - **An evidence trail.** Every record is linked to the ones before it and signed.
 - **Checks written as code.** The same work always gets the same verdict.
@@ -20,7 +20,7 @@ A record you can edit later proves nothing. Sealing takes a fingerprint of the r
 
 The diagram shows a record becoming a fingerprint, the fingerprint combined with the trail so far, and the combination signed.
 
-Suppose someone changes the `exit_code` of an old measurement from 1 to 0. Its fingerprint changes, so its signature fails, and so does every later record. One command finds it:
+Suppose someone changes the `exit_code` of an old measurement from 1 to 0. Its fingerprint changes, so its signature fails, and so does every later record. One command finds the change.
 
 ```sh
 daggry verify
@@ -47,8 +47,8 @@ For example, a validator takes a sealed plan and a sealed result. A criterion co
 A verdict is derived by code, whichever source the validator comes from.
 
 - **A built-in validator** ships with the platform and runs in the control plane, over sealed inputs.
-- **A native validator** is loaded in-process or run as a service that speaks the validator protocol, in any language. It is a pure function over sealed inputs, so it has nothing to read but the records.
-- **A script validator** runs in the deterministic runner, on a clean copy of the workspace, after the agent process has ended. The script reports a result and never its own verdict: a built-in validator derives the verdict from the sealed result. Code judges, never a script's own claim.
+- **A native validator** runs in-process with the control plane, or as a service that speaks the validator protocol. It is a pure function over sealed inputs, so it has nothing to read but the records.
+- **A script validator** runs in the deterministic runner, on a clean copy of the workspace, after the agent process has ended. The script reports a result, as an exit code or a result document, and never its own verdict: a built-in validator derives the verdict from the sealed result. Code judges, never a script's own claim.
 
 No validator runs where an agent can write, and none starts a model. See [Validators: the extension point](/guide/concepts/validators).
 
