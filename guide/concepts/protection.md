@@ -1,47 +1,45 @@
 # What an agent cannot change
 
-The easiest way to pass a check is to change the check. An agent that can edit its validators, its instructions or its check settings can make any run look green. Daggry protects those files in code. It does not rely on the agent's instructions.
-
-The rule is short: an agent never changes what instructs it, constrains it or judges it. Only a person can widen the rules.
+The easiest way to pass a validator is to change the validator. An agent that can edit its validators, its instructions or its limits can make any run look good, so Daggry protects those files in code and does not rely on the agent's instructions. Read this page if you own a project or write workflows and want to know what an agent can never touch.
 
 <Boundary />
 
-The diagram shows an agent in its pod. The agent can write the files its step is scoped to. It cannot write the checks that judge it, its instruction files or the check settings. A change to a protected file is put back and recorded.
+The diagram shows an agent in its runner. The agent can write the files its step is scoped to. It cannot write the validators, its instruction files or its limits. A change to a protected file is put back and recorded.
 
-## What instructs, constrains and judges
+The rule is short: an agent never changes what instructs it, constrains it or judges it. Only a person can loosen a rule.
 
-- **Instructs.** Daggry's own instructions, such as the step prompt, and your project's own coding-agent configuration: instruction files, agent folders, skills, commands, hooks and project settings. The runner holds Daggry's own instructions on a read-only volume. The agent reads your project's configuration from the workspace, so it works the way your project says. The boundary check keeps the rule for those files: a changed path is restored in the runner and rechecked in the control plane, and the step fails.
-- **Constrains.** The workflow, each step's scope (the files it may write) and the protected set. These live outside the runner. The conductor (the module that orders the steps) reads the workflow, and the control plane (the module that holds the keys, seals and judges) checks scope and the protected set.
-- **Judges.** The validators and what they read. The files of a script validator are protected by default, whether the tenant config or the project config declares it. A run takes a project's validators from the baseline, the version of the workspace the run started from, and built-in and native validators from the factory, never from the agent's change. Checks that the run itself wrote in an earlier iteration are frozen. See [Validators: the extension point](/guide/concepts/validators).
+Daggry enforces the rule twice. The runner puts back a protected file when a step ends. The control plane then checks the change again from outside the runner, where an agent cannot skip it, and fails the step.
 
-A project can add paths of its own to the protected set. For the exact list of protected paths and what a project adds, see [Protected paths](/reference/protected-paths).
+## Three groups of files are off limits
+
+You need this list to know which of your files an agent can never edit. Three groups of files are off limits to an agent.
+
+- **What instructs it.** The step prompt, and your project's own agent configuration: instruction files, agent folders, skills, commands, hooks and project settings. The agent reads them and cannot change them.
+- **What constrains it.** The workflow, each step's scope (the paths it can write) and the protected paths. Daggry keeps the workflow outside the runner.
+- **What judges it.** The validators and the files they read. The files of a script validator are protected by default. A run takes a project's validators from the version of the workspace it started from, never from the agent's change.
+
+A project owner can add protected paths in the project config. For the exact list, see [Protected paths](/reference/protected-paths).
 
 ## Frozen paths
 
-Some work is judged by a check the run itself writes. In a loop, a proof step writes the check that proves a criterion, and Daggry seals it. From then on, the paths the proof step wrote are frozen paths, so the work cannot pass by weakening its own check. Daggry compares each frozen path with the last sealed version of the workspace, and a changed or missing file is a violation.
+A run that writes its own test could also rewrite it, so the test is frozen once sealed. In a loop, a proof step writes the proof for a plan item, and Daggry seals it. From then on, the paths the proof step wrote are frozen paths. The work cannot pass by weakening its own proof.
 
 In this illustrative example, a proof step writes `checks/leave-policy.sh`. A later step whose scope holds `checks/**` still cannot change that file.
 
-If the agent believes a frozen check is wrong, it does not edit it. It ends its step with the check failing, and the loop stops and asks you.
+If the agent believes a frozen proof is wrong, it does not edit it. It ends its step with the proof failing, and the loop stops and asks you.
 
-In the software binding, the frozen paths are tests. See [Bindings](/reference/bindings#the-software-binding).
-
-## Unfreeze a path
-
-To let the agent change one frozen path, you grant it. The run must be waiting at the `human` step that an exhausted loop routes to.
+::: details How do I let the agent change a frozen path?
+You grant it. The run must be waiting at the approval that the loop goes to when it reaches its limit.
 
 ```sh
 daggry approve <run-id> --unfreeze <path>
 ```
 
-`<run-id>` is the waiting run. `<path>` is the frozen path to open. The grant is recorded against the file's current content and opens that one path for the next iteration only.
+`<run-id>` is the waiting run. `<path>` is the frozen path to open. Daggry records the grant against the file's content at that moment. The grant opens that one path for the next iteration only.
+:::
 
-## Why the check holds
+Related:
 
-Daggry checks twice. The program that runs the steps inside the runner restores violating paths when a step ends. Then the control plane rechecks from the forge's own view of the change, and a violation there fails the step. Because the second check runs outside the runner, an agent cannot skip it. The steps are in [Protected paths](/reference/protected-paths).
-
-## Next steps
-
-- To see how loops use frozen paths, read [Work graphs](/guide/concepts/workflows).
-- To see who can add a validator, read [Validators: the extension point](/guide/concepts/validators).
-- To see how the record of an approval is kept, read [Why you can trust a run](/guide/concepts/trust).
+- [Add a loop](/guide/how-to/add-a-loop)
+- [Why you can trust a run](/guide/concepts/trust)
+- [Protected paths reference](/reference/protected-paths)
