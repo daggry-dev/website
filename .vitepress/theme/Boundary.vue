@@ -7,9 +7,9 @@ const editable = [
   { f: 'handbook/index.md', d: 'in this step\'s scope' },
 ]
 const protectedItems = [
-  { t: 'Checks it must not weaken', d: 'frozen paths: checks sealed earlier in the run stay exactly as they were' },
+  { t: 'Its proofs', d: 'frozen paths: a proof sealed earlier in the run stays exactly as it was' },
   { t: 'Its own instructions', d: 'the workflow and the files that tell agents what to do' },
-  { t: 'Check settings', d: 'which validators judge the work' },
+  { t: 'Its validators and limits', d: 'which validators check the work, and what it can write' },
 ]
 </script>
 
@@ -17,7 +17,7 @@ const protectedItems = [
   <figure class="dgm bd">
     <div class="dg-body">
       <div class="pod">
-        <p class="podl">Throwaway pod: one job, one workspace</p>
+        <p class="podl">Throwaway runner: one job, one workspace</p>
         <div class="agent"><span class="av" aria-hidden="true">A</span>The agent</div>
         <span class="stem" aria-hidden="true" />
         <div class="zones">
@@ -41,12 +41,12 @@ const protectedItems = [
           </div>
         </div>
       </div>
-      <p class="outside">Never in the pod: the signing key and the key for the forge. The pod's token works for this one workspace only.</p>
+      <p class="outside">Never in the runner: the signing key and the forge key. The runner's token works for this one workspace only.</p>
     </div>
     <figcaption class="cap">
-      What an agent can change. Inside its pod it can edit the files its step is scoped to. The checks that judge
-      it, its own instructions and the check settings are protected: an edit there is restored, and the step fails
-      if anything protected changed. Code enforces the rule. In the software binding, the frozen checks are tests.
+      What an agent can change. Inside its runner it can edit the files in its step's scope. Its proofs, its
+      instructions, its validators and its limits are protected: an edit there is restored, and the step fails
+      if anything protected changed. Code enforces the rule. In software, the proofs are tests.
     </figcaption>
   </figure>
 </template>

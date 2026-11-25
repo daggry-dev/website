@@ -1,13 +1,13 @@
 <template>
   <figure class="dgm">
     <ScrollFrame label="Module diagram">
-    <svg viewBox="0 0 960 500" role="img" aria-label="Modules: four open standards on top, the running parts below. The conductor reads the tenant config and the workflow, and hands each job attempt to a runner under a lease. The runner, drawn as the deterministic runner and the agent runner, reads the project config, runs script validators and the engine, and sends claims to the control plane. The control plane has validators judge the claims, seals them as evidence and keeps them in the store. The forge sends work in and takes the result. The boxes are the kit's parts.">
+    <svg viewBox="0 0 960 500" role="img" aria-label="Modules: four open formats on top, the modules below. The conductor reads the tenant config and the workflow, and hands each job attempt to a runner under a lease. The runner, drawn as the deterministic runner and the agent runner, reads the project config, runs script validators and the engine, and sends claims to the control plane. The control plane has validators check the claims, seals them as evidence and keeps them in the store. The forge sends work in and takes the result.">
       <defs>
         <marker id="mod-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="arrow"/></marker>
         <marker id="mod-ah-hot" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="arrow hot"/></marker>
       </defs>
       <!-- the four standards -->
-      <text x="20" y="28" class="lbl">Open standards · the documents the parts read and write</text>
+      <text x="20" y="28" class="lbl">Open formats · the files the modules read and write</text>
       <rect x="20" y="44" width="130" height="60" rx="12" class="cool"/>
       <text x="85" y="70" text-anchor="middle" class="md">Tenant config</text>
       <text x="85" y="88" text-anchor="middle" class="sm">how the factory works</text>
@@ -46,7 +46,7 @@
       <text x="840" y="220" text-anchor="middle" class="sm">seals · holds the keys</text>
       <rect x="754" y="236" width="172" height="56" rx="12" class="cool"/>
       <text x="840" y="260" text-anchor="middle" class="md">Validators</text>
-      <text x="840" y="278" text-anchor="middle" class="sm">judge in code · plug in yours</text>
+      <text x="840" y="278" text-anchor="middle" class="sm">check as code · add your own</text>
       <rect x="754" y="304" width="172" height="56" rx="12" class="box"/>
       <text x="840" y="328" text-anchor="middle" class="md">Store</text>
       <text x="840" y="346" text-anchor="middle" class="sm">the trail · tenant state</text>
@@ -57,10 +57,10 @@
       <text x="840" y="474" text-anchor="middle" class="sm">work in · result out</text>
       <path d="M840 432 V400" class="edge" marker-end="url(#mod-ah)"/>
       <!-- legend -->
-      <text x="20" y="464" class="lbl">The kit's parts: modules you assemble into a factory</text>
+      <text x="20" y="464" class="lbl">The seven modules you set up as your factory</text>
       <!-- edges: standards into modules -->
       <path d="M85 104 V170" class="edge" marker-end="url(#mod-ah)"/>
-      <text x="95" y="142" class="sm">limits · roster</text>
+      <text x="95" y="142" class="sm">limits · agents</text>
       <path d="M235 104 V170" class="edge" marker-end="url(#mod-ah)"/>
       <text x="245" y="142" class="sm">steps</text>
       <path d="M520 104 V170" class="edge" marker-end="url(#mod-ah)"/>
@@ -81,9 +81,9 @@
     </svg>
     </ScrollFrame>
     <figcaption class="cap">
-      The kit's parts: the modules and the four open standards that connect them. The runner is drawn as its two kinds of step execution. The conductor hands a job attempt to a runner, the runner sends back
-      claims, validators judge each claim in code, and the control plane seals it as evidence in the store. The forge sends work in and takes the result.
-      Validators are the plug-in point: built in, a script of your own, or a native validator in any language.
+      The seven modules and the four open formats they read and write. The runner is drawn twice, because it runs a step as a script or with an agent. The conductor hands a job attempt to a runner, the runner sends back
+      claims, validators check each claim as code, and the control plane seals it as evidence in the store. The forge sends work in and takes the result.
+      You can add your own validators: a script, or a native validator in any language.
     </figcaption>
   </figure>
 </template>

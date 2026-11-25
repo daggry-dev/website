@@ -18,16 +18,16 @@ import DgIcon from './DgIcon.vue'
         <li>
           <div class="dg-node cool check">
             <span class="dg-who">runs</span>
-            <b>A check written as code</b>
-            <span>For example: every planned item has a check that failed before the work and passes after it.</span>
+            <b>A validator</b>
+            <span>For example: every plan item has a proof that failed before the work and passes after it.</span>
           </div>
           <DgArrow hot />
         </li>
         <li>
           <div class="dg-node">
             <span class="dg-who">decides</span>
-            <b>Verdict</b>
-            <span>Same records, same verdict, every time.</span>
+            <b>Pass or fail</b>
+            <span>Same records, same result, every time.</span>
             <span class="dg-chip ok v"><DgIcon name="tick" />pass</span>
           </div>
           <DgArrow hot />
@@ -49,16 +49,16 @@ import DgIcon from './DgIcon.vue'
       <div class="claim">
         <div class="bubble">
           <span class="dg-who">the agent says</span>
-          <q>Done, all checks pass.</q>
+          <q>Done, all tests pass.</q>
         </div>
         <div class="bounce">
           <DgIcon name="back" class="bi" />
-          <span><b>Bounced.</b> No sealed record backs it, so the check never sees it. A claim on its own opens no gate.</span>
+          <span><b>Bounced.</b> No sealed record backs it, so the validator never sees it. A claim on its own opens no gate.</span>
         </div>
       </div>
     </div>
     <figcaption class="cap">
-      A check written as code reads only sealed records and gives a verdict; the gate opens only on a pass.
+      A validator reads only sealed records and returns pass or fail. The gate opens only on a pass.
       What the agent says about its own work is not a record, so it cannot open a gate.
     </figcaption>
   </figure>

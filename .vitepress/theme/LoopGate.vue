@@ -3,10 +3,10 @@ import DgArrow from './DgArrow.vue'
 import DgIcon from './DgIcon.vue'
 
 const steps = [
-  { who: 'agent', t: 'Write the proof', d: 'a check for the next item in the plan', c: 'cool' },
-  { who: 'code', t: 'Shown to fail', d: 'on the baseline, before the work', c: '' },
+  { who: 'agent', t: 'Write the proof', d: 'a test for the next plan item', c: 'cool' },
+  { who: 'code', t: 'Shown to fail', d: 'before the work', c: '' },
   { who: 'agent', t: 'Do the work', d: 'change the paths in scope', c: 'cool' },
-  { who: 'code', t: 'Re-run on a clean copy', d: 'every validator, fresh copy', c: 'warm' },
+  { who: 'code', t: 'Run again on a clean copy', d: 'every validator', c: 'warm' },
 ]
 </script>
 
@@ -14,7 +14,7 @@ const steps = [
   <figure class="dgm lg">
     <div class="dg-body grid">
       <div class="loop">
-        <p class="lt">One pass of the loop, once per item, with a fixed number of tries</p>
+        <p class="lt">One iteration for each plan item, up to the loop limit</p>
         <ol class="dg-flow">
           <li v-for="(s, i) in steps" :key="s.t">
             <div :class="['dg-node', s.c]">
@@ -25,7 +25,7 @@ const steps = [
             <DgArrow v-if="i < steps.length - 1" />
           </li>
         </ol>
-        <p class="back"><DgIcon name="back" />Items left, or this one failed: go round again</p>
+        <p class="back"><DgIcon name="back" />Plan items left, or this one failed: another iteration</p>
       </div>
 
       <DgArrow hot class="to-gate" />
@@ -33,25 +33,25 @@ const steps = [
       <div class="gate">
         <div class="g">
           <b>Gate</b>
-          <span>a check written as code</span>
+          <span>the rule that lets the loop stop</span>
         </div>
         <ul class="exits">
           <li class="dg-node ok">
-            <span class="dg-who">all items covered</span>
+            <span class="dg-who">every plan item covered</span>
             <b>Next step</b>
           </li>
           <li class="dg-node rose">
-            <span class="dg-who">runs out of tries</span>
+            <span class="dg-who">loop limit reached</span>
             <b><DgIcon name="person" class="pi" />Fails, or a person decides</b>
           </li>
         </ul>
       </div>
     </div>
     <figcaption class="cap">
-      Each pass takes one planned item through four steps, two by the agent and two by code: the agent writes a check,
-      code shows that the check fails on the baseline, the agent does the work, and code runs every validator on a clean
-      copy. The gate lets the run go on only when every item is covered. If the tries run out, the run fails, or it
-      waits for a person at the human step the workflow names. In the software binding, the check is a test.
+      Each iteration takes one plan item through four steps, two by the agent and two by code: the agent writes a proof,
+      code shows that the proof fails before the work, the agent does the work, and code runs every validator on a clean
+      copy. The gate lets the run go on only when every plan item is covered. At the loop limit, the run fails, or it
+      waits for you at the <code>human</code> step the workflow names. In software, the proof is a test.
     </figcaption>
   </figure>
 </template>

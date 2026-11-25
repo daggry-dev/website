@@ -17,7 +17,7 @@ const records = [
     <div class="dg-body">
       <p class="head">
         <span class="ex">Example</span>
-        <span>The evidence trail of one night, in the software binding</span>
+        <span>The evidence trail of one night of software work</span>
       </p>
       <ol class="trail">
         <template v-for="(r, i) in records" :key="i">
@@ -46,7 +46,7 @@ const records = [
     </div>
     <figcaption class="cap">
       An example trail, shortened to four of its twelve records. Each record says what happened and that code checked
-      it, and is linked to the trail before it. One command re-checks the whole trail on your own machine.
+      it, and is linked to the trail before it. One command verifies the whole trail on your own machine.
     </figcaption>
   </figure>
 </template>

@@ -1,36 +1,36 @@
 <script setup lang="ts">
 import ScrollFrame from './ScrollFrame.vue'
 const before = [
-  { k: 'agent', t: 'Plan', d: 'a list of items', c: 'cool' },
+  { k: 'agent', t: 'Plan', d: 'a list of plan items', c: 'cool' },
   { k: 'you', t: 'You approve', d: 'the exact plan', c: 'rose' },
 ]
 const loop = [
-  { k: 'agent', t: 'Write the proof', d: 'a check for the next item', c: 'cool' },
-  { k: 'code', t: 'Check shown to fail', d: 'on the baseline', c: 'box' },
-  { k: 'agent', t: 'Do the work', d: 'make the check pass', c: 'cool' },
-  { k: 'code', t: 'Re-run on a clean copy', d: 'every validator', c: 'warm' },
+  { k: 'agent', t: 'Write the proof', d: 'a test for the next plan item', c: 'cool' },
+  { k: 'code', t: 'Proof shown to fail', d: 'before the work', c: 'box' },
+  { k: 'agent', t: 'Do the work', d: 'make the proof pass', c: 'cool' },
+  { k: 'code', t: 'Run again on a clean copy', d: 'every validator', c: 'warm' },
 ]
 const after = [
-  { k: 'code', t: 'Hand over the result', d: 'an effect, for your review', c: 'warm' },
+  { k: 'code', t: 'Deliver the result', d: 'an effect, for your review', c: 'warm' },
 ]
 </script>
 
 <template>
   <figure class="dgm wf">
-    <ScrollFrame label="Delivery workflow">
+    <ScrollFrame label="Workflow diagram">
       <div class="row">
         <template v-for="s in before" :key="s.t"><div :class="['n', s.c]"><small>{{ s.k }}</small><b>{{ s.t }}</b><em>{{ s.d }}</em></div><span class="a" aria-hidden="true">→</span></template>
         <div class="loop">
-          <small class="lt">repeat for each item · a fixed number of tries</small>
+          <small class="lt">repeat for each plan item · up to the loop limit</small>
           <div class="lrow">
             <template v-for="(s, i) in loop" :key="s.t"><div :class="['n', s.c]"><small>{{ s.k }}</small><b>{{ s.t }}</b><em>{{ s.d }}</em></div><span v-if="i < loop.length - 1" class="a" aria-hidden="true">→</span></template>
           </div>
-          <small class="back">↺ check still fails? try the item again · out of tries: the run fails or waits for you</small>
+          <small class="back">↺ proof still fails? another iteration · at the loop limit: the run fails or waits for you</small>
         </div>
         <template v-for="s in after" :key="s.t"><span class="a" aria-hidden="true">→</span><div :class="['n', s.c]"><small>{{ s.k }}</small><b>{{ s.t }}</b><em>{{ s.d }}</em></div></template>
       </div>
     </ScrollFrame>
-    <figcaption class="cap">The shape of a delivery workflow: a plan, your approval, a loop that proves each item with a check that first fails and then passes, and an effect that hands the result over. The loop has a fixed number of tries. When they run out, the run fails or waits for you. In the software binding, the check is a test and the effect opens a pull request.</figcaption>
+    <figcaption class="cap">A workflow that delivers a change: a plan, your approval, a loop with a proof for each plan item that fails first, then passes, and an effect that delivers the result. When the loop reaches its limit, the run fails or waits for you. In software, the proof is a test and the effect opens a pull request.</figcaption>
   </figure>
 </template>
 

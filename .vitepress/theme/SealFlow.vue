@@ -10,7 +10,7 @@ import DgArrow from './DgArrow.vue'
           <div class="dg-node">
             <span class="dg-who">1. record</span>
             <b>A step's result</b>
-            <span class="dg-mono sample">checks re-run: 0 failed</span>
+            <span class="dg-mono sample">validators run: 0 failed</span>
             <span>Written by code, not by the agent.</span>
           </div>
           <DgArrow />
@@ -38,7 +38,7 @@ import DgArrow from './DgArrow.vue'
             <span class="dg-who">4. sign</span>
             <b>Signed with a key</b>
             <span class="dg-mono sample">signature over 5f19…</span>
-            <span>The key never enters a pod, so no agent can sign.</span>
+            <span>The signing key never enters a runner, so no agent can sign.</span>
           </div>
           <DgArrow hot />
         </li>

@@ -3,30 +3,31 @@ import { withBase } from 'vitepress'
 import { SIGNUP_OPEN } from './features'
 
 const proof = [
-  { t: 'A changed record shows', d: 'Every result is linked to the one before and signed. Change one byte in the middle of the trail and daggry verify shows where. The trail is tamper-evident, not tamper-proof.', l: '/guide/concepts/trust' },
-  { t: 'Checks are code', d: 'The same work always gets the same verdict. An agent cannot talk its way to a pass.', l: '/guide/concepts/trust' },
-  { t: 'Formats are public', d: 'Every record format is a published JSON Schema. Read and check the trail with your own tools.', l: '/guide/concepts/standards' },
+  { t: 'A changed record shows', d: 'Every result is signed and linked to the one before. Change one byte, and daggry verify shows where.', l: '/guide/concepts/trust' },
+  { t: 'Validators are code', d: 'The same work always gets the same result. An agent cannot talk its way to a pass.', l: '/guide/how-to/add-a-validator' },
+  { t: 'Formats are public', d: 'Read and check the trail with your own tools.', l: '/reference/open-formats' },
 ]
-// The four open standards: what each document says.
-const standards = [
-  { t: 'Workflow', d: 'The work, as steps: what each hands to the next, the checks, and the moments you decide.', l: '/guide/concepts/workflows' },
-  { t: 'Evidence', d: 'One sealed record for each result, signed and linked to the record before it.', l: '/guide/concepts/trust' },
-  { t: 'Project config', d: 'What is true of one project: which validators judge its work and what no step may write.', l: '/reference/project-config' },
-  { t: 'Tenant config', d: 'How the factory works: which workflows, how they are orchestrated, which agents work and where a person decides.', l: '/guide/concepts/tenant' },
+// The four open formats: three files you write, and the evidence trail Daggry writes.
+const formats = [
+  { t: 'Workflow', d: 'The steps of a piece of work, in order.', l: '/guide/concepts/workflows' },
+  { t: 'Project config', d: 'How to check one project and what to protect in it.', l: '/guide/how-to/set-up-a-project' },
+  { t: 'Tenant config', d: 'Which workflows run, which agents work and where a person must approve.', l: '/guide/how-to/set-up-a-tenant' },
+  { t: 'Evidence trail', d: 'Every result, signed and linked. Daggry writes it.', l: '/guide/concepts/trust' },
 ]
-// Each chip links to its pattern's heading on the patterns page (VitePress heading slugs).
+// Each chip links to its example's heading on the examples page (VitePress heading slugs).
 const kinds = [
   { t: 'Review a document', a: 'review-a-document' },
-  { t: 'Refresh data, approve, publish', a: 'refresh-data-and-approve-before-publish' },
+  { t: 'Refresh and publish data', a: 'refresh-and-publish-data' },
   { t: 'Ship a change from an issue', a: 'ship-a-change-from-an-issue' },
-  { t: 'Write a sourced report', a: 'research-a-question-and-write-a-sourced-report' },
-  { t: 'Migrate files in batches', a: 'migrate-files-in-bounded-batches' },
-  { t: 'Process a list of items', a: 'process-a-batch-of-items' },
-  { t: 'Update docs with review', a: 'update-documentation-with-a-human-review' },
-  { t: 'Run a release check', a: 'run-a-gated-release-check' },
+  { t: 'Write a sourced report', a: 'write-a-sourced-report' },
+  { t: 'Process a list of items', a: 'process-a-list-of-items' },
+  { t: 'Migrate files in batches', a: 'migrate-files-in-batches' },
+  { t: 'Update documentation', a: 'update-documentation' },
+  { t: 'Run a release check', a: 'run-a-release-check' },
+  { t: 'Audit and report', a: 'audit-and-report' },
 ]
 
-// Software binding example. A nine-line workflow with no agent step: run a script, re-check, wait for you, open a pull request.
+// Software example. A nine-line workflow with no agent step: run a script, validate, wait for you, open a pull request.
 // Valid against public/schemas/workflow.json. Split into key/value pieces for colouring.
 const snippet: { k?: string; v?: string; p?: string }[][] = [
   [{ k: 'format' }, { p: ': ' }, { v: 'daggry/workflow@1' }],
@@ -35,14 +36,17 @@ const snippet: { k?: string; v?: string; p?: string }[][] = [
   [{ p: '    ' }, { k: 'kind' }, { p: ': ' }, { v: 'command' }],
   [{ p: '    ' }, { k: 'run' }, { p: ': ' }, { v: './scripts/migrate-config.sh' }],
   [{ p: '    ' }, { k: 'scope' }, { p: ': [' }, { v: '"config/**"' }, { p: ']' }],
-  [{ p: '  - { ' }, { k: 'id' }, { p: ': ' }, { v: 'check' }, { p: ', ' }, { k: 'kind' }, { p: ': ' }, { v: 'verify' }, { p: ', ' }, { k: 'validators' }, { p: ': [' }, { v: 'project' }, { p: '] }' }],
+  [{ p: '  - { ' }, { k: 'id' }, { p: ': ' }, { v: 'validate' }, { p: ', ' }, { k: 'kind' }, { p: ': ' }, { v: 'verify' }, { p: ', ' }, { k: 'validators' }, { p: ': [' }, { v: 'project' }, { p: '] }' }],
   [{ p: '  - { ' }, { k: 'id' }, { p: ': ' }, { v: 'review' }, { p: ', ' }, { k: 'kind' }, { p: ': ' }, { v: 'human' }, { p: ', ' }, { k: 'waiting_for' }, { p: ': ' }, { v: 'input-needed' }, { p: ' }' }],
   [{ p: '  - { ' }, { k: 'id' }, { p: ': ' }, { v: 'pr' }, { p: ', ' }, { k: 'kind' }, { p: ': ' }, { v: 'effect' }, { p: ', ' }, { k: 'do' }, { p: ': ' }, { v: 'open-pr' }, { p: ' }' }],
 ]
 
+// The seven modules, in the fixed order.
+const modules = ['Conductor', 'Control plane', 'Runner', 'Engine', 'Forge', 'Store', 'Validators']
+
 const doors = [
-  { t: 'Understand it', time: '10 minutes', d: 'Read the story of one night, and why each part is there.', l: '/guide/' },
-  { t: 'Try it', time: 'Hands on', d: 'Run a first workflow in the software binding and verify its trail.', l: '/guide/getting-started' },
+  { t: 'Understand it', time: '10 minutes', d: 'Read the story of one night, then what you can use Daggry for.', l: '/guide/' },
+  { t: 'Try it', time: 'Hands on', d: 'Run a first workflow, approve it and verify its trail.', l: '/guide/getting-started' },
   { t: 'See the build status', time: '2 minutes', d: 'The roadmap is the one page that states what is built.', l: '/roadmap' },
 ]
 </script>
@@ -55,13 +59,11 @@ const doors = [
       <p class="eyebrow">Daggry · Danish for dawn</p>
       <h1>Agents do the work.<br /><em>Code checks it.</em></h1>
       <p class="lede">
-        Agents can work all night. Daggry makes that safe to sleep through: every step an agent finishes is
-        re-checked by code and recorded in a signed, tamper-evident trail. It is a factory kit, built from modules
-        and open standards.
+        Agents can work all night. Daggry makes that safe to sleep through: code checks every step an agent
+        finishes and signs the result into a trail you can verify yourself.
       </p>
       <p class="lede">
-        You assemble the modules into your own factory, for any work that has a deterministic check. A binding is a
-        ready-made configuration of the kit for one kind of work. Software is the first.
+        Daggry is a factory kit. You set up its modules as your own factory, for any work a script can check.
       </p>
       <div class="cta">
         <a class="btn primary" :href="withBase('/guide/')">See one night</a>
@@ -78,17 +80,16 @@ const doors = [
         By morning, all you have is the agent's own report.
       </p>
       <Compare />
+      <p class="more"><a :href="withBase('/guide/why')">Why use it</a></p>
     </section>
 
     <section class="wide">
       <p class="eyebrow">Overnight</p>
       <h2>Go to bed. Wake at <em>daggry</em>.</h2>
       <p class="sub">
-        One binding as the example: software, where an issue becomes a pull request. For each item in your plan,
-        the agent writes a test, Daggry shows the test fails, the agent makes it pass, and Daggry re-runs it on a
-        clean copy. If a machine dies at 3 a.m., a new runner starts from the last sealed change and repeats the
-        interrupted step. The same machinery runs any work that has a deterministic check: a document review, a
-        data pipeline refresh, a design audit.
+        A software example: an issue becomes a pull request. For each item in your plan, the agent writes a test,
+        Daggry shows that the test fails, the agent makes it pass, and Daggry runs it again on a clean copy. If a
+        machine dies at 3 a.m., a new runner starts from the last sealed change.
       </p>
       <Overnight />
     </section>
@@ -97,37 +98,37 @@ const doors = [
       <p class="eyebrow">How it works</p>
       <h2>Describe it once. <em>Check every step.</em></h2>
       <p class="sub">
-        A workflow is a short file: the steps, what each must hand to the next, the validators that judge
-        the work, and the moments you decide. Daggry runs on your own cluster, and a binding connects it to where
-        your work lives.
+        A workflow is a short file: the steps, the validators that check the work, and the moments you decide.
+        Daggry runs on your own cluster.
       </p>
       <HowItWorks />
+      <p class="more">
+        <a :href="withBase('/guide/features')">What it does</a>
+        <a :href="withBase('/guide/how-it-works')">How it works</a>
+      </p>
     </section>
 
     <section class="wide">
-      <p class="eyebrow">Modules and open standards</p>
+      <p class="eyebrow">Modules and open formats</p>
       <h2>A factory kit, <em>not one machine</em>.</h2>
       <p class="sub">
-        Each module has one job: a conductor orders the work, a control plane seals it, a runner runs commands and
-        agents by two separate mechanisms, and validators judge the result in code. Four open documents connect
-        them, so nothing is tied to one kind of work, one coding agent, one cloud or one factory. Validators are
-        where you plug in a check of your own: a script, or a native validator in any language.
+        Seven modules, each with one job. You set them up as your own factory, and you can replace any of them.
+        You write three files and Daggry writes the fourth, the evidence trail. All four formats are published,
+        so your own tools can read them.
       </p>
-      <Modules />
+      <ul class="chips mods">
+        <li v-for="m in modules" :key="m"><span>{{ m }}</span></li>
+      </ul>
       <div class="proof four">
-        <a v-for="s in standards" :key="s.t" class="card" :href="withBase(s.l)">
-          <h3>{{ s.t }}</h3>
-          <p>{{ s.d }}</p>
+        <a v-for="f in formats" :key="f.t" class="card" :href="withBase(f.l)">
+          <h3>{{ f.t }}</h3>
+          <p>{{ f.d }}</p>
         </a>
       </div>
-      <p class="honest">
-        Each document has a published schema, a version and a way to extend it. Any factory can implement the same
-        specification and the same signing and chaining of evidence.
-      </p>
       <p class="more">
-        <a :href="withBase('/guide/concepts/modules')">See the modules</a>
-        <a :href="withBase('/guide/concepts/standards')">Read the standards</a>
-        <a :href="withBase('/guide/concepts/validators')">Plug in a validator</a>
+        <a :href="withBase('/guide/how-it-works')">See the modules</a>
+        <a :href="withBase('/guide/configure')">Configure Daggry</a>
+        <a :href="withBase('/guide/how-to/add-a-validator')">Add a validator</a>
       </p>
     </section>
 
@@ -135,7 +136,7 @@ const doors = [
       <p class="eyebrow">Proof, not promises</p>
       <h2>Trust the <em>trail</em>, not the agent.</h2>
       <p class="sub">
-        This is what you read over coffee: every step, the check behind it, and a link to the record before.
+        This is what you read over coffee: every step, what code checked, and a link to the record before.
       </p>
       <MorningTrail />
       <div class="proof">
@@ -145,19 +146,18 @@ const doors = [
         </a>
       </div>
       <p class="honest">
-        A seal proves the check ran and the record is unchanged. It does not prove your checks are the right ones.
-        Records dropped from the end of the trail show only against a signed head kept outside the cluster.
+        A seal proves that the validator ran and that the record is unchanged. It does not prove that you chose
+        the right validators.
         <a :href="withBase('/guide/concepts/trust')">Read the limits</a>
       </p>
     </section>
 
     <section class="wide">
-      <p class="eyebrow">Any work with a check</p>
+      <p class="eyebrow">What you can use it for</p>
       <h2>If a script can check it, <em>Daggry can run it</em>.</h2>
       <p class="sub">
-        Any work that lives in a workspace and has a check a script can run: software, a document review, a data
-        refresh, a design audit. This workflow is from the software binding and needs no agent: it runs a script,
-        has a validator re-check the result, waits for you, and opens a pull request.
+        Software, a document review, a data refresh, an audit. This software example needs no agent: it runs a
+        script, validates the result, waits for you, and opens a pull request.
       </p>
       <div class="work">
         <ul class="chips">
@@ -165,10 +165,10 @@ const doors = [
         </ul>
         <figure class="code">
           <pre tabindex="0" aria-label="Example workflow file, nine lines"><code><template v-for="(line, i) in snippet" :key="i"><span v-for="(s, j) in line" :key="j" :class="s.k ? 'k' : s.v ? 'v' : 'p'">{{ s.k ?? s.v ?? s.p }}</span>{{ '\n' }}</template></code></pre>
-          <figcaption>A complete workflow. The validator is declared in the project config, where the run cannot change it.</figcaption>
+          <figcaption>A complete workflow. The validator is named in the project config, where the run cannot change it.</figcaption>
         </figure>
       </div>
-      <p class="more"><a :href="withBase('/guide/how-to/workflow-patterns')">See the patterns</a></p>
+      <p class="more"><a :href="withBase('/guide/use-cases')">See the nine examples</a></p>
     </section>
 
     <section class="wide">
@@ -244,6 +244,8 @@ const doors = [
 .chips li { min-width: 0; max-width: 100%; }
 .chips li a { display: block; padding: 9px 16px; border-radius: 999px; font-size: .9rem; border: 1px solid var(--dg-btn-border); background: var(--dg-btn-bg); color: var(--dg-ink); text-decoration: none; transition: transform .2s; }
 .chips li a:hover { transform: translateY(-1px); }
+.chips.mods { margin: 0 0 28px; }
+.chips.mods span { display: block; padding: 9px 16px; border-radius: 999px; font-size: .9rem; border: 1px solid var(--dg-btn-border); color: var(--dg-ink); }
 .code { margin: 0; min-width: 0; }
 .code pre {
   margin: 0; padding: 20px 22px; border-radius: 18px; overflow-x: auto;

@@ -2,7 +2,7 @@
 import DgArrow from './DgArrow.vue'
 import DgIcon from './DgIcon.vue'
 
-const file = ['steps:', '  write a plan', '  wait for your approval', '  for each item:', '    do the work, verify it', '  hand over the result']
+const file = ['steps:', '  write a plan', '  wait for your approval', '  for each item:', '    do the work, validate it', '  deliver the result']
 </script>
 
 <template>
@@ -16,39 +16,39 @@ const file = ['steps:', '  write a plan', '  wait for your approval', '  for eac
               <span v-for="(l, i) in file" :key="i" class="ln" :class="{ key: i === 0 }">{{ l }}</span>
             </div>
             <h3><span class="n">1</span>Describe</h3>
-            <p>You describe the work as a short file of steps. The agent follows it and cannot change it.</p>
+            <p>You describe the work as a file of fixed steps. The agent follows it and cannot change it.</p>
           </div>
           <DgArrow hot />
         </li>
         <li>
           <div class="step">
             <div class="art pods" aria-hidden="true">
-              <div v-for="p in ['plan', 'work', 'verify']" :key="p" class="pod">
+              <div v-for="p in ['plan', 'work', 'validate']" :key="p" class="pod">
                 <span class="job">{{ p }}</span>
                 <span class="repo"><DgIcon name="lock" />one workspace</span>
               </div>
             </div>
             <h3><span class="n">2</span>Run in isolation</h3>
-            <p>Each job runs in its own throwaway runner. It holds a token for one workspace and never the signing key.</p>
+            <p>Each job runs in a throwaway runner that never holds the signing key.</p>
           </div>
           <DgArrow hot />
         </li>
         <li>
           <div class="step">
             <div class="art recs" aria-hidden="true">
-              <div v-for="(r, i) in ['check passes after', 'check failed before', 'plan approved']" :key="r" class="rec" :style="{ '--i': i }">
+              <div v-for="(r, i) in ['test passes after', 'test failed before', 'plan approved']" :key="r" class="rec" :style="{ '--i': i }">
                 <DgIcon name="tick" /><span>{{ r }}</span>
               </div>
               <span class="seal">sealed</span>
             </div>
             <h3><span class="n">3</span>Check and record</h3>
-            <p>What an agent says it did is only a claim. Validators judge it in code, and the control plane writes the record. Plug in validators of your own.</p>
+            <p>What an agent says it did is only a claim. Validators check it as code, and Daggry signs the result. You can add your own.</p>
           </div>
         </li>
       </ol>
     </div>
     <figcaption class="cap">
-      Three steps. You write the plan of work once; each job gets its own runner and a token for one workspace; and nothing moves on until a validator has re-checked it and added it to a signed, tamper-evident trail.
+      Three steps. You describe the work once. Each job gets its own runner. Nothing moves on until a validator has checked it and the result is signed into the evidence trail.
     </figcaption>
   </figure>
 </template>

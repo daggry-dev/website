@@ -40,7 +40,7 @@ const items = ['State the daily limit for meals', 'Name who approves an exceptio
       </div>
     </div>
     <figcaption class="cap">
-      An approval. The run stops where the workflow says a person decides, and says why. Your approval is recorded
+      An approval. The run stops where the workflow asks for your approval, and says why. Your approval is recorded
       against the fingerprint of the exact plan you read, so it cannot be moved to a different plan.
     </figcaption>
   </figure>

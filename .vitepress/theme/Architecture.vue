@@ -1,7 +1,7 @@
 <template>
   <figure class="dgm">
     <ScrollFrame label="Architecture diagram">
-    <svg viewBox="0 0 960 440" role="img" aria-label="Architecture: on your cluster, the control plane holds the store and the keys, and the conductor orders the steps and starts a throwaway runner for each job. The runner holds the engine and the script validators, a token for one workspace and the model credential, never the signing key. The forge sends work in and takes the result. You use the CLI on your machine. The boxes are the kit's parts.">
+    <svg viewBox="0 0 960 440" role="img" aria-label="Architecture: on your cluster, the control plane holds the store and the keys, and the conductor orders the steps and starts a throwaway runner for each job. The runner holds the engine and the script validators, a token for one workspace and the model credential, never the signing key. The forge sends work in and takes the result. You use the CLI on your machine.">
       <defs>
         <marker id="arch-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="arrow"/></marker>
         <marker id="arch-ah-hot" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="arrow hot"/></marker>
@@ -17,10 +17,10 @@
       <!-- control plane -->
       <rect x="210" y="60" width="230" height="240" rx="18" class="warm"/>
       <text x="325" y="90" text-anchor="middle" class="md">Control plane</text>
-      <text x="325" y="110" text-anchor="middle" class="sm">seals · judges · serves the API</text>
+      <text x="325" y="110" text-anchor="middle" class="sm">checks · seals · serves the API</text>
       <rect x="226" y="126" width="198" height="56" rx="12" class="cool"/>
       <text x="325" y="150" text-anchor="middle" class="md">Store</text>
-      <text x="325" y="168" text-anchor="middle" class="sm">the trail · every sealed record</text>
+      <text x="325" y="168" text-anchor="middle" class="sm">the trail · every record</text>
       <rect x="226" y="196" width="198" height="84" rx="12" class="box"/>
       <text x="325" y="222" text-anchor="middle" class="md">The keys stay here</text>
       <text x="325" y="242" text-anchor="middle" class="sm">the signing key</text>
@@ -30,8 +30,7 @@
       <text x="550" y="90" text-anchor="middle" class="md">Conductor</text>
       <text x="550" y="112" text-anchor="middle" class="sm">orders the steps</text>
       <text x="550" y="130" text-anchor="middle" class="sm">a runner per job</text>
-      <text x="550" y="148" text-anchor="middle" class="sm">liveness by lease</text>
-      <text x="550" y="172" text-anchor="middle" class="sm">holds no key</text>
+      <text x="550" y="156" text-anchor="middle" class="sm">holds no key</text>
       <!-- pod -->
       <rect x="648" y="60" width="292" height="240" rx="18" class="rose"/>
       <text x="794" y="88" text-anchor="middle" class="lbl">Runner · throwaway · one job</text>
@@ -50,7 +49,7 @@
       <path d="M110 174 H210" class="edge hot" marker-end="url(#arch-ah-hot)"/>
       <text x="155" y="166" text-anchor="middle" class="sm">new work</text>
       <path d="M210 278 H110" class="edge hot" marker-end="url(#arch-ah-hot)"/>
-      <text x="155" y="296" text-anchor="middle" class="sm">hands over</text>
+      <text x="155" y="296" text-anchor="middle" class="sm">delivers</text>
       <path d="M440 125 H480" class="edge" marker-end="url(#arch-ah)"/>
       <path d="M620 125 H648" class="edge hot" marker-end="url(#arch-ah-hot)"/>
       <path d="M648 240 H440" class="edge" marker-end="url(#arch-ah)"/>
@@ -58,13 +57,13 @@
       <path d="M325 356 V300" class="edge" marker-end="url(#arch-ah)"/>
       <text x="337" y="334" class="sm">start · approve · verify</text>
       <!-- legend -->
-      <text x="695" y="390" text-anchor="middle" class="lbl">The kit's parts, where each one runs</text>
+      <text x="695" y="390" text-anchor="middle" class="lbl">The modules, and where each one runs</text>
     </svg>
     </ScrollFrame>
     <figcaption class="cap">
-      The kit's parts by role: the forge, the control plane with its store, the conductor, a throwaway runner for each job, and the CLI. The control plane keeps the
-      trail and the keys; the conductor orders the steps and starts the runners; the signing key never enters a runner. What the
-      runner sends back is only a claim until a validator judges it and the control plane seals it.
+      Where each module runs. The control plane keeps the trail and the keys. The conductor orders the steps and
+      starts a throwaway runner for each job. The signing key never enters a runner. What the runner sends back
+      is only a claim until a validator checks it and the control plane seals it.
     </figcaption>
   </figure>
 </template>

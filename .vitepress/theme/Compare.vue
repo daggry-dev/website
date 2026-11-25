@@ -3,18 +3,18 @@
   <div class="cmp">
     <div class="side bad">
       <span class="tag">Without Daggry</span>
-      <div class="bub">“Done, all checks pass.”</div>
+      <div class="bub">“Done, all tests pass.”</div>
       <p>The agent’s own words are the only record. A reviewer must trust them or redo the work.</p>
     </div>
     <div class="side good">
       <span class="tag">With Daggry</span>
-      <div class="bub mono">checks re-run by code: 0 failed, sealed</div>
-      <p>Code re-ran the checks on a clean copy of the workspace, wrote down the result, and sealed it into the trail. <dfn>Sealed</dfn> means checked by code, then signed so it cannot be quietly changed.</p>
+      <div class="bub mono">validators run by code: 0 failed, sealed</div>
+      <p>Code ran the validators on a clean copy, wrote down the result and sealed it. <dfn>Sealed</dfn> means checked by code, then signed so that a later change shows.</p>
     </div>
   </div>
   <figcaption class="cap">
-    Two records of the same work. Without Daggry, the agent's own report is the only record. With Daggry, code runs
-    the checks again and seals the result into a trail you can verify. In the software binding, the checks are tests.
+    The same work, reported twice. Without Daggry, the agent's own report is all you have. With Daggry, code runs
+    the validators and seals the result into a trail you can verify.
   </figcaption>
   </figure>
 </template>
