@@ -2,13 +2,13 @@
 
 A work graph is a workflow: a document that tells Daggry how a piece of work goes. Every other page says workflow. An agent left to decide its own process can skip a step or loop all night, and you cannot predict which. Daggry takes that choice away: the agent follows the file and cannot change it.
 
-The workflow is one of Daggry's four open standards. The file has a standard layout with a published schema and opens with the header `format: daggry/workflow@1`, so the work is defined by a document, not by the platform. A pull request from an issue is the first workflow, not the only one. See [Open standards](/guide/concepts/standards).
+The workflow is one of Daggry's four open standards. The file has a standard layout with a published schema and opens with the header `format: daggry/workflow@1`, so the work is defined by a document, not by the platform. The file names no tool and no kind of work: in the software binding a workflow turns an issue into a pull request, and another workflow reviews a document or refreshes a dataset. See [Open standards](/guide/concepts/standards) and [Bindings](/reference/bindings).
 
 ## Five building blocks
 
-A workflow is a document in the tenant's catalogue. Its file is kept in a repository the tenant chooses, which can be the repository the work is done on. The tenant decides which workflows run on which repository, and the repository does not. `daggry run --workflow <file>` supplies a workflow as a file from the machine that starts the run. A new kind of work needs a new file, not a new release of Daggry. For a picture of the delivery workflow, see [Write a workflow](/guide/how-to/write-a-workflow).
+A workflow is a document in the tenant's catalogue. Its file is kept in a workspace the tenant chooses, which can be the workspace the work is done on. The tenant decides which workflows run on which project, and the project does not. `daggry run --workflow <file>` supplies a workflow as a file from the machine that starts the run. A new kind of work needs a new file, not a new release of Daggry. For a picture of the delivery workflow, see [Write a workflow](/guide/how-to/write-a-workflow).
 
-- A **step** is one unit of work: an agent session, a script, a check, a wait for a person, or opening a pull request.
+- A **step** is one unit of work: an agent session, a script, a verification by validators, a wait for a person, or an effect that hands the result over.
 - An **output** is what a step hands to the next one. Daggry seals it: code checks it, then signs it so it cannot be quietly changed.
 - A **gate** is a rule over facts that code computed. It decides whether a loop can stop.
 - A **loop** repeats steps for each item of an approved plan, with a hard limit.
@@ -22,13 +22,13 @@ A loop is where an agent can spin, so each loop has a limit and a gate. After ev
 
 <LoopGate />
 
-The diagram shows one loop iteration, the gate after it, and the exit when the limit is spent: the run fails, or a person decides.
+The diagram shows one loop iteration in the software binding, the gate after it, and the exit when the limit is spent: the run fails, or a person decides.
 
-In a delivery loop, an iteration is a test, a fix and a check. The agent cannot edit the test it is trying to pass.
+The general idea is this: a criterion's check fails before the work and passes after. A check that already passes says nothing about the work. In the software binding's delivery loop, an iteration is a test, a fix and a verification. The agent cannot edit the test it is trying to pass.
 
 ## You decide where a person is needed
 
-Some decisions are yours, and an agent that guesses them can build the wrong plan to the end. A human wait stops the run where you chose and shows why. Normally there are two: approve the plan before work starts, and review the result before it leaves the repository.
+Some decisions are yours, and an agent that guesses them can build the wrong plan to the end. A human wait stops the run where you chose and shows why. Normally there are two: approve the plan before work starts, and review the result before it leaves the workspace.
 
 <HumanWait />
 
@@ -49,9 +49,19 @@ A gate reads only facts that code computed from sealed records, never what an ag
 
 ## Who runs each step
 
-A step's kind decides what runs it: the runner in the pod, the control plane, or nobody while the run waits for a person. For each kind, see [Which module runs a step](/reference/workflow-schema#which-module-runs-a-step).
+A step's kind decides what runs it: the runner, the control plane, or nobody while the run waits for a person. For each kind, see [Which module runs a step](/reference/workflow-schema#which-module-runs-a-step).
 
-A `verify` step names no command. It runs the check that the repository's project config calls canonical, which can be a test suite, a build or a script of the project's own. The same workflow therefore works on projects in different languages. See [Project config](/reference/project-config).
+## A verify step names its validators
+
+A `verify` step names no command. It names one or more validators, and the platform runs them. This example is illustrative.
+
+```yaml
+- id: check
+  kind: verify
+  validators: [project, tenant/house-style]
+```
+
+`project` is the project's verification: the validator that the project config calls canonical, whatever tool it runs, with the supporting validators and thresholds it lists. The same workflow therefore works on projects with different tools and different kinds of work. `tenant/house-style` is a script validator that the tenant declares. A name in the `daggry` namespace is a validator that ships with the platform, and a native validator is loaded in-process or run as a service that speaks the validator protocol, in any language. See [Validators: the extension point](/guide/concepts/validators) and [Project config](/reference/project-config).
 
 The conductor orders the steps and hands each job to a runner. How many jobs run at a time, how long a lease lasts and where a person must decide come from the tenant config. See [The modules](/guide/concepts/modules) and [The tenant defines the factory](/guide/concepts/tenant).
 
@@ -70,5 +80,6 @@ Daggry fits work that you can break into steps with named outputs, check with a 
 - To turn your kind of work into a workflow, read [Design a workflow](/guide/how-to/design-a-workflow).
 - To write the file, read [Write a workflow](/guide/how-to/write-a-workflow).
 - To see what an agent cannot change, read [What an agent cannot change](/guide/concepts/protection).
+- To plug in a check of your own, read [Validators](/guide/concepts/validators).
 - To see which module runs each step, read [The modules](/guide/concepts/modules).
 - To see where each step runs, read [Where it runs](/guide/concepts/architecture).

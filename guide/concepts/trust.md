@@ -1,10 +1,10 @@
 # Why you can trust a run
 
-A coding agent says "all tests pass". That sentence is a claim. The agent can be wrong, can misread a result, or can pass a test it rewrote. Daggry replaces that claim with three things you can check.
+An agent says "all checks pass". That sentence is a claim. The agent can be wrong, can misread a result, or can pass a check it rewrote. Daggry replaces that claim with three things you can check.
 
 <Compare />
 
-On the left, the agent's own words are the only record. On the right, code re-ran the tests, reduced the output to a record and sealed it into a trail you can check.
+The comparison shows a run in the software binding, where the checks are tests. On the left, the agent's own words are the only record. On the right, code re-ran the checks, reduced the output to a record and sealed it into a trail you can check.
 
 The three guarantees:
 
@@ -34,21 +34,31 @@ The trail is tamper-evident, not tamper-proof. `daggry verify` takes the public 
 
 ## Checks: a model cannot be talked into a pass
 
-A model grading a model can be persuaded, and can answer differently on different days. A validator is a check written as code. It reads only records that are already sealed, and the same records always give the same verdict.
+A model grading a model can be persuaded, and can answer differently on different days. A validator is a check written as code. It takes inputs that are already sealed, and the same inputs always give the same verdict.
 
 <CheckFlow />
 
 The diagram shows sealed records going into a check written as code, the check producing a verdict, and the verdict opening or closing a gate.
 
-For example, a check takes a sealed plan and a sealed test result. A criterion counts as covered only when a passing test carries its id. The agent can say "C2 is covered", but the check says so only when the result shows it.
+For example, a validator takes a sealed plan and a sealed result. A criterion counts as covered only when a passing finding carries its id. The agent can say "C2 is covered", but the validator says so only when the result shows it.
+
+### Where each validator runs
+
+A verdict is derived by code, whichever source the validator comes from.
+
+- **A built-in validator** ships with the platform and runs in the control plane, over sealed inputs.
+- **A native validator** is loaded in-process or run as a service that speaks the validator protocol, in any language. It is a pure function over sealed inputs, so it has nothing to read but the records.
+- **A script validator** runs in the deterministic runner, on a clean copy of the workspace, after the agent process has ended. The script reports a result and never its own verdict: a built-in validator derives the verdict from the sealed result. Code judges, never a script's own claim.
+
+No validator runs where an agent can write, and none starts a model. See [Validators: the extension point](/guide/concepts/validators).
 
 ## Schemas: a proof you can read yourself
 
-A proof only the vendor's tool can read is not a proof. Every record format is a published JSON Schema under `/schemas/` on this site. Any tool that supports draft 2020-12 can check a record against it. The schemas say what a record is allowed to be. The checks say what the record found. The trail says that neither changed afterwards.
+A proof only the vendor's tool can read is not a proof. Every record format is a published JSON Schema under `/schemas/` on this site. Any tool that supports draft 2020-12 can check a record against it. The schemas say what a record is allowed to be. The validators say what the record found. The trail says that neither changed afterwards.
 
 ## What a seal does not prove
 
-A seal proves the check ran and the record is unchanged. It does not prove your tests are the right ones. A passing verdict means the rule held for its inputs, and a test result is only as good as the test command it ran.
+A seal proves the check ran and the record is unchanged. It does not prove your checks are the right ones. A passing verdict means the rule held for its inputs, and a result is only as good as the validator that produced it.
 
 ## Next steps
 
