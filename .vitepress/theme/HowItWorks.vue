@@ -2,7 +2,7 @@
 import DgArrow from './DgArrow.vue'
 import DgIcon from './DgIcon.vue'
 
-const file = ['steps:', '  write a plan', '  wait for your approval', '  for each item:', '    write a test, make it pass', '  open a pull request']
+const file = ['steps:', '  write a plan', '  wait for your approval', '  for each item:', '    do the work, verify it', '  hand over the result']
 </script>
 
 <template>
@@ -23,32 +23,32 @@ const file = ['steps:', '  write a plan', '  wait for your approval', '  for eac
         <li>
           <div class="step">
             <div class="art pods" aria-hidden="true">
-              <div v-for="p in ['plan', 'test', 'build']" :key="p" class="pod">
+              <div v-for="p in ['plan', 'work', 'verify']" :key="p" class="pod">
                 <span class="job">{{ p }}</span>
-                <span class="repo"><DgIcon name="lock" />one repository</span>
+                <span class="repo"><DgIcon name="lock" />one workspace</span>
               </div>
             </div>
-            <h3><span class="n">2</span>Run in pods</h3>
-            <p>Each job runs in its own throwaway pod. It holds a token for one repository and never the signing key.</p>
+            <h3><span class="n">2</span>Run in isolation</h3>
+            <p>Each job runs in its own throwaway runner. It holds a token for one workspace and never the signing key.</p>
           </div>
           <DgArrow hot />
         </li>
         <li>
           <div class="step">
             <div class="art recs" aria-hidden="true">
-              <div v-for="(r, i) in ['tests re-run: pass', 'test failed first', 'plan approved']" :key="r" class="rec" :style="{ '--i': i }">
+              <div v-for="(r, i) in ['check passes after', 'check failed before', 'plan approved']" :key="r" class="rec" :style="{ '--i': i }">
                 <DgIcon name="tick" /><span>{{ r }}</span>
               </div>
               <span class="seal">sealed</span>
             </div>
             <h3><span class="n">3</span>Check and record</h3>
-            <p>What an agent says it did is only a claim. Code re-runs the check and writes the record.</p>
+            <p>What an agent says it did is only a claim. Validators judge it in code, and the control plane writes the record. Plug in validators of your own.</p>
           </div>
         </li>
       </ol>
     </div>
     <figcaption class="cap">
-      Three steps. You write the plan of work once; each job gets its own pod and a token for one repository; and nothing moves on until code has re-checked it and added it to a signed, tamper-evident trail.
+      Three steps. You write the plan of work once; each job gets its own runner and a token for one workspace; and nothing moves on until a validator has re-checked it and added it to a signed, tamper-evident trail.
     </figcaption>
   </figure>
 </template>

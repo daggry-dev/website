@@ -17,7 +17,7 @@ const records = [
     <div class="dg-body">
       <p class="head">
         <span class="ex">Example</span>
-        <span>The evidence trail of one night</span>
+        <span>The evidence trail of one night, in the software binding</span>
       </p>
       <ol class="trail">
         <template v-for="(r, i) in records" :key="i">

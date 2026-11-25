@@ -11,20 +11,22 @@ const proof = [
 const standards = [
   { t: 'Workflow', d: 'The work, as steps: what each hands to the next, the checks, and the moments you decide.', l: '/guide/concepts/workflows' },
   { t: 'Evidence', d: 'One sealed record for each result, signed and linked to the record before it.', l: '/guide/concepts/trust' },
-  { t: 'Project config', d: 'What is true of one repository: how its work is measured and what no step may write.', l: '/reference/project-config' },
+  { t: 'Project config', d: 'What is true of one project: which validators judge its work and what no step may write.', l: '/reference/project-config' },
   { t: 'Tenant config', d: 'How the factory works: which workflows, how they are orchestrated, which agents work and where a person decides.', l: '/guide/concepts/tenant' },
 ]
 // Each chip links to its pattern's heading on the patterns page (VitePress heading slugs).
 const kinds = [
+  { t: 'Review a document', a: 'review-a-document' },
+  { t: 'Refresh data, approve, publish', a: 'refresh-data-and-approve-before-publish' },
   { t: 'Ship a change from an issue', a: 'ship-a-change-from-an-issue' },
-  { t: 'Write a sourced report', a: 'research-a-question-and-commit-a-sourced-report' },
+  { t: 'Write a sourced report', a: 'research-a-question-and-write-a-sourced-report' },
   { t: 'Migrate files in batches', a: 'migrate-files-in-bounded-batches' },
   { t: 'Process a list of items', a: 'process-a-batch-of-items' },
   { t: 'Update docs with review', a: 'update-documentation-with-a-human-review' },
   { t: 'Run a release check', a: 'run-a-gated-release-check' },
 ]
 
-// A nine-line workflow with no agent step: run a script, re-check, wait for you, open a pull request.
+// Software binding example. A nine-line workflow with no agent step: run a script, re-check, wait for you, open a pull request.
 // Valid against public/schemas/workflow.json. Split into key/value pieces for colouring.
 const snippet: { k?: string; v?: string; p?: string }[][] = [
   [{ k: 'format' }, { p: ': ' }, { v: 'daggry/workflow@1' }],
@@ -33,14 +35,14 @@ const snippet: { k?: string; v?: string; p?: string }[][] = [
   [{ p: '    ' }, { k: 'kind' }, { p: ': ' }, { v: 'command' }],
   [{ p: '    ' }, { k: 'run' }, { p: ': ' }, { v: './scripts/migrate-config.sh' }],
   [{ p: '    ' }, { k: 'scope' }, { p: ': [' }, { v: '"config/**"' }, { p: ']' }],
-  [{ p: '  - { ' }, { k: 'id' }, { p: ': ' }, { v: 'check' }, { p: ', ' }, { k: 'kind' }, { p: ': ' }, { v: 'verify' }, { p: ' }' }],
+  [{ p: '  - { ' }, { k: 'id' }, { p: ': ' }, { v: 'check' }, { p: ', ' }, { k: 'kind' }, { p: ': ' }, { v: 'verify' }, { p: ', ' }, { k: 'validators' }, { p: ': [' }, { v: 'project' }, { p: '] }' }],
   [{ p: '  - { ' }, { k: 'id' }, { p: ': ' }, { v: 'review' }, { p: ', ' }, { k: 'kind' }, { p: ': ' }, { v: 'human' }, { p: ', ' }, { k: 'waiting_for' }, { p: ': ' }, { v: 'input-needed' }, { p: ' }' }],
   [{ p: '  - { ' }, { k: 'id' }, { p: ': ' }, { v: 'pr' }, { p: ', ' }, { k: 'kind' }, { p: ': ' }, { v: 'effect' }, { p: ', ' }, { k: 'do' }, { p: ': ' }, { v: 'open-pr' }, { p: ' }' }],
 ]
 
 const doors = [
   { t: 'Understand it', time: '10 minutes', d: 'Read the story of one night, and why each part is there.', l: '/guide/' },
-  { t: 'Try it', time: 'Hands on', d: 'Run a first workflow on a scratch repository and verify its trail.', l: '/guide/getting-started' },
+  { t: 'Try it', time: 'Hands on', d: 'Run a first workflow in the software binding and verify its trail.', l: '/guide/getting-started' },
   { t: 'See the build status', time: '2 minutes', d: 'The roadmap is the one page that states what is built.', l: '/roadmap' },
 ]
 </script>
@@ -53,9 +55,13 @@ const doors = [
       <p class="eyebrow">Daggry · Danish for dawn</p>
       <h1>Agents do the work.<br /><em>Code checks it.</em></h1>
       <p class="lede">
-        Coding agents can work all night. Daggry makes that safe to sleep through: every step an agent finishes is
-        re-checked by code and recorded in a signed, tamper-evident trail. It is a factory kit, built from modules
-        and open standards.
+        Agents can work all night. Daggry makes that safe to sleep through: every step an agent finishes is
+        re-checked by code and recorded in a signed, tamper-evident trail. It is a factory kit for any work that
+        has a deterministic check, built from open standards and replaceable parts.
+      </p>
+      <p class="lede">
+        The factory is a control plane, a conductor and a stack that delivers verified evidence. Agents do the
+        non-deterministic work, code gives the deterministic judgement, and an agent never grades its own work.
       </p>
       <div class="cta">
         <a class="btn primary" :href="withBase('/guide/')">See one night</a>
@@ -69,7 +75,7 @@ const doors = [
       <p class="eyebrow">The problem</p>
       <h2>A night of work, and <em>only its word</em> for it.</h2>
       <p class="sub">
-        By morning, all you have is the agent's own report.
+        By morning, all you have is the agent's own report. The example is a run in the software binding.
       </p>
       <Compare />
     </section>
@@ -78,9 +84,11 @@ const doors = [
       <p class="eyebrow">Overnight</p>
       <h2>Go to bed. Wake at <em>daggry</em>.</h2>
       <p class="sub">
-        For each item in your plan, the agent writes a test, Daggry shows the test fails, the agent makes it pass,
-        and Daggry re-runs it on a clean copy of the code. If a machine dies at 3 a.m., a new pod (a throwaway
-        container) starts from the last sealed commit and repeats the interrupted step.
+        One binding as the example: software, where an issue becomes a pull request. For each item in your plan,
+        the agent writes a test, Daggry shows the test fails, the agent makes it pass, and Daggry re-runs it on a
+        clean copy. If a machine dies at 3 a.m., a new runner starts from the last sealed change and repeats the
+        interrupted step. The same machinery runs any work that has a deterministic check: a document review, a
+        data pipeline refresh, a design audit.
       </p>
       <Overnight />
     </section>
@@ -89,19 +97,21 @@ const doors = [
       <p class="eyebrow">How it works</p>
       <h2>Describe it once. <em>Check every step.</em></h2>
       <p class="sub">
-        A workflow is a short file: the steps, what each must hand to the next, the checks, and the
-        moments you decide. Daggry runs on your own Kubernetes cluster and works on GitHub repositories.
+        A workflow is a short file: the steps, what each must hand to the next, the validators that judge
+        the work, and the moments you decide. Daggry runs on your own cluster, and a binding connects it to where
+        your work lives.
       </p>
       <HowItWorks />
     </section>
 
     <section class="wide">
       <p class="eyebrow">Modules and open standards</p>
-      <h2>A factory kit, <em>not one machine</em>.</h2>
+      <h2>Contracts, <em>not one machine</em>.</h2>
       <p class="sub">
-        Each module has one job: a conductor orders the work, a control plane seals it, and a runner runs code and
-        agents by two separate mechanisms. Four open documents connect them, so nothing is tied to one kind of work, one agent,
-        one cloud or one factory.
+        Each part has one job and is defined by a contract: a conductor orders the work, a control plane seals it,
+        a runner runs commands and agents by two separate mechanisms, and validators judge the result in code. Four
+        open documents connect them. Any part can be replaced, and validators are where you plug in your own: a
+        script, or a native validator in any language.
       </p>
       <Modules />
       <div class="proof four">
@@ -112,11 +122,13 @@ const doors = [
       </div>
       <p class="honest">
         Each document has a published schema, a version and a way to extend it. Any factory can implement the same
-        specification and the same signing and chaining of evidence.
+        specification and the same signing and chaining of evidence. The reference implementation is one
+        implementation of the contracts.
       </p>
       <p class="more">
         <a :href="withBase('/guide/concepts/modules')">See the modules</a>
         <a :href="withBase('/guide/concepts/standards')">Read the standards</a>
+        <a :href="withBase('/guide/concepts/validators')">Plug in a validator</a>
       </p>
     </section>
 
@@ -134,7 +146,7 @@ const doors = [
         </a>
       </div>
       <p class="honest">
-        A seal proves the check ran and the record is unchanged. It does not prove your tests are the right ones.
+        A seal proves the check ran and the record is unchanged. It does not prove your checks are the right ones.
         Records dropped from the end of the trail show only against a signed head kept outside the cluster.
         <a :href="withBase('/guide/concepts/trust')">Read the limits</a>
       </p>
@@ -144,9 +156,9 @@ const doors = [
       <p class="eyebrow">Any work with a check</p>
       <h2>If a script can check it, <em>Daggry can run it</em>.</h2>
       <p class="sub">
-Any work that lives in a repository and has a check a script can run. A pull request from an issue is the
-        first workload, not the only one. This workflow needs no agent: it runs a script, re-checks the result,
-        waits for you, and opens a pull request.
+        Any work that lives in a workspace and has a check a script can run: software, a document review, a data
+        refresh, a design audit. This workflow is from the software binding and needs no agent: it runs a script,
+        has a validator re-check the result, waits for you, and opens a pull request.
       </p>
       <div class="work">
         <ul class="chips">
@@ -154,7 +166,7 @@ Any work that lives in a repository and has a check a script can run. A pull req
         </ul>
         <figure class="code">
           <pre tabindex="0" aria-label="Example workflow file, nine lines"><code><template v-for="(line, i) in snippet" :key="i"><span v-for="(s, j) in line" :key="j" :class="s.k ? 'k' : s.v ? 'v' : 'p'">{{ s.k ?? s.v ?? s.p }}</span>{{ '\n' }}</template></code></pre>
-          <figcaption>A complete workflow. The check itself is set in the repository, where the run cannot change it.</figcaption>
+          <figcaption>A complete workflow. The validator is declared in the project config, where the run cannot change it.</figcaption>
         </figure>
       </div>
       <p class="more"><a :href="withBase('/guide/how-to/workflow-patterns')">See the patterns</a></p>
