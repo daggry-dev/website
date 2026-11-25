@@ -18,7 +18,7 @@ Code runs every check and judges every result. No agent and no model grades its 
 
 ## The validator contract
 
-A validator is defined by what it is given and what it yields. Nothing in the contract names a tool, a language or a kind of work.
+A validator is defined by what it is given and what it yields. Nothing in the contract names a tool, a language or a kind of work. The table lists its parts.
 
 | Part | Rule |
 |---|---|
@@ -31,7 +31,7 @@ A validator is defined by what it is given and what it yields. Nothing in the co
 
 ### Result and verdict
 
-A result says what a check found. A verdict says whether the work is accepted. They are two records, and code writes both.
+A result says what a check found. A verdict says whether the work is accepted. They are two records, and code writes both, as the table lists.
 
 | Record | Written by | Sealed as |
 |---|---|---|
@@ -42,12 +42,16 @@ A script validator never writes its own verdict. Whatever its output claims, the
 
 ### Verdict rules
 
+These rules apply to every verdict.
+
 - A validator emits `derived` facts only, never `claimed` ones.
 - A fact value is a boolean, an integer or a string.
 - A fact name starts with a letter or `_`, then holds letters, digits, `_` or `-`, and is unique within a verdict.
 - Only the verdicts the control plane seals open gates. See [Gate expressions](/reference/gates).
 
 ## The three sources
+
+A validator comes from one of three sources.
 
 | Source | Reference | Declared in | Runs in | Reads |
 |---|---|---|---|---|
@@ -56,6 +60,8 @@ A script validator never writes its own verdict. Whatever its output claims, the
 | Native | `<namespace>/<name>` | The party that owns the namespace. The tenant admits it by name, version and digest in `validators.native` of the [Tenant config](/reference/tenant-config#validators). | With the control plane, as a pure function. | Sealed artifacts only. Never the workspace. |
 
 ### Trust
+
+The table lists, for each source, who decides that a validator counts and what keeps it honest.
 
 | Source | Who decides that it counts | What keeps it honest |
 |---|---|---|
@@ -68,7 +74,7 @@ A project's script validator that the tenant has not admitted still runs as a pr
 
 ## Referring to a validator
 
-A `verify` step names its validators in `validators`. See [verify](/reference/workflow-schema#verify).
+A `verify` step names its validators in `validators`. See [verify](/reference/workflow-schema#verify). The table lists the forms of a reference.
 
 | Reference | Resolves to |
 |---|---|
@@ -87,6 +93,8 @@ Every reference is resolved when the run starts. The run is refused when a refer
 ```
 
 ## Versioning
+
+The table lists what the version of a validator is and what pins it.
 
 | Source | Version | Pinned by |
 |---|---|---|
@@ -108,7 +116,7 @@ The platform ships these validators. This table is the one list of them.
 | `daggry/baseline-proof` | One `red` measurement. | `red` (boolean) | `pass` when red, else `fail` with the first reason as a finding. |
 | `daggry/base-relative` | One `base` measurement and the `head` measurement of the canonical validator. | `findings_removed` (integer), `findings_newly_skipped` (integer) | `fail` when either count is not 0, else `pass`. Ids go to findings as `removed: <id>` and `newly skipped: <id>`, sorted. |
 
-When each one runs:
+The table lists when each one runs.
 
 | Validator | Runs |
 |---|---|
@@ -126,7 +134,7 @@ A finding carries an id when, after lowercasing the criterion id and the finding
 
 ### Baseline proof
 
-A baseline proof shows that a criterion's check says something about the work: the check fails on the baseline and passes after the work. A `red` measurement is the canonical validator's result on the baseline with a proof step's new frozen paths overlaid. It is red when the exit code is not 0 and a finding that carries the criterion id has the outcome `fail`. A measurement with no findings is not red.
+A baseline proof shows that a criterion's check says something about the work: the check fails on the baseline and passes after the work. A `red` measurement is the canonical validator's result on the baseline with a proof step's new frozen paths overlaid. It is red when the exit code is not 0 and a finding that carries the criterion id has the outcome `fail`. A measurement with no findings is not red. The table lists the findings of a proof that is not red.
 
 | Finding | Meaning |
 |---|---|
@@ -138,6 +146,8 @@ A baseline proof shows that a criterion's check says something about the work: t
 The fact `red` and the label `red` name this proof. In a workspace of programs the proof is a failing test: see [Bindings](/reference/bindings#the-software-binding).
 
 ### Base-relative facts
+
+`daggry/base-relative` emits two facts.
 
 | Fact | Counts |
 |---|---|
@@ -157,6 +167,8 @@ One malformed measurement makes every validator that reads it return `inconclusi
 - `check`, `contract`, `outcome`, `findings`, `metrics` or `tests` is present and mistyped.
 
 ## Measure, preview and judge
+
+Verification has three parts, and two of them produce evidence.
 
 | Part | Where | What | Counts as evidence |
 |---|---|---|---|
@@ -205,7 +217,7 @@ A tool that has an output format of its own needs no wrapper script when the ten
 
 A native validator implements the validator contract as a pure function over sealed inputs. It is loaded in-process with the control plane, or it runs as a service outside the control plane's process and speaks the validator protocol. It can be written in any language.
 
-The contract has two operations.
+The contract has the two operations in the table.
 
 | Operation | Given | Gives |
 |---|---|---|
@@ -214,13 +226,13 @@ The contract has two operations.
 
 The validator protocol carries the same two operations as a request and a response with JSON bodies. The request of validate holds the sealed envelopes. The response holds the fields of a verdict body.
 
-Rules:
+These rules apply to a native validator.
 
 - A native validator reads nothing but the artifacts it is given. It is never given the workspace, a credential or the signing key.
 - It returns facts and a status. The control plane seals the verdict. A native validator seals nothing.
 - The cluster admin installs it, and the tenant admits it by name, version and digest. See [validators](/reference/tenant-config#validators).
 
-The reference implementation loads an in-process native validator as a Rust crate. This block is the native extension interface in that form.
+The reference implementation loads an in-process native validator as a Rust library. This block is the native extension interface in that form.
 
 ```rust
 // The native extension interface, in the reference implementation's in-process form.
@@ -233,6 +245,8 @@ pub trait Validator {
 ```
 
 ## Next steps
+
+The list names the pages to read next.
 
 - For the keys of a `verify` step, see [Workflow schema](/reference/workflow-schema#verify).
 - For declaring a script validator, see [Project config](/reference/project-config#validators) and [Tenant config](/reference/tenant-config#validators).

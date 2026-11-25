@@ -14,7 +14,7 @@ A workflow names no tool and no kind of work. It names validators, effects and a
 
 ## Download
 
-The workflow file has a published JSON Schema (draft 2020-12).
+The workflow file has a published JSON Schema (draft 2020-12). The table links the file.
 
 | Schema | File |
 |---|---|
@@ -46,7 +46,7 @@ A workflow is a document in the tenant's catalogue. Each catalogue entry names t
 
 ### YAML subset
 
-The loader reads a strict subset of YAML.
+The loader reads a strict subset of YAML. The table lists what it refuses.
 
 | Construct | Result |
 |---|---|
@@ -59,19 +59,19 @@ The loader reads a strict subset of YAML.
 
 ## Steps
 
-Every step requires `id` and `kind`. `kind` is one of the five values of the standard, `command`, `agent`, `verify`, `human` and `effect`, or an extension kind that the tenant registers. Any other value is refused at `/steps/<n>/kind`. See [Step kind registry](#step-kind-registry).
+Every step requires `id` and `kind`. `kind` is one of the five values of the standard, `command`, `agent`, `verify`, `human` and `effect`, or an extension kind that the tenant registers. Any other value is refused at `/steps/<n>/kind`. See [Step kind registry](#step-kind-registry). The table lists the five kinds.
 
 | Kind | What runs the step | What it does |
 |---|---|---|
 | `agent` | Agent runner | A session of an agent engine that must deliver named artifact kinds. |
-| `command` | Deterministic runner | A shell line, limited by a `scope` of paths it may write. |
+| `command` | Deterministic runner | A shell line, limited by a `scope` of paths it can write. |
 | `verify` | Deterministic runner and control plane | Runs the validators it names on the last sealed version of the workspace. |
 | `human` | None. A person decides. | Releases the pod and waits. `daggry approve` completes it. |
 | `effect` | Control plane | An idempotent side effect that the tenant registers, such as handing a change over. |
 
 ### command
 
-A shell line that the runner executes in the pod. A failed command step fails the run, also inside a loop.
+A shell line that the runner executes in the pod. A failed command step fails the run, also inside a loop. The table lists its keys.
 
 | Key | Type | Required | Constraints |
 |---|---|---|---|
@@ -82,7 +82,7 @@ A shell line that the runner executes in the pod. A failed command step fails th
 
 ### agent
 
-A session of an agent engine.
+A session of an agent engine. The table lists its keys.
 
 | Key | Type | Required | Constraints |
 |---|---|---|---|
@@ -96,6 +96,8 @@ A session of an agent engine.
 | `tests` | array of strings | no | A second name for `freeze`, used by the software binding. A step holds one of the two. See [Bindings](/reference/bindings#frozen-tests). |
 | `scope` | scope | yes | See [Scope](#scope). |
 
+These rules apply to an `agent` step.
+
 - The step succeeds when every declared output is accepted. It fails when the engine ends first or a limit is reached.
 - An output matches by bare name: `plan`, `evidence/plan@1` and `daggry/change@1` all work.
 - The control plane seals a `change` for every accepted `agent` or `command` step, so an output named `change` is never required from the runner.
@@ -104,7 +106,7 @@ A session of an agent engine.
 
 ### verify
 
-Runs validators on the last sealed version of the workspace. A validator is the extension point of verification. See [Validators](/reference/validators).
+Runs validators on the last sealed version of the workspace. See [Validators](/reference/validators). The table lists its keys.
 
 | Key | Type | Required | Constraints |
 |---|---|---|---|
@@ -121,7 +123,7 @@ A `verify` step has no command. Every validator it names is resolved when the ru
 
 ### human
 
-Waits for a person.
+Waits for a person. The table lists its keys.
 
 | Key | Type | Required | Constraints |
 |---|---|---|---|
@@ -133,7 +135,7 @@ The control plane marks the run `waiting` at the step boundary and releases the 
 
 ### effect
 
-Runs in the control plane, never in the pod.
+Runs in the control plane, never in the pod. The table lists its keys.
 
 | Key | Type | Required | Constraints |
 |---|---|---|---|
@@ -145,7 +147,7 @@ The standard defines no effect. A binding defines the effects for its kind of wo
 
 ### Step kind registry
 
-A step kind is an entry in a registry. Each entry names the kind, the keys a step of that kind takes and what runs it: the runner, as the deterministic runner or the agent runner, or the control plane. See [The modules](/guide/concepts/modules#the-runner-two-kinds-of-step-execution).
+A step kind is an entry in a registry. Each entry names the kind, the keys a step of that kind takes and what runs it: the runner, as the deterministic runner or the agent runner, or the control plane. See [The modules](/guide/concepts/modules). The table lists the entries.
 
 | Kind | What runs the step | Registered by |
 |---|---|---|
@@ -156,9 +158,9 @@ A step kind is an entry in a registry. Each entry names the kind, the keys a ste
 | `human` | None. A person decides, and the control plane seals the decision. | The standard. |
 | `<namespace>/<name>` | What its registration names: the deterministic runner, the agent runner or the control plane. | The tenant, in `extensions.step_kinds` of the [Tenant config](/reference/tenant-config#extensions). |
 
-Rules for the registry:
+These rules apply to the registry.
 
-- A kind without a namespace belongs to the standard. The five above are the whole set. A new one is a change to the standard.
+- A kind without a namespace belongs to the standard. The five standard kinds are the whole set. A new one is a change to the standard.
 - An extension kind has the form `<namespace>/<name>`: exactly one `/`, with each part made of ASCII letters, digits, `-` or `_`. The namespace names the party that defines the kind.
 - An extension kind is registered with the URL of a JSON Schema for its keys. A step of that kind takes `id`, `kind` and the keys that schema allows.
 - A kind that is not one of the five and is not registered by the tenant is refused at `/steps/<n>/kind`.
@@ -166,7 +168,7 @@ Rules for the registry:
 
 ### Which module runs a step
 
-A workflow declares what runs a step through the step's `kind` and through nothing else. The conductor reads the kind, looks it up in the registry and hands the step to what the entry names.
+A workflow declares what runs a step through the step's `kind` and through nothing else. The conductor reads the kind, looks it up in the registry and hands the step to what the entry names. The table lists what each one runs.
 
 | What runs the step | Runs | Never |
 |---|---|---|
@@ -179,7 +181,7 @@ No key of a step changes what runs it. An `agent` step always runs in the agent 
 
 ### Validators by reference
 
-A workflow never holds a verification command. A `verify` step names validators, and the project, the tenant and the platform supply them. A workflow therefore runs unchanged on projects of different kinds.
+A workflow never holds a verification command. A `verify` step names validators, and the project, the tenant and the platform supply them. The table lists the forms of a reference.
 
 | Reference | Resolves to |
 |---|---|
@@ -189,7 +191,7 @@ A workflow never holds a verification command. A `verify` step names validators,
 | `daggry/<name>` | A built-in validator. |
 | `<namespace>/<name>` | A native validator the tenant admits. |
 
-Rules:
+These rules apply to a reference.
 
 - A reference is `project`, or a namespace, a `/` and a validator name: a lowercase letter, then lowercase letters, digits, `-` or `_`.
 - A project reference is looked up in the project config of the baseline when the run starts. A reference that names nothing refuses the run.
@@ -204,11 +206,11 @@ The sources, the built-in validators and where each runs are in [Validators](/re
 
 ## Scope
 
-`scope` is what a step may write. It is required on `command` and `agent` steps and absent on the other kinds of the standard.
+`scope` is what a step can write. It is required on `command` and `agent` steps and absent on the other kinds of the standard. It takes one of three values.
 
 | Value | Meaning |
 |---|---|
-| `nothing` | The step may write no path. |
+| `nothing` | The step can write no path. |
 | `anywhere` | Any path except protected paths and the automation folders a binding names. |
 | a list of entries | Only paths that an entry holds. Each entry is non-empty: a glob, or an area reference, `area:<name>`. `[]` is valid and holds no path. |
 
@@ -218,14 +220,14 @@ How a scope is judged and enforced is in [Protected paths](/reference/protected-
 
 ### Areas by name
 
-A workflow can name a part of a workspace without knowing its paths. An entry of a `scope` list is a glob or an area reference, and the [Project config](/reference/project-config#areas) of the workspace supplies the paths.
+A workflow can name a part of a workspace without knowing its paths. An entry of a `scope` list is a glob or an area reference, and the [Project config](/reference/project-config#areas) of the workspace supplies the paths. The table lists the two forms of an entry.
 
 | Entry | Stands for |
 |---|---|
 | `area:<name>` | Every path that the area of that name holds. |
 | Any other string | A glob. |
 
-Rules:
+These rules apply to an area reference.
 
 - The name follows the rule for a validator name. It is looked up in the project config of the baseline when the run starts. A name the project config lacks refuses the run.
 - A list can mix globs and area references. A path is in the scope of the step when one entry holds it.
@@ -246,7 +248,7 @@ steps:
 
 ## Loop
 
-A loop entry has an `id` and a `loop` object. A loop is not a sixth step kind.
+A loop entry has an `id` and a `loop` object. A loop is not a sixth step kind. The table lists the keys of `loop`.
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
@@ -258,6 +260,8 @@ A loop entry has an `id` and a `loop` object. A loop is not a sixth step kind.
 | `steps` | array of steps | yes | The steps of one iteration. A loop inside a loop is refused. |
 
 ### Loop rules
+
+The table lists how a loop counts, repeats and ends.
 
 | Rule | Detail |
 |---|---|
@@ -286,6 +290,8 @@ The runner overlays the proof step's new frozen paths on a clean copy of the bas
 A workflow grows without a change to the standard in two ways: a step kind that the tenant registers, and a namespaced extension key. The step kinds are in [Step kind registry](#step-kind-registry).
 
 ### Extension keys in a workflow
+
+The table lists the rules for an extension key in a workflow.
 
 | Rule | Detail |
 |---|---|
@@ -320,6 +326,8 @@ steps:
     outputs: [change]
     scope: ["area:app"]
 ```
+
+The table explains the values.
 
 | Value | Meaning |
 |---|---|
@@ -363,7 +371,7 @@ steps:
           engine: <engine>
           prompt: Do the work that makes the check pass.
           outputs: [change]
-          scope: ["area:content", "checks/**"]
+          scope: ["area:handbook", "checks/**"]
         - id: check
           kind: verify
           validators: [project, daggry/criterion-coverage]
@@ -379,10 +387,12 @@ steps:
     do: publish
 ```
 
+The table explains the values.
+
 | Value | Meaning |
 |---|---|
 | `<engine>` | The identifier of a registered agent engine. |
-| `area:content` | An area in the project config of the workspace. |
+| `area:handbook` | An area in the project config of the workspace. |
 | `publish` | An effect that the tenant registers. Under the software binding the effect is `open-pr`. |
 
 The smallest valid workflow is the header and one command step.
@@ -404,7 +414,7 @@ To check a file of your own, give the schema and the file to any validator that 
 
 ## Load errors
 
-The loader reports the first refusal, in this order. A refused workflow returns as `workflow: <message>` and the run does not start.
+The loader reports the first refusal, in the order of the table. A refused workflow returns as `workflow: <message>` and the run does not start.
 
 | Stage | Refusal | Cause |
 |---|---|---|
@@ -419,7 +429,7 @@ The loader reports the first refusal, in this order. A refused workflow returns 
 
 ## Examples the loader refuses
 
-A short, representative set. The first column shows the cause. The second names the stage and the location.
+The table is a short, representative set. The first column shows the cause. The second names the stage and the location.
 
 | Input | Refusal |
 |---|---|
@@ -442,7 +452,7 @@ A short, representative set. The first column shows the cause. The second names 
 | `until: inputs.plan.criteria` (a claimed field) | Gate, class claimed |
 | `until: explode()` | Expression, unknown function |
 
-The loader does not check these at load. Each fails later or does nothing:
+The loader does not check the rules in this table at load. Each fails later or does nothing.
 
 | Not checked | What happens |
 |---|---|

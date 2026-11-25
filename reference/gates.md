@@ -12,7 +12,7 @@ The expressions on this page are illustrative. Where an example is refused, the 
 
 A gate reads only `derived` facts: values that code computed from sealed inputs. The loader refuses a read of a `claimed` field, of a field with no class, and of a step that does not exist, before a run starts.
 
-Accepted:
+The loader accepts these reads.
 
 ```text
 verdict.all_covered
@@ -22,7 +22,7 @@ inputs.measurement.exit_code == 0
 success()
 ```
 
-Refused:
+The loader refuses these reads.
 
 ```text
 inputs.plan.criteria == 'x'
@@ -31,6 +31,8 @@ steps.zzz.measurement.exit_code == 0
 ```
 
 ## Contexts
+
+A gate reads from four contexts.
 
 | Context | Reads |
 |---|---|
@@ -43,7 +45,7 @@ A gate expression can use a name only from these four contexts. `env.HOME` is re
 
 ## Read forms
 
-`<kind>` is the kind's bare name, such as `measurement`, not `evidence/measurement@1`.
+The table lists the four read forms. `<kind>` is the kind's bare name, such as `measurement`, not `evidence/measurement@1`.
 
 | Read | Form | Names after the context | How the loader classifies it |
 |---|---|---|---|
@@ -60,6 +62,8 @@ Every envelope `meta` value is `derived`.
 
 ## Fact classes
 
+Every field has one of three classes or none.
+
 | Class | Meaning | Gate can read |
 |---|---|---|
 | `claimed` | An agent wrote it. | No. |
@@ -70,6 +74,8 @@ Every envelope `meta` value is `derived`.
 A schema marks a field's class with the keyword `x-fact-class` on the property.
 
 ### Fact classes by kind and field
+
+The table gives the class of every top-level body field of every kind.
 
 | Kind | Field | Class |
 |---|---|---|
@@ -89,7 +95,7 @@ Only a top-level property of a body is readable. A fact value is a boolean, an i
 
 ### Verdict facts
 
-A `verdict.<name>` read takes the value from the verdicts sealed for the run, newest first. Each verdict contributes `status` (a string) and each of its facts. A newer value of the same name replaces an older one, so `verdict.status` is the status of the latest verdict.
+A `verdict.<name>` read takes the value from the verdicts sealed for the run, newest first. Each verdict contributes `status` (a string) and each of its facts. A newer value of the same name replaces an older one, so `verdict.status` is the status of the latest verdict. The table lists the names the built-in validators give.
 
 | Name | Type | From | Meaning |
 |---|---|---|---|
@@ -122,6 +128,8 @@ field   = ("inputs" | "needs" | "steps" | "verdict") { "." name }+
 
 ### Lexical rules
 
+The table lists the rule for each element of an expression.
+
 | Element | Rule |
 |---|---|
 | Whitespace | Ignored between tokens. |
@@ -136,6 +144,8 @@ field   = ("inputs" | "needs" | "steps" | "verdict") { "." name }+
 
 ### Functions
 
+The grammar has three functions.
+
 | Function | Value |
 |---|---|
 | `success()` | True when no step before this point failed. |
@@ -145,6 +155,8 @@ field   = ("inputs" | "needs" | "steps" | "verdict") { "." name }+
 Functions take no arguments. `success(1)` is a syntax error. Any other call is an unknown function. A bare `success` without parentheses is an unknown context.
 
 ### Evaluation rules
+
+The table lists how an expression is evaluated.
 
 | Rule | Detail |
 |---|---|
@@ -160,6 +172,8 @@ Functions take no arguments. `success(1)` is a syntax error. Any other call is a
 
 ### Parse errors
 
+The parser reports one of four messages.
+
 | Message | Cause |
 |---|---|
 | ``unknown context `<name>` `` | The expression names a context other than the four. |
@@ -168,6 +182,8 @@ Functions take no arguments. `success(1)` is a syntax error. Any other call is a
 | `expression nested too deeply` | Parentheses or `!` nest more than 32 deep. |
 
 ### Evaluation errors
+
+The evaluator reports one of four messages.
 
 | Message | Cause |
 |---|---|
@@ -204,7 +220,7 @@ These show the grammar. Whether each is readable in a workflow depends on the ki
 
 ### Expressions the parser refuses
 
-A representative set. Offsets count characters from the start of the expression.
+The table is a representative set. Offsets count characters from the start of the expression.
 
 | Expression | Message |
 |---|---|
@@ -215,6 +231,8 @@ A representative set. Offsets count characters from the start of the expression.
 
 ### Expressions that parse and fail to evaluate
 
+Each expression in the table parses, and the evaluator refuses it.
+
 | Expression | Message |
 |---|---|
 | `'a' < 'b'`, `'a' >= 'b'`, `true < false`, `verdict.passed > false`, `true <= true` | `operands of the wrong type` |
@@ -223,6 +241,8 @@ A representative set. Offsets count characters from the start of the expression.
 | `verdict.quality == 'good'` where the field is judged | ``field `<field>` is judged, not derived`` |
 
 ### Reads the loader accepts
+
+The loader accepts each `until` in the table.
 
 | `until` | Why |
 |---|---|
@@ -234,6 +254,8 @@ A representative set. Offsets count characters from the start of the expression.
 | `needs.anything.measurement.exit_code == 0` | `needs` ids are not checked against the workflow. |
 
 ### Reads the loader refuses
+
+The loader refuses each `until` in the table and names the class.
 
 | `until` | Class in the refusal | Cause |
 |---|---|---|

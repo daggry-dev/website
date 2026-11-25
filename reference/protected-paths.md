@@ -80,6 +80,8 @@ A person frees one frozen path with this command.
 daggry approve <run-id> --unfreeze <path>
 ```
 
+These rules apply to the grant.
+
 - The command works only at the `human` step that an exhausted loop routes to.
 - It seals an `approval` that names the run, the path and the file's digest.
 - The path is unfrozen for the next loop iteration only. That iteration's sealed change sets the new frozen digest.
@@ -87,7 +89,7 @@ daggry approve <run-id> --unfreeze <path>
 
 ## Enforcement
 
-The second check is the authority.
+The boundary check runs twice for each step, in the pod and in the control plane, and the second check is the authority. The list gives the order.
 
 1. The agent's step ends.
 2. The runner lists what changed, from the difference between the last sealed version and the step's result, so every difference the agent made counts.
@@ -100,6 +102,8 @@ An engine hook can give early feedback. It is never the gate.
 
 ## Pod boundary
 
+These rules hold for every pod.
+
 - Daggry's own instructions, such as the step prompt, sit in a volume that is read-only in the main container.
 - The project's own agent configuration (instruction files, agent folders, skills, commands, hooks and project settings) is read from the working copy. The boundary check under Enforcement guards it: a changed path is put back in the pod and rechecked in the control plane, and the step fails.
 - The seal key and the workspace store's own key never enter the pod.
@@ -107,6 +111,8 @@ An engine hook can give early feedback. It is never the gate.
 - If the `verify` step cannot switch user, it measures nothing and the step fails with ``the verify step could not switch to a different unix user: <cause>; nothing was measured``.
 
 ## Next steps
+
+The list names the pages to read next.
 
 - For the `approval` fields, see [Kinds and schemas](/reference/kinds#evidence-approval-1).
 - For the paths one kind of work adds, see [Bindings](/reference/bindings).
