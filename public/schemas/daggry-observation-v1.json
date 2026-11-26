@@ -1,18 +1,19 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "daggry/observation@1",
-  "title": "daggry/observation@1: a protected-restored or a step-failed record",
+  "title": "daggry/observation@1: a protected-restored, a step-failed, an effect-delivered or an auto-allowed record",
   "type": "object",
   "required": [
-    "event",
-    "reason"
+    "event"
   ],
   "additionalProperties": false,
   "properties": {
     "event": {
       "enum": [
         "protected-restored",
-        "step-failed"
+        "step-failed",
+        "effect-delivered",
+        "auto-allowed"
       ],
       "x-fact-class": "derived"
     },
@@ -35,6 +36,46 @@
       "type": "integer",
       "minimum": 1,
       "x-fact-class": "derived"
+    },
+    "effect": {
+      "type": "string",
+      "minLength": 1,
+      "x-fact-class": "derived"
+    },
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "x-fact-class": "derived"
+    },
+    "expression": {
+      "type": "string",
+      "minLength": 1,
+      "x-fact-class": "derived"
+    },
+    "facts": {
+      "x-fact-class": "derived",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "value"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "value": {
+            "type": [
+              "boolean",
+              "integer",
+              "string"
+            ]
+          }
+        }
+      }
     }
   },
   "allOf": [
@@ -51,11 +92,16 @@
       },
       "then": {
         "required": [
-          "path"
+          "path",
+          "reason"
         ],
         "properties": {
           "step": false,
-          "attempt": false
+          "attempt": false,
+          "effect": false,
+          "ref": false,
+          "expression": false,
+          "facts": false
         }
       }
     },
@@ -73,10 +119,67 @@
       "then": {
         "required": [
           "step",
-          "attempt"
+          "attempt",
+          "reason"
         ],
         "properties": {
-          "path": false
+          "path": false,
+          "effect": false,
+          "ref": false,
+          "expression": false,
+          "facts": false
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "effect-delivered"
+          }
+        },
+        "required": [
+          "event"
+        ]
+      },
+      "then": {
+        "required": [
+          "step",
+          "effect",
+          "ref"
+        ],
+        "properties": {
+          "path": false,
+          "attempt": false,
+          "reason": false,
+          "expression": false,
+          "facts": false
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event": {
+            "const": "auto-allowed"
+          }
+        },
+        "required": [
+          "event"
+        ]
+      },
+      "then": {
+        "required": [
+          "step",
+          "expression",
+          "facts"
+        ],
+        "properties": {
+          "path": false,
+          "attempt": false,
+          "reason": false,
+          "effect": false,
+          "ref": false
         }
       }
     }

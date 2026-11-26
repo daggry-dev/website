@@ -4,11 +4,11 @@
 import DgIcon from './DgIcon.vue'
 
 const records = [
-  { t: '22:04', h: 'Plan approved by you', d: 'Five items to build. Your approval is tied to this exact plan.', by: 'recorded by code', fp: '9c1e', prev: 'start' },
-  { t: '23:17', h: 'Test written and shown to fail', d: 'Item 1 of 5. The new test fails on the code as it was, so it really tests something.', by: 'checked by code', fp: '4b7a', prev: '9c1e' },
-  { t: '23:52', h: 'Test passes on a clean copy', d: 'Code re-ran every test on a fresh copy of the code: 0 failures.', by: 'checked by code', fp: 'e0d3', prev: '4b7a' },
-  { gap: 'Items 2 to 5: the same two records each, 01:10 to 05:30' },
-  { t: '06:03', h: 'Pull request opened', d: 'All five items covered. Ready for your review, with this trail beside it.', by: 'recorded by code', fp: 'a41f', prev: 'c58e' },
+  { t: '22:04', h: 'Plan approved by you', d: 'Five criteria. You replied "looks right, go ahead" on the issue. Your reply is tied to this exact plan.', by: 'recorded by code', fp: '9c1e', prev: 'start' },
+  { t: '23:17', h: 'Tests written and shown to fail', d: 'One for each criterion. Every new test fails on the code as it was, so each really tests something.', by: 'checked by code', fp: '4b7a', prev: '9c1e' },
+  { gap: 'Rounds 1 to 3: the agent works on what still fails and code re-runs every test, 23:40 to 05:30' },
+  { t: '05:41', h: 'Tests pass on a clean copy', d: 'Code re-ran every test on a fresh copy of the code: 0 failures, all five criteria covered.', by: 'checked by code', fp: 'e0d3', prev: '2f6a' },
+  { t: '06:03', h: 'Pull request opened', d: 'Ready for your review on the pull request, with this trail beside it. Your comments there join the trail.', by: 'recorded by code', fp: 'a41f', prev: 'e0d3' },
 ] as const
 </script>
 

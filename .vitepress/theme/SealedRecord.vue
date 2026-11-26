@@ -3,7 +3,7 @@ import DgIcon from './DgIcon.vue'
 
 const label =
   'One sealed record, in four layers. The result: what the step produced, with its kind, its id and its body. ' +
-  'Added by code at sealing: who produced it, when, which records it builds on and which key signs it. ' +
+  'Added by code at sealing: who produced it, when, which records it builds on and which key signs it. For an agent step, who is the persona and the digest of its instructions. ' +
   'The digest: a short code computed from everything above it. ' +
   'The signature: made with the signing key, which never enters a runner. ' +
   'A seal proves that a validator ran and that the record is unchanged. ' +
@@ -24,7 +24,7 @@ const label =
           <div class="dg-node cool">
             <span class="dg-who">added by code at sealing</span>
             <b>Who, when and from what</b>
-            <span>Who produced it, when, which records it builds on and which key signs it.</span>
+            <span>Who produced it, when, which records it builds on and which key signs it. For an agent step, who is the persona and the digest of its instructions.</span>
           </div>
           <div class="dg-node cool">
             <span class="dg-who">digest</span>
@@ -52,7 +52,8 @@ const label =
     </div>
     <figcaption class="cap">
       What a sealed record contains. The result is what the step produced: its kind, its id and its body. Code
-      adds who produced it, when, which records it builds on and which key signs it. The digest is computed
+      adds who produced it, when, which records it builds on and which key signs it. For an agent step, who is
+      the persona and the digest of its instructions. The digest is computed
       from all of that, and the signature is made with a key that never enters a runner. A seal proves that a
       validator ran and that the record is unchanged. It does not prove that you chose the right validators.
     </figcaption>

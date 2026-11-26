@@ -2,255 +2,249 @@
 
 *Reference*
 
-A workflow has a strict form, and Daggry refuses anything else. This page defines every key, every value a key accepts, every file the loader refuses and how you add your own keys and step kinds. Read it when you write or review a workflow and need the exact rule. To write your first one, follow [Write a workflow](/guide/how-to/write-a-workflow).
+A workflow is one YAML file that lists the steps of a piece of work, in order. This page defines every key you write: the file shape, the five step kinds, scope, the loop and one worked example. Read it when you write or review a workflow. To write your first one, follow [Write a workflow](/guide/how-to/write-a-workflow). For how Daggry loads a file and what it refuses, see [Workflow rules](/reference/workflow-rules).
 
-A workflow is one YAML file that lists steps and loops, each loop with a limit. It is one of the four [open formats](/reference/open-formats), with the [Project config](/reference/project-config), the [Tenant config](/reference/tenant-config) and evidence.
+Every step ends with a seal. Daggry checks what the step produced, signs it as a record and adds the record to the evidence trail, so the trail shows which step did what, in order. Each step kind on this page says what it seals.
 
-The examples on this page are illustrative. Each one is valid against the published schema. See [Validation](#validation).
+The examples on this page are illustrative.
 
-In examples, `engine: <engine>` stands for the identifier of an agent engine that the tenant registers. Write that identifier in place of `<engine>`. One engine, `replay`, plays back a recorded transcript and takes a `transcript` path in place of `prompt`.
+<WorkflowAnatomy />
 
-A workflow names validators, effects and areas by reference. The project, the tenant and the binding supply what the names stand for, so the same file works for any kind of work. See [Bindings](/reference/bindings).
-
-## Download
-
-The workflow file has a published JSON Schema (draft 2020-12). The table links the file.
-
-| Schema | File |
-|---|---|
-| `daggry/workflow@1` | [workflow.json](/schemas/workflow.json) |
+The diagram shows a workflow from top to bottom: an `agent` step that names a persona, an approval, a loop that repeats until its gate holds, and an effect. Beside each part it names the records the part seals.
 
 ## File shape
 
-A workflow file has three parts.
-
-| Part | Keys | Rule |
-|---|---|---|
-| Header | `format` | Required. Always `daggry/workflow@1`. |
-| Body | `steps` | Required. The ordered entries of the workflow. `steps: []` is valid. |
-| Extension keys | `<namespace>/<key>` | Any number. See [Extension keys in a workflow](#extension-keys-in-a-workflow). |
-
-`format` follows the form `<namespace>/<name>@<major>`, the same form as an artifact kind. A reader refuses a missing `format`, a malformed one and a major version it does not know. A breaking change to the layout is a new major.
-
-Any other top-level key is refused. The file has no name, no inputs section, no `needs` key and no step-level condition. A gate appears only in a loop's `until`. See [Gate expressions](/reference/gates).
-
-An entry is a step when it has a `kind` key. Otherwise it is a loop entry. Every object is closed: a key that this page does not define and that is not an extension key is refused. Ids are non-empty strings. Loop entries and the steps inside loops share one id namespace.
-
-The workflow lives in the control plane. An agent cannot change it.
-
-### Where a workflow comes from
-
-A workflow is a document in the tenant's catalogue. Each catalogue entry names the workspace, the path and the version the file is read from, and the tenant chooses that workspace. It can be the workspace the work is done on, but that workspace does not assign the workflow to itself. The tenant config decides which workflows run on which workspace. See [workflows](/reference/tenant-config#workflows) and [projects](/reference/tenant-config#projects).
-
-`daggry run --workflow <file>` supplies a workflow as a file: the file is read from the machine that starts the run. See [CLI](/reference/cli).
-
-### YAML subset
-
-The loader reads a strict subset of YAML. The table lists what it refuses.
-
-| Construct | Result |
-|---|---|
-| Anchor `&name` | Refused. |
-| Alias `*name` | Refused. |
-| Tag `!tag` or `!!tag` | Refused. |
-| Merge key `<<:` | Refused. |
-| Duplicate mapping key | Refused. |
-| The same characters inside a quoted or block scalar | Data. They load. |
-
-## Steps
-
-Every step requires `id` and `kind`. `kind` is one of the five values of the standard, `command`, `agent`, `verify`, `human` and `effect`, or an extension kind that the tenant registers. Any other value is refused at `/steps/<n>/kind`. See [Step kind registry](#step-kind-registry). The table lists the five kinds.
-
-| Kind | What runs the step | What it does |
-|---|---|---|
-| `agent` | Agent runner | A session of an agent engine that must deliver named artifact kinds. |
-| `command` | Deterministic runner | A program and its arguments, limited by a `scope` of paths it can write. |
-| `verify` | Deterministic runner and control plane | Runs the validators it names on the last sealed version of the workspace. |
-| `human` | None. A person decides. | Releases the pod and waits. `daggry approve` completes it. |
-| `effect` | Control plane | An idempotent side effect that the tenant registers, such as handing a change over. |
-
-### command
-
-A command that the runner executes in the pod, in the form defined in [Commands](/reference/project-config#commands). A failed command step fails the run, also inside a loop. The table lists its keys.
-
-| Key | Type | Required | Constraints |
-|---|---|---|---|
-| `id` | string | yes | Non-empty. |
-| `kind` | string | yes | `command`. |
-| `run` | command | yes | A program and its arguments, as a list. See [Commands](/reference/project-config#commands). |
-| `scope` | scope | yes | See [Scope](#scope). |
-
-### agent
-
-A session of an agent engine. The table lists its keys.
-
-| Key | Type | Required | Constraints |
-|---|---|---|---|
-| `id` | string | yes | Non-empty. |
-| `kind` | string | yes | `agent`. |
-| `engine` | string | yes | Non-empty. The identifier of an agent engine. See [Engine](#engine). |
-| `prompt` | string | no | The control plane writes it to a read-only instruction file named for the step id. |
-| `transcript` | string | no | Non-empty. The path of the recorded transcript that the `replay` engine plays back, in place of `prompt`. |
-| `outputs` | array of strings | yes | Each non-empty. The kinds the step must deliver. |
-| `freeze` | array of strings | no | Each non-empty. Globs that mark which of the step's changed paths are frozen when the step is sealed. |
-| `scope` | scope | yes | See [Scope](#scope). |
-
-These rules apply to an `agent` step.
-
-- The step succeeds when every declared output is accepted. It fails when the engine ends first or a limit is reached.
-- An output matches by bare name: `plan`, `evidence/plan@1` and `daggry/change@1` all work.
-- The control plane seals a `change` for every accepted `agent` or `command` step, so an output named `change` is never required from the runner.
-- A step can submit `observation` always, `measurement` from a `verify` step or a step with `freeze`, and any other kind only if it is among `outputs`. Any other record rejects the step with ``record <n>: kind `<kind>` not admitted``.
-- A step with `freeze` is the proof step of a loop: it writes what proves a criterion. When the control plane accepts it, its matching paths become the frozen set.
-
-### verify
-
-Runs validators on the last sealed version of the workspace and judges the result. For what each step does and the verdict rules, see [Judges](/reference/judges#the-model). The table lists its keys.
-
-| Key | Type | Required | Constraints |
-|---|---|---|---|
-| `id` | string | yes | Non-empty. |
-| `kind` | string | yes | `verify`. |
-| `validators` | array of references | yes | One or more, none twice. See [Validators by reference](#validators-by-reference). |
-| `judges` | array of names | no | Judges to run after the default judge: `coverage`, `no_regression` or the name of a judge you declare. None twice. Absent: only the default judge. The order is the order of the verdicts. See [Judges](/reference/judges). |
-
-A `verify` step has no command. Every validator it names is resolved when the run starts.
-
-- A validator you define runs in the deterministic runner, on a clean copy of the last sealed version. The step submits one `head` measurement for each.
-- Inside a loop, a `verify` step that does not pass is red: the iteration ends and the run does not fail. Outside a loop, a failed `verify` step fails the run.
-
-### human
-
-Waits for a person. The table lists its keys.
-
-| Key | Type | Required | Constraints |
-|---|---|---|---|
-| `id` | string | yes | Non-empty. |
-| `kind` | string | yes | `human`. |
-| `waiting_for` | string | yes | `approval` or `input-needed`. |
-
-The control plane marks the run `waiting` at the step boundary and releases the job's pod. `daggry approve <run-id>` completes the step, and the run continues in a new attempt from the last sealed version of the workspace. `approve` binds to the `plan` for `approval` and to the latest `change` for `input-needed`. A `human` step that some loop names in `on_exhausted` is skipped in normal flow and runs only when that loop is exhausted.
-
-### effect
-
-Runs in the control plane, never in the pod. The table lists its keys.
-
-| Key | Type | Required | Constraints |
-|---|---|---|---|
-| `id` | string | yes | Non-empty. |
-| `kind` | string | yes | `effect`. |
-| `do` | string | yes | The name of an effect that the tenant registers in `extensions.effects` of the [Tenant config](/reference/tenant-config#extensions): a name, or `<namespace>/<name>`. |
-
-The standard defines no effect. A binding defines the effects for its kind of work, such as handing a change over or publishing it. See [Bindings](/reference/bindings). The idempotency key of every effect is the run id plus the step id, so a retry has the same result. A failing effect fails the run. An effect the tenant has not registered refuses the run when it starts.
-
-### Step kind registry
-
-A step kind is an entry in a registry. Each entry names the kind, the keys a step of that kind takes and what runs it: the runner, as the deterministic runner or the agent runner, or the control plane. See [The modules and where they run](/guide/concepts/modules). The table lists the entries.
-
-| Kind | What runs the step | Registered by |
-|---|---|---|
-| `command` | Deterministic runner | The standard. |
-| `verify` | Deterministic runner, for validators. Control plane, for the judges. | The standard. |
-| `agent` | Agent runner | The standard. |
-| `effect` | Control plane | The standard. |
-| `human` | None. A person decides, and the control plane seals the decision. | The standard. |
-| `<namespace>/<name>` | What its registration names: the deterministic runner, the agent runner or the control plane. | The tenant, in `extensions.step_kinds` of the [Tenant config](/reference/tenant-config#extensions). |
-
-These rules apply to the registry.
-
-- A kind without a namespace belongs to the standard. The five standard kinds are the whole set. A new one is a change to the standard.
-- An extension kind has the form `<namespace>/<name>`: exactly one `/`, with each part made of ASCII letters, digits, `-` or `_`. The namespace names the party that defines the kind.
-- An extension kind is registered with the URL of a JSON Schema for its keys. A step of that kind takes `id`, `kind` and the keys that schema allows.
-- A kind that is not one of the five and is not registered by the tenant is refused at `/steps/<n>/kind`.
-- A loop is not a step kind, and no extension kind is a loop.
-
-### Which module runs a step
-
-A workflow declares what runs a step through the step's `kind` and through nothing else. The conductor reads the kind, looks it up in the registry and hands the step to what the entry names. The table lists what each one runs.
-
-| What runs the step | Runs | Never |
-|---|---|---|
-| Deterministic runner | What a person wrote into the workflow, the project or the tenant: a `command` step's `run` line and validators you define. | Starts a model. |
-| Agent runner | An agent engine, and whatever the engine generates. | Judges its own work. |
-| Control plane | Effects, seals and judges. | Runs a command or an agent. |
-| A person | The decision at a `human` step. | - |
-
-No key of a step changes what runs it. An `agent` step always runs in the agent runner, and a `command` step never does.
-
-### Validators by reference
-
-A `verify` step names validators, and the project and the tenant supply them. A workflow holds no validator command. The table lists the forms of a reference.
-
-| Reference | Resolves to |
-|---|---|
-| `project` | The project's default set of validators: the canonical validator and each validator in `verification.also` of the [Project config](/reference/project-config#verification). |
-| `<name>` | The validator you define of that name: first in the project config of the baseline, then in the [Tenant config](/reference/tenant-config#validators). The project's validator wins over a tenant's of the same name. |
-
-These rules apply to a reference.
-
-- A reference is `project` or a validator name: a lowercase letter, then lowercase letters, digits, `-` or `_`. A `/` is never part of a name.
-- `project` needs a project config with `verification.canonical`.
-
-For reserved names, lookup and when a validator counts as evidence, see [Referring to a validator](/reference/validators#referring-to-a-validator).
-
-### Engine
-
-`engine` is an open string, not a closed list, so a new agent engine needs no change to the schema. The loader checks the value against the engines the tenant registers in `agents.engines` of the [Tenant config](/reference/tenant-config#agents). A value no registered engine has is refused.
-
-## Scope
-
-`scope` is what a step can write. It is required on `command` and `agent` steps and absent on the other kinds of the standard. It takes one of three values.
-
-| Value | Meaning |
-|---|---|
-| `nothing` | The step can write no path. |
-| `anywhere` | Any path except protected paths and the automation folders a binding names. |
-| a list of entries | Only paths that an entry holds. Each entry is non-empty: a glob, or an area reference, `area:<name>`. `[]` is valid and holds no path. |
-
-Any other word, such as `everywhere`, is refused. A glob that does not compile is refused at run time.
-
-How a scope is judged and enforced is in [Protected paths](/reference/protected-paths#scope).
-
-### Areas by name
-
-A workflow can name a part of a workspace without knowing its paths. An entry of a `scope` list is a glob or an area reference, and the [Project config](/reference/project-config#areas) of the workspace supplies the paths. The table lists the two forms of an entry.
-
-| Entry | Stands for |
-|---|---|
-| `area:<name>` | Every path that the area of that name holds. |
-| Any other string | A glob. |
-
-These rules apply to an area reference.
-
-- The name follows the rule for a validator name. It is looked up in the project config of the baseline when the run starts. A name the project config lacks refuses the run.
-- A list can mix globs and area references. A path is in the scope of the step when one entry holds it.
-- An area reference never opens a protected path, and it applies inside the scope of the run. See [The scope of a run](/reference/protected-paths#the-scope-of-a-run).
+A workflow file has a header and a list of steps.
 
 ```yaml
 format: daggry/workflow@1
 steps:
-  - id: fix
-    kind: agent
-    engine: <engine>
-    prompt: Revise the page.
-    outputs: [change]
-    scope: ["area:app", "CHANGELOG.md"]
+  - id: render
+    kind: command
+    run: [sh, scripts/render.sh]
+    scope: anywhere
 ```
 
-`app` is an area in the project config of the workspace, and `<engine>` is the identifier of a registered agent engine.
+The table lists the two keys.
+
+| Key | Required | Meaning |
+|---|---|---|
+| `format` | yes | Always `daggry/workflow@1`. |
+| `steps` | yes | The entries of the workflow, in the order they run. An entry is a step or a [loop](#loop). |
+
+The file holds no instructions for an agent, no objective, no validator command and no credential. The objective comes with each run: from the issue, from a trigger or from `daggry run`. A step names a persona, a validator or an effect, and the [Tenant config](/reference/tenant-config) and the [Project config](/reference/project-config) say what each name stands for. The control plane holds the workflow outside every runner, so no step can change it.
+
+## Steps
+
+A step has an `id`, unique in the file, and a `kind`. The table lists the five kinds.
+
+| Kind | What it does | What it seals |
+|---|---|---|
+| [`agent`](#agent) | A persona does work and hands in the outputs the step names. | A `change`, each named output such as a `plan`, and the persona that did it. |
+| [`command`](#command) | A program you name runs in the runner. | A `change`. |
+| [`verify`](#verify) | Validators measure the work and judges decide. | One `measurement` for each validator and one `verdict` for each judge. |
+| [`human`](#human) | A checkpoint: the run asks a person and waits. | An `approval` or an `input`, bound to the digest of what the person answered. |
+| [`effect`](#effect) | Daggry delivers the result. | An `observation` that names what was delivered, and one that says why no person was needed. |
+
+No key changes what a kind does. An `agent` step never runs your validators, and a `verify` step never starts an agent.
+
+### agent
+
+A persona does the work of the step. The step says who works, what they must hand in and what they can write. It holds no prompt and no task note: the persona's instructions say how the work is done, and the objective of the run says what is wanted.
+
+```yaml
+- id: plan
+  kind: agent
+  persona: planner
+  outputs: [plan]
+  scope: nothing
+```
+
+The table lists the keys.
+
+| Key | Required | Meaning |
+|---|---|---|
+| `persona` | yes | The name of a persona. Daggry looks it up in the `personas` of the project config first, then of the tenant config. See [personas](/reference/tenant-config#personas). |
+| `outputs` | yes | What the step must hand in, by bare name: `plan`, `change`, or `input` for a reviewer whose findings are advice. The step passes when Daggry accepts every output. |
+| `scope` | yes | What the step can write. See [Scope](#scope). |
+| `freeze` | no | Globs. The paths the step wrote that match them are frozen when the step is sealed. A step with `freeze` is the proof step of a loop. See [Red then green](#red-then-green). |
+
+<PersonaReceives />
+
+The diagram shows the five things a persona step is given, and nothing else: the persona's instructions, the objective of the run, the sealed outputs of earlier steps, the outputs it must hand in and its scope.
+
+The objective is what the run was asked to do: the text of the issue, a trigger's standing text or the text given to `daggry run`. Daggry seals it as the work item when the run starts. The sealed outputs include a person's input and, in a repeat iteration of a loop, the findings that still fail. This is how one persona hands work to the next: a `planner` persona seals a `plan`, and a `developer` persona reads the sealed plan, never a chat history. What it hands in is a claim until Daggry accepts it.
+
+A persona can ask. When it needs something only a person knows, it posts a question on the issue, the run waits, and the next reply from a person continues the step with that reply as input. A workflow needs no key for this.
+
+**Sealed:** a `change` for the step's commits, and each output in `outputs`. Every record the step seals carries the persona's name and the digest of its instructions, so the trail shows who did the work and under which version of the instructions.
+
+### command
+
+A program runs in the runner. A failed command fails the run.
+
+```yaml
+- id: render
+  kind: command
+  run: [sh, scripts/render.sh]
+  scope: ["site/**"]
+```
+
+The table lists the keys.
+
+| Key | Required | Meaning |
+|---|---|---|
+| `run` | yes | The program and its arguments, as a list. See [Commands](/reference/project-config#commands). |
+| `scope` | yes | What the step can write. See [Scope](#scope). |
+
+**Sealed:** a `change` for what the command wrote.
+
+### verify
+
+Validators measure the last sealed version of the workspace, and judges decide from the evidence trail. The step holds no command: it names validators and judges.
+
+```yaml
+- id: check
+  kind: verify
+  validators: [project, links]
+  judges: [coverage]
+```
+
+The table lists the keys.
+
+| Key | Required | Meaning |
+|---|---|---|
+| `validators` | yes | One or more names, none twice. `project` is the project's default set. Any other name is a validator you declare. See [Referring to a validator](/reference/validators#referring-to-a-validator). |
+| `judges` | no | Judges to run after the default judge: `coverage`, `no_regression` or a judge you declare. See [Judges](/reference/judges). |
+
+The step passes when every verdict passes. Outside a loop, a step that does not pass fails the run. Inside a loop it ends the iteration as red. See [Loop rules](#loop-rules).
+
+**Sealed:** one `measurement` for each validator, then one `verdict` for each judge. A gate reads the verdicts and nothing else.
+
+### human
+
+A checkpoint: the run asks a person and waits. Daggry posts what it wants approved on the issue, or on the pull request once one is open. The person answers there.
+
+```yaml
+- id: approve-plan
+  kind: human
+  of: plan
+```
+
+`of` is the one key. It names the step or loop the checkpoint is about. The table lists what a reply does.
+
+| The person | Daggry seals | The run |
+|---|---|---|
+| Says yes: a thumbs-up on the request, an approving review on the pull request, or a clear yes in words | An `approval`, bound to the digest of what `of` last sealed. | Continues. |
+| Says anything else | An `input`, with the reply as written. | Goes back to `of` with that reply, runs forward to this checkpoint and asks again. Only an approver's reply does this. |
+
+Going back is how every correction works: a change to the plan, a request for changes on the pull request, a loop that ran out, a merge that failed. After three rounds without a yes, the run stops and says so.
+
+An approval holds for one digest. When the run comes back to a checkpoint and the thing it approved is unchanged, Daggry does not ask again. When it has changed, Daggry asks again, and a yes that answered an older version is not applied.
+
+For who can approve and how Daggry reads a reply, see [Comments and approvals](/reference/conversation). `daggry approve <run-id>` says yes from the command line.
+
+**Sealed:** an `approval` or an `input`. Each holds the digest of what it answers, so an answer cannot be moved to another version.
+
+### effect
+
+Daggry delivers the result. An effect runs in the control plane, never in a runner, so no agent holds the credential that delivers.
+
+```yaml
+- id: deliver
+  kind: effect
+  do: open-pr
+```
+
+The table lists the effects.
+
+| `do` | What it does |
+|---|---|
+| `open-pr` | Opens a pull request from the run's branch, `daggry/<run-id>`, to `main`. The title and the body come from the issue. |
+| `merge-pr` | Merges the pull request the run opened, as one squashed commit. It first brings the branch up to date with `main`, runs the project's validators on the result and waits for the repository's own required checks. It never bypasses branch protection. |
+
+An effect also takes one optional key, `auto_when`. See [Autonomy](#autonomy).
+
+When a merge cannot happen, because of a conflict, a failing required check or a failing validator, Daggry seals the reason as an `input` and sends the run back to the `of` of the last checkpoint. No person is needed for that. The repository's own checks are a condition of the merge. They are not Daggry validators, and their results are not evidence.
+
+An effect is safe to repeat: its key is the run id and the step id, so a retry returns the same pull request. A failing effect fails the run.
+
+**Sealed:** an `observation` with the event `effect-delivered`, the name of the effect and what it delivered, such as the URL of the pull request.
+
+#### Autonomy
+
+An effect can run with no person, but only when code says the change is small and safe enough. `auto_when` is a [gate expression](/reference/gates) over sealed facts. The threshold is code, never an instruction to an agent.
+
+```yaml
+- id: merge
+  kind: effect
+  do: merge-pr
+  auto_when: run.within.docs && run.changed_lines <= 200 && run.verdicts_failed == 0 && run.protected_touched == 0
+```
+
+The table lists what happens.
+
+| `auto_when` | The effect |
+|---|---|
+| Absent | Runs when the run reaches it. A `human` step before it is how the workflow asks a person. |
+| Holds | Runs with no person. Daggry first seals an `observation` with the event `auto-allowed`, the expression and the facts it read. |
+| Does not hold | Waits. Daggry asks for approval on the pull request, and the effect runs once a person says yes. |
+
+The tenant has the last word. With `effect` in `agents.approval.require` of the [Tenant config](/reference/tenant-config#agents), a person approves before every effect, whatever `auto_when` says. For the facts an expression can read, see [Run facts](/reference/gates#run-facts).
+
+## Scope
+
+`scope` is what a step can write. `agent` and `command` steps require it. The table lists its three forms.
+
+| Value | The step can write |
+|---|---|
+| `nothing` | No path. |
+| `anywhere` | Any path that is not protected. |
+| A list | The paths that an entry of the list holds. An entry is a glob, such as `"docs/**"`, or an area of the project, as `area:<name>`. |
+
+```yaml
+scope: ["area:app", "CHANGELOG.md"]
+```
+
+An area is a named group of paths that the [Project config](/reference/project-config#areas) defines, so a workflow can name a part of a project without knowing its paths. No scope opens a protected path. A change outside the scope is put back and recorded as an `observation`. For how Daggry judges a scope, see [Protected paths](/reference/protected-paths#scope).
 
 ## Loop
 
-A loop entry has an `id` and a `loop` object. A loop is not a sixth step kind. The table lists the keys of `loop`.
+A loop repeats its steps until the work is done, up to a limit. It has three keys: `until`, `max` and `steps`. "Done" is a gate: an expression over sealed facts, such as "every criterion is covered". A loop entry has an `id` and a `loop` key in place of `kind`.
 
-| Key | Type | Required | Meaning |
-|---|---|---|---|
-| `over` | string | yes | The input that holds the list. Non-empty. The list is the `criteria` of the sealed `plan`: `over: plan`. |
-| `as` | string | yes | The name an iteration's item reaches its steps as. Non-empty. |
-| `until` | string | yes | A gate expression, read at the end of each iteration. The loop ends when it holds. |
-| `max` | integer | yes | 1 or more. The bound on iterations of the whole loop, across all items. |
-| `on_exhausted` | string | yes | `fail`, or the id of a top-level `human` step. |
-| `steps` | array of steps | yes | The steps of one iteration. A loop inside a loop is refused. |
+```yaml
+- id: build
+  loop:
+    until: verdict.all_covered
+    max: 5
+    steps:
+      - id: work
+        kind: agent
+        persona: writer
+        outputs: [change]
+        scope: ["area:handbook"]
+      - id: check
+        kind: verify
+        validators: [project]
+        judges: [coverage]
+```
+
+Each iteration, the persona works on everything that is still open, and the `verify` step measures the whole result. The loop ends when the gate holds. Otherwise it repeats, and the persona gets only the findings that still fail.
+
+<LoopRounds />
+
+The diagram shows three iterations of one loop: the set of failing findings shrinks each time, the gate reads the sealed verdict after each iteration, and the loop ends when nothing is left or the limit is reached.
+
+The table lists the keys of `loop`.
+
+| Key | Required | Meaning |
+|---|---|---|
+| `until` | yes | The gate: an expression that reads sealed facts. The loop ends when it holds. See [Gate expressions](/reference/gates). |
+| `max` | yes | The limit: the most iterations, 1 or more. |
+| `steps` | yes | The steps of one iteration. A loop cannot hold another loop. |
+| `over`, `as` | no | Slice the work into items, with one iteration for each. See [One item at a time](#one-item-at-a-time). |
+
+**Sealed:** a loop seals nothing of its own. Each step of each iteration seals its records, so the trail holds every iteration, passed or not.
 
 ### Loop rules
 
@@ -259,201 +253,153 @@ The table lists how a loop counts, repeats and ends.
 | Rule | Detail |
 |---|---|
 | Count | An iteration counts against `max` when it starts. |
-| Green | All of the iteration's steps passed. The loop advances to the next item. |
-| Red | The iteration's `verify` step failed. The same item repeats. |
-| Gate | `until` is evaluated at the end of every iteration, green or red. When it holds, the loop ends and the run continues after it. |
-| End | The loop also ends when the list is finished. |
-| Empty list | The loop and its exhaust target are skipped. |
-| Other failures | A failed step of any other kind in a loop fails the run. It is not red. A rejected boundary, a missing output or a failed baseline proof also fails the run. |
-| Repeat | An iteration that repeats skips every proof step: an `agent` step with `freeze`. A fresh iteration on a new item runs it. |
-| Exhausted | When `max` is reached with the list unfinished, `on_exhausted` applies. |
-| `fail` | The run ends `failed` with the reason ``loop `<id>` ran out of iterations``. |
-| `<human id>` | The run waits at that step. `daggry approve <run-id>` gives up the unfinished item, and the run continues after the human step. `daggry approve <run-id> --unfreeze <path>` re-enters the loop on the same item with a fresh `max`, as a repeat iteration. |
-
-`fail` is reserved, so a `human` step named `fail` cannot be an exhaust target.
+| Gate | Daggry reads `until` at the end of every iteration. When it holds, the loop ends. |
+| Repeat | When the gate does not hold, the steps run again. An `agent` step gets the findings that still fail, and a proof step does not run again. |
+| A `verify` step that does not pass | Ends the iteration. It does not fail the run: the loop repeats. |
+| Any other failure | A failed `agent` or `command` step fails the run. |
+| At the limit | The run goes on to the next checkpoint, which says what is unfinished. A reply there sends the run back, and the loop gets a fresh `max`. A yes accepts the result as it is. With no checkpoint after the loop, the run fails with the reason ``loop `<id>` ran out of iterations``. |
+| Coming back | When a checkpoint sends the run back, every loop on the way runs at least one iteration, whatever its gate says. |
 
 ### Red then green
 
-A red-then-green loop has three steps in an iteration. A proof step (an `agent` step with `freeze`) writes what proves the criterion: a proof whose finding carries the criterion id. A second `agent` step does the work that makes it pass. A `verify` step runs the validators on a clean copy. The guide calls this "fails first, then passes".
-
-The runner overlays the proof step's new frozen paths on a clean copy of the baseline and runs the baseline's canonical validator there. The `baseline_proof` judge, which Daggry applies itself, seals a verdict with the fact `red`. A proof step in a loop that does not prove red is rejected. See [Baseline proof](/reference/conformance#baseline-proof). Frozen paths and unfreeze are defined in [Protected paths](/reference/protected-paths#frozen-paths).
-
-## Extensibility
-
-A workflow grows without a change to the standard in two ways: a step kind that the tenant registers, and a namespaced extension key. The step kinds are in [Step kind registry](#step-kind-registry).
-
-### Extension keys in a workflow
-
-The table lists the rules for an extension key in a workflow.
-
-| Rule | Detail |
-|---|---|
-| Form | `<namespace>/<key>`. Pattern `^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$`. |
-| Place | At the top level, on a step and on a `loop` object. |
-| A reader that does not know the key | Ignores the value and preserves it. |
-| A key without a namespace | Refused, unless this page defines it. |
-| Limit | An extension key never widens a step's scope, a loop's `max` or any rule of the project or the tenant, and never changes the meaning of a key this page defines. |
-
-The full rules are in [Extension keys](/reference/project-config#extension-keys).
-
-### Example
-
-This workflow carries one extension key on the document, one on a step and one step of an extension kind.
+A check that already passes says nothing about the work. So a loop can start with a proof step: an `agent` step with `freeze`. It writes the checks that prove the plan, one for each criterion, before any work is done.
 
 ```yaml
-format: daggry/workflow@1
-acme/owner: platform-team
-steps:
-  - id: render
-    kind: command
-    run: [sh, scripts/render.sh]
-    scope: anywhere
-    acme/cost-centre: build
-  - id: scan
-    kind: acme/scan
-    level: strict
-  - id: fix
-    kind: agent
-    engine: <engine>
-    prompt: Fix what the scan found.
-    outputs: [change]
-    scope: ["area:app"]
+- id: build
+  loop:
+    until: verdict.all_covered
+    max: 5
+    steps:
+      - id: proof
+        kind: agent
+        persona: test-writer
+        outputs: [change]
+        freeze: ["tests/**"]
+        scope: ["tests/**"]
+      - id: work
+        kind: agent
+        persona: implementer
+        outputs: [change]
+        scope: ["area:app", "tests/**"]
+      - id: check
+        kind: verify
+        validators: [project]
+        judges: [coverage]
 ```
 
-The table explains the values.
+1. In the first iteration, the proof step writes a check for every criterion of the plan, such as a test whose name carries the criterion id.
+2. Daggry runs the project's canonical validator on the baseline with the checks added. The proof counts only when a check for every criterion fails there. The `baseline_proof` judge decides this.
+3. Daggry seals the checks and freezes their paths. No later step can change them.
+4. The work step does the work against the whole set of failing checks.
+5. The `verify` step measures the result on a clean copy. The `coverage` judge counts the criteria that a passing check now carries.
+6. While a criterion is uncovered, the loop repeats from step 4, and the persona gets the checks that still fail.
 
-| Value | Meaning |
-|---|---|
-| `acme/owner`, `acme/cost-centre` | Extension keys. A reader that does not know the `acme` namespace ignores them. |
-| `acme/scan` | An extension kind. The tenant registers it with the module that runs it and the schema that allows `level`. |
-| `<engine>` | The identifier of a registered agent engine. |
+**Sealed:** before any work starts, the trail holds the `change` with the frozen checks, a `measurement` of them on the baseline and the `baseline_proof` verdict. For the exact rule, see [Baseline proof](/reference/conformance#baseline-proof). For frozen paths, see [Frozen paths](/reference/protected-paths#frozen-paths).
 
-## A full valid example
+### One item at a time
 
-This workflow plans, waits for approval, then runs a red-then-green loop over the plan's criteria. It then runs a command and hands the change over with an effect. The loop ends when every criterion is covered, or when 5 iterations are spent, at which point the run waits at `ask`.
+By default one iteration works on everything that is open, which keeps handovers few: one persona start, one `verify` run and one set of records for each iteration. With `over`, the loop takes the criteria of the plan one by one instead.
+
+```yaml
+loop:
+  over: plan
+  as: criterion
+  until: verdict.all_covered
+  max: 12
+  steps: [...]
+```
+
+`over: plan` names the list, the criteria of the sealed plan. `as` names the current criterion for the steps. Give both or neither. An iteration whose `verify` step passes moves to the next criterion, one that does not pass repeats the same criterion, and a proof step runs once for each criterion. The loop also ends when the list is finished. `max` counts every iteration, across all criteria.
+
+<BatchOrItems />
+
+The diagram compares the two shapes: one iteration for the whole plan, or one for each criterion.
+
+Slicing pays for more starts, more `verify` runs and more records, so use it when it buys something: the criteria are large or independent, the whole plan would not fit in one session, or you want each criterion sealed and judged on its own, as a [rubric judge](/reference/judges#rubric-judge) with no fixed criterion needs.
+
+## What each step seals
+
+Read this section to find a step in the evidence trail. Every run opens with two records, and each step adds its own.
+
+<StepTrail />
+
+The diagram shows one row for each point of a run and the records it seals, in the order they join the trail. The table gives the same list.
+
+| When | Records sealed | Kind |
+|---|---|---|
+| The run starts | What the run pins: the workflow, the personas, the validators and the judges, each by digest. The objective: what was asked, and whether an issue, a trigger or a command asked it. | `run-lock`, `work-item` |
+| An `agent` step | The change, and each named output. Each carries the persona and the digest of its instructions. | `change`, `plan` |
+| A proof step | The change with the frozen checks, the checks measured on the baseline, and the verdict on them. | `change`, `measurement`, `verdict` |
+| A `command` step | The change. | `change` |
+| A `verify` step | One measurement for each validator, one verdict for each judge. | `measurement`, `verdict` |
+| A `human` step | The person's answer, bound to a digest: a yes, or a reply in words. | `approval`, `input` |
+| Anyone says something in the thread | What they said, at any time in the run. | `input` |
+| An `effect` step | What was delivered and, when no person was needed, why it was allowed. | `observation` |
+| A path is put back, or a step fails | What happened and why. | `observation` |
+
+For the fields of each record, see [Artifact kinds](/reference/kinds). To check the trail yourself, see [Verify a run](/guide/how-to/verify-a-run).
+
+## A worked example
+
+This workflow plans, asks you to approve the plan, builds red then green until every criterion is covered, opens a pull request, asks you to approve the change and merges. It names two personas and holds no instructions.
 
 ```yaml
 format: daggry/workflow@1
 steps:
   - id: plan
     kind: agent
-    engine: <engine>
-    prompt: Write the plan.
+    persona: planner
     outputs: [plan]
     scope: nothing
   - id: approve-plan
     kind: human
-    waiting_for: approval
-  - id: red-green
+    of: plan
+  - id: build
     loop:
-      over: plan
-      as: criterion
       until: verdict.all_covered
       max: 5
-      on_exhausted: ask
       steps:
         - id: proof
           kind: agent
-          engine: <engine>
-          prompt: Write the check that proves the criterion.
+          persona: developer
           outputs: [change]
-          freeze: ["checks/**"]
-          scope: ["checks/**"]
+          freeze: ["tests/**"]
+          scope: ["tests/**"]
         - id: work
           kind: agent
-          engine: <engine>
-          prompt: Do the work that makes the check pass.
+          persona: developer
           outputs: [change]
-          scope: ["area:handbook", "checks/**"]
+          scope: ["area:app", "tests/**"]
         - id: check
           kind: verify
           validators: [project]
           judges: [coverage]
-  - id: ask
-    kind: human
-    waiting_for: input-needed
-  - id: render
-    kind: command
-    run: [sh, scripts/render.sh]
-    scope: anywhere
-  - id: deliver
+  - id: open
     kind: effect
-    do: publish
+    do: open-pr
+  - id: approve-change
+    kind: human
+    of: plan
+  - id: merge
+    kind: effect
+    do: merge-pr
 ```
 
-The table explains the values.
+The table follows the run through the trail.
 
-| Value | Meaning |
-|---|---|
-| `<engine>` | The identifier of a registered agent engine. |
-| `area:handbook` | An area in the project config of the workspace. |
-| `publish` | An effect that the tenant registers. Under the software binding the effect is `open-pr`. |
-
-The smallest valid workflow is the header and one command step.
-
-```yaml
-format: daggry/workflow@1
-steps:
-  - id: render
-    kind: command
-    run: [sh, scripts/render.sh]
-    scope: anywhere
-```
-
-## Validation
-
-Every YAML example on this page was checked against [workflow.json](/schemas/workflow.json) with a draft 2020-12 validator, and each one is valid.
-
-To check a file of your own, give the schema and the file to any validator that supports draft 2020-12. The schema does not check the rules that need another document: that an `engine` is registered, that an extension kind and an effect are registered, that a validator reference resolves, and that an area name is in the project config.
-
-## Load errors
-
-The loader reports the first refusal, in the order of the table. A refused workflow returns as `workflow: <message>` and the run does not start.
-
-| Stage | Refusal | Cause |
+| Step | What happens | What the trail gains |
 |---|---|---|
-| 1 | Not YAML | The text is not YAML, or has a duplicate key. |
-| 2 | Unsupported construct | An anchor, alias, tag or merge key. The message is ``the strict YAML subset refuses <construct>``. |
-| 3 | Schema | The document does not fit the schema. The message is ``workflow schema: <message> (at `<location>`)``, where `<location>` is the JSON pointer of the offending value, such as `/steps/0/kind`. |
-| 4 | Expression | A loop's `until` is not a gate expression. The message is ``step `<step>`: until: <source>``. |
-| 5 | Model | The document fits the schema but not the workflow model. The message is `workflow model: <message>`. |
-| 6 | Duplicate id | Two entries or steps carry one id. The message is ``step id `<id>` is used twice``. |
-| 7 | Exhaust target | `on_exhausted` names something that is not a top-level `human` step. The message is ``step `<step>`: on_exhausted `<target>` is not a top-level human step``. |
-| 8 | Gate | An `until` reads a field that is not `derived`, that no kind schema can classify, or a `steps.<id>` read of an id the workflow lacks. The message is ``step `<step>`: gate reads `<field>`, whose class is <class>; only derived fields are readable``. |
+| `plan` | The `planner` persona reads the objective and writes the criteria. It asks on the issue when something is unclear. | A `plan`, and an `input` for each reply. |
+| `approve-plan` | You approve the plan, or reply, and the planner revises it. | An `approval` bound to the plan's digest. |
+| `proof` | Once: the `developer` persona writes a test for every criterion. Daggry shows that they fail on the baseline. | A `change` with frozen paths, a `measurement` and a verdict. |
+| `work`, `check` | The persona works against the failing tests, and the validators run on a clean copy. The loop repeats on what still fails. | A `change`, measurements and verdicts in each iteration. |
+| `open` | Daggry opens the pull request. | An `observation`. |
+| `approve-change` | You approve on the pull request. A request for changes goes back to `plan`: the planner changes the plan only if the reply calls for it, and the developer fixes what you asked. A plan that did not change is not approved again. | An `input` for each comment, then an `approval` bound to the change's digest. |
+| `merge` | Daggry merges. | An `observation`. |
 
-## Examples the loader refuses
+## Schema
 
-The table is a short, representative set. The first column shows the cause. The second names the stage and the location.
-
-| Input | Refusal |
-|---|---|
-| `steps:` followed by `- &a {id: v, kind: human, waiting_for: approval}` | Unsupported construct (anchor) |
-| `steps: [` | Not YAML |
-| No `format` key | Schema (missing `format`) |
-| `format: daggry/workflow@2` | Schema at `/format` (unknown major) |
-| `steps: 3` | Schema at `/steps` |
-| `kind: parallel` | Schema at `/steps/0/kind` |
-| `owner: platform-team` at the top level | Schema (a key without a namespace) |
-| A loop with `max: 0` | Schema at `/steps/0/loop/max` |
-| A `verify` step with `run: x` | Schema at `/steps/0` (extra key) |
-| A `verify` step with no `validators`, or with `validators: []` | Schema at `/steps/0` |
-| `validators: [Project Review]` | Schema at `/steps/0/validators/0` (not a reference) |
-| `validators: [daggry]` | Schema at `/steps/0/validators/0` (reserved name) |
-| `validators: [acme/links]` | Schema at `/steps/0/validators/0` (a `/` is not allowed) |
-| `do: Open PR` | Schema at `/steps/0/do` (not an effect name) |
-| `scope: ["area:Web App"]` | Schema at `/steps/0/scope` (not an area name) |
-| Two steps with `id: v` | Duplicate id `v` |
-| `on_exhausted: ask` with no `ask` step | Exhaust target `ask` |
-| `until: inputs.plan.criteria` (a claimed field) | Gate, class claimed |
-| `until: explode()` | Expression, unknown function |
-
-The loader does not check the rules in this table at load. Each fails later or does nothing.
-
-| Not checked | What happens |
-|---|---|
-| That `outputs` names real kinds. | An unknown output is never delivered, and the step fails. |
-| That `freeze` and `scope` globs compile. | A bad glob fails at the boundary check. |
-| A fact name after `verdict.` | A name no judge emits is not caught at load. |
+The workflow file has a published JSON Schema (draft 2020-12): [workflow.json](/schemas/workflow.json). The schema checks the shape of a file. It does not check that a persona, a validator, a judge or an area exists: Daggry checks those names when the run starts.
 
 ::: details Schema: workflow file
 This is the content of [workflow.json](/schemas/workflow.json).
@@ -497,6 +443,11 @@ This is the content of [workflow.json](/schemas/workflow.json).
       "type": "string",
       "pattern": "^(?!(project|daggry|baseline_proof)$)[a-z][a-z0-9_-]*$",
       "description": "coverage, no_regression, or the name of a judge you declare."
+    },
+    "personaRef": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$",
+      "description": "The name of a persona that the project config or the tenant config defines."
     },
     "scopeEntry": {
       "type": "string",
@@ -649,11 +600,8 @@ This is the content of [workflow.json](/schemas/workflow.json).
         "loop": {
           "type": "object",
           "required": [
-            "over",
-            "as",
             "until",
             "max",
-            "on_exhausted",
             "steps"
           ],
           "additionalProperties": false,
@@ -675,15 +623,20 @@ This is the content of [workflow.json](/schemas/workflow.json).
               "type": "integer",
               "minimum": 1
             },
-            "on_exhausted": {
-              "$ref": "#/$defs/id"
-            },
             "steps": {
               "type": "array",
               "items": {
                 "$ref": "#/$defs/step"
               }
             }
+          },
+          "dependentRequired": {
+            "over": [
+              "as"
+            ],
+            "as": [
+              "over"
+            ]
           }
         }
       }
@@ -716,7 +669,7 @@ This is the content of [workflow.json](/schemas/workflow.json).
       "required": [
         "id",
         "kind",
-        "engine",
+        "persona",
         "outputs",
         "scope"
       ],
@@ -729,17 +682,8 @@ This is the content of [workflow.json](/schemas/workflow.json).
           "$ref": "#/$defs/id"
         },
         "kind": true,
-        "engine": {
-          "type": "string",
-          "minLength": 1,
-          "description": "The identifier of an agent engine that the tenant registers."
-        },
-        "prompt": {
-          "type": "string"
-        },
-        "transcript": {
-          "type": "string",
-          "minLength": 1
+        "persona": {
+          "$ref": "#/$defs/personaRef"
         },
         "outputs": {
           "type": "array",
@@ -797,7 +741,7 @@ This is the content of [workflow.json](/schemas/workflow.json).
       "required": [
         "id",
         "kind",
-        "waiting_for"
+        "of"
       ],
       "additionalProperties": false,
       "patternProperties": {
@@ -808,11 +752,9 @@ This is the content of [workflow.json](/schemas/workflow.json).
           "$ref": "#/$defs/id"
         },
         "kind": true,
-        "waiting_for": {
-          "enum": [
-            "approval",
-            "input-needed"
-          ]
+        "of": {
+          "$ref": "#/$defs/id",
+          "description": "The step or loop this checkpoint is about. A yes continues the run. Any other reply sends the run back to it with that reply."
         }
       }
     },
@@ -834,7 +776,12 @@ This is the content of [workflow.json](/schemas/workflow.json).
         "do": {
           "type": "string",
           "pattern": "^([A-Za-z0-9_-]+/)?[a-z][a-z0-9_-]*$",
-          "description": "The name of an effect that the tenant registers."
+          "description": "The name of an effect. Daggry ships open-pr and merge-pr. A tenant can register more."
+        },
+        "auto_when": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A gate expression. When it holds, the effect runs with no person. When it does not, the run waits for a person's approval first."
         }
       }
     },
@@ -851,3 +798,12 @@ This is the content of [workflow.json](/schemas/workflow.json).
 }
 ```
 :::
+
+## Next steps
+
+The list names the pages to read next.
+
+- For how a file is loaded, what the loader refuses and extension keys, see [Workflow rules](/reference/workflow-rules).
+- For what a gate can read, see [Gate expressions](/reference/gates).
+- For defining a persona, see [personas](/reference/tenant-config#personas).
+- For validators and judges, see [Validators](/reference/validators) and [Judges](/reference/judges).

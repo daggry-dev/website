@@ -1,6 +1,10 @@
 # Set up a project
 
-Daggry checks work against the rule you give it. The project config is one file, `.daggry/project.yaml`, that names the script that checks the project and the paths no agent can change. Daggry only uses what `.daggry/project.yaml` names: it never looks for scripts or files by folder or file name. Read this page if you own a project. You do it once.
+Daggry checks work against the rule you give it.
+The project config is one file, `.daggry/project.yaml`, that names the script that checks the project and the paths no agent can change.
+Read this page if you own a project. You do it once.
+
+Daggry only uses what `.daggry/project.yaml` names: it never looks for scripts or files by folder or file name. A run reads the file from the version of the workspace it started from and seals what your validators report, so the evidence trail shows which rule each result was measured against.
 
 The files on this page are illustrative.
 
@@ -23,7 +27,7 @@ verification:
 2. Create `.daggry/project.yaml` with the content shown. `validators.review` names the script, and `verification.canonical` picks it as the main validator.
 3. Commit both files. The next run uses them.
 
-A `verify` step now runs your main validator with the word `project`. To report more than pass or fail, see [Add a validator](/guide/how-to/add-a-validator).
+A `verify` step now runs your main validator with the word `project`, and Daggry seals what it reports as a measurement. To report more than pass or fail, see [Add a validator](/guide/how-to/add-a-validator).
 
 ## Protect more paths
 
@@ -81,6 +85,10 @@ protect:
 ```
 
 For every key, see the [Project config reference](/reference/project-config).
+:::
+
+::: details Can a project have its own personas?
+Yes. Under `personas`, a project adds a persona or replaces one of the tenant's with the same name. Its instruction file is read from the version of the workspace the run started from, and it is a protected path. See [Define the personas](/guide/how-to/set-up-a-tenant#make-the-team-yours).
 :::
 
 Related:

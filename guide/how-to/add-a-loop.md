@@ -1,16 +1,18 @@
 # Add a loop
 
-An agent that repeats work can run all night. A loop repeats steps once for each criterion, checks a gate after every iteration and stops at a limit you set. Read this page when the same steps repeat for each criterion of an approved plan. It builds on [Write a workflow](/guide/how-to/write-a-workflow).
+Work is rarely right the first time, and an agent that keeps trying with no limit can run all night.
+A loop repeats its steps until the work is done, checks a gate after every iteration and stops at a limit you set.
+Read this page when one pass is not enough: the agent should keep working on what still fails. It builds on [Write a workflow](/guide/how-to/write-a-workflow).
 
-The example is a software one: write a failing test, make it pass, validate. A loop for other work has the same keys and other steps. The file is illustrative.
+A loop seals nothing of its own. The steps of each iteration seal their change, measurements and verdicts, so the evidence trail shows every iteration, passed or failed. The example is software: write failing tests, make them pass, validate. The file is illustrative.
 
 <WorkflowGraph />
 
-The diagram shows the workflow this page builds: a plan, your approval, a loop of proof, work and validation for each criterion, and an effect, the step that delivers the result (here, it opens a pull request).
+The diagram shows the workflow this page builds: a plan, your approval, a loop that repeats until every proof passes, and an effect that delivers the result as a pull request.
 
 ## Add the loop
 
-Use a loop when the same steps repeat for each criterion. A criterion is one entry of the approved plan.
+A loop needs two things: what "done" means, and how often to try.
 
 1. Add a loop entry after the approval. A loop entry has an `id` and a `loop` key, and no `kind`.
 
@@ -19,103 +21,96 @@ Use a loop when the same steps repeat for each criterion. A criterion is one ent
    steps:
      - id: plan
        kind: agent
-       engine: <engine>
-       prompt: Write a plan with checkable criteria.
+       persona: planner
        outputs: [plan]
        scope: nothing
      - id: approve-plan
        kind: human
-       waiting_for: approval
-     - id: red-green
+       of: plan
+     - id: build
        loop:
-         over: plan
-         as: criterion
          until: verdict.all_covered
-         max: 10
-         on_exhausted: ask
+         max: 5
          steps:
            - id: proof
              kind: agent
-             engine: <engine>
-             prompt: Write a failing test for the criterion.
+             persona: test-writer
              outputs: [change]
              freeze: ["tests/**"]
              scope: ["tests/**"]
            - id: work
              kind: agent
-             engine: <engine>
-             prompt: Make the test pass.
+             persona: implementer
              outputs: [change]
              scope: ["src/**", "tests/**"]
            - id: check
              kind: verify
              validators: [project]
              judges: [coverage]
-     - id: ask
-       kind: human
-       waiting_for: input-needed
      - id: pr
        kind: effect
        do: open-pr
    ```
 
-2. Set the loop keys. Every key is required.
+2. Set the loop keys.
 
    | Key | Meaning |
    |---|---|
-   | `over` | The list to loop over. Use `plan`, the criteria of the approved plan. |
-   | `as` | The name of the current criterion. |
-   | `until` | The gate: an expression that reads verdict facts and decides whether the loop ends. It runs nothing. Daggry reads it at the end of each iteration. |
-   | `max` | The loop limit: the most iterations the loop can run. It counts the whole loop, not each criterion. |
-   | `on_exhausted` | What happens at the limit: `fail`, or the `id` of a top-level `human` step. |
+   | `until` | The gate: what "done" means. It reads facts from sealed verdicts and runs nothing. Here the loop is done when every criterion of the plan is covered. |
+   | `max` | The loop limit: the most iterations the loop can run. |
    | `steps` | The steps of one iteration. |
 
-3. Set `max` greater than the number of criteria you expect, or the loop cannot finish. The `max` of 10 here assumes a plan of fewer than 10 items.
+3. Set `max` to the number of tries you are willing to pay for. Most work that will pass does so in a few iterations.
 
-The gate `verdict.all_covered` holds when every criterion has passed. The `coverage` judge works that out when the `verify` step names it in `judges`. A loop cannot contain another loop.
+The `coverage` judge works out `verdict.all_covered` when the `verify` step names it in `judges`. A loop cannot contain another loop.
 
-## How an iteration ends
+## How the loop runs
 
-You need this to read a run's status. An iteration either moves on or repeats, and the `verify` step decides which.
+Each iteration works on everything that is still open, and each repeat has less to do.
 
-<LoopGate />
+<LoopRounds />
 
-The diagram shows one iteration, the gate after it and the exit at the loop limit. When the limit is reached, the run fails or a person decides.
+The diagram shows one loop over three iterations: the failing criteria shrink from two to one to none, and the gate reads the sealed verdict after each iteration.
 
-- **The `verify` step passes.** The loop moves to the next criterion.
-- **The `verify` step fails.** The same criterion repeats, and the agent gets the failing findings and the tail of the validator's output. The proof step does not run again.
-- **Any other step fails.** The run fails.
+- **The gate holds.** The loop ends, and the run goes on.
+- **The gate does not hold.** The steps run again. The agent gets only the findings that still fail, with the tail of the validator's output. The proof step does not run again.
+- **An `agent` or `command` step fails.** The run fails.
 
-Each repeat spends one iteration of `max`.
+Each repeat spends one iteration of `max`, and its records stay in the trail beside the ones that passed.
 
-## Prove each criterion first
+## Prove the work first
 
-A test that already passes says nothing about the work. So the first step of the iteration writes a proof: a test that fails first, then passes. Software teams call this red, then green.
+A test that already passes says nothing about the work. So the loop starts with a proof step: tests that fail first, then pass. Software teams call this red, then green.
 
-The `freeze` key marks the proof step. Each iteration then runs in this order.
+The `freeze` key marks the proof step. It runs once, in the first iteration.
 
-1. The proof step writes a test for the next criterion.
-2. Daggry runs the project's main validator on the version of the workspace the run started from, with the new test added. The proof counts only if the test fails there.
-3. Daggry seals the change and freezes the paths the proof step wrote, matched by the `freeze` globs. No later step can change a frozen path, whatever its scope.
-4. The agent does the work that makes the test pass.
-5. The validators measure the result on a clean copy of the workspace, and the judges decide the verdict.
+1. The proof step writes a test for every criterion of the plan.
+2. Daggry runs the project's main validator on the version of the workspace the run started from, with the new tests added. The proof counts only if a test for every criterion fails there.
+3. Daggry seals the tests and freezes them. No later step can change a frozen path, whatever its scope.
+4. The agent does the work that makes the tests pass.
+5. The validators measure the result on a clean copy, and the judges decide. While a test still fails, the loop repeats from step 4.
 
 A loop with no proof step, such as a document review, starts at step 4. For frozen paths, see [What an agent cannot change](/guide/concepts/protection).
 
+::: details When should a loop take one criterion at a time?
+Add `over: plan` and `as: criterion` to the loop, and each iteration takes one criterion: its own proof, its own work and its own `verify` run.
+
+<BatchOrItems />
+
+The diagram compares the two shapes. One criterion at a time costs more: an agent starts again for each criterion, re-reads the project, and every iteration runs the validators and seals its records. Use it when the criteria are large or independent, when the whole plan would not fit in one agent session, or when you want each criterion checked and sealed on its own. See [One item at a time](/reference/workflow-schema#one-item-at-a-time).
+:::
+
 ## When the limit is reached
 
-Decide this before the run, because it is what stops an agent that is stuck. `on_exhausted` says what happens after `max` iterations.
+The limit is what stops an agent that is stuck. What happens next depends on the workflow.
 
-- With `fail`, the run fails.
-- With the `id` of a `human` step, the run stops there for your approval. Daggry skips that step unless the loop reaches its limit.
+- **A checkpoint follows the loop.** The run goes on to it, and Daggry asks you and says what is unfinished. Reply, and the loop goes round again with a fresh limit and what you said. Say yes, and the run goes on with the result as it is.
+- **No checkpoint follows.** The run fails and says why.
 
-At that approval you have two choices.
-
-1. To give up the unfinished criterion and continue, run `daggry approve <run-id>`.
-2. To retry it with one frozen path open to change, run `daggry approve <run-id> --unfreeze <path>`.
+If the agent believes a frozen test is wrong, it asks you on the issue, and your yes opens that one path once.
 
 Related:
 
+- [Loop reference](/reference/workflow-schema#loop)
 - [Gate expressions](/reference/gates)
-- [Add a validator](/guide/how-to/add-a-validator)
 - [Workflow examples](/guide/how-to/workflow-patterns)

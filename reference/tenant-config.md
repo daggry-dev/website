@@ -2,285 +2,127 @@
 
 *Reference*
 
-The tenant config is one YAML document that says how a tenant's factory works: which workflows it offers, how work is scheduled, which agents work and where a person must approve, which runners run the steps, which validators projects share, which projects it serves and which workflows run on each. Read this page to look up a key or the precedence rule, or if you write a tool that reads the document. For the steps, follow [Set up a tenant](/guide/how-to/set-up-a-tenant).
+The tenant config is one YAML document that says how a tenant's factory works: which personas work, which workflows it offers, which validators and judges projects share, where a person must approve, and what each project gets. Read this page to look up a key or the precedence rule. For the steps, follow [Set up a tenant](/guide/how-to/set-up-a-tenant).
 
-The format is open. It follows the same layout rules as the [Project config](/reference/project-config): a `format` header, named sections and namespaced extension keys.
+The control plane holds the document outside every runner, so no agent can change it. A run pins what it uses from it in the run lock, the first record of the run: each persona with the digest of its instructions, each validator and each judge. The evidence trail therefore shows which rules a run ran under, and a later change to the document applies to new runs only.
 
-The documents on this page are illustrative. In examples, `<engine>` stands for the identifier of an agent engine your installation provides.
+The documents on this page are illustrative. `<engine>` stands for the name of a coding-agent engine your installation provides.
 
-## Download
+<TenantConfigMap />
 
-The tenant config has a published JSON Schema (draft 2020-12). The table links the file.
+The diagram pairs the main sections of the document with what each gives a run. For what lives in which file, see the diagram on the [Reference](/reference/) page.
 
-| Schema | File |
-|---|---|
-| `daggry/tenant@1` | [daggry-tenant-v1.json](/schemas/daggry-tenant-v1.json) |
+## The document
 
-## The standard
-
-### Layout
-
-A tenant config has three parts.
-
-| Part | Keys | Rule |
-|---|---|---|
-| Header | `format` | Required. Names the standard and its major version. |
-| Sections | `workflows`, `orchestration`, `agents`, `runners`, `validators`, `judges`, `projects`, `extensions` | Each is optional. Each appears at most once. |
-| Extension keys | `<namespace>/<key>` | Any number. The rules are in [Extension keys](/reference/project-config#extension-keys). |
-
-Every object is closed: a key that is not listed on this page and is not an extension key is refused. The document uses the strict [YAML subset](/reference/workflow-schema#yaml-subset).
-
-### Header
-
-The header has one key.
-
-| Key | Type | Required | Meaning |
-|---|---|---|---|
-| `format` | string | yes | Always `daggry/tenant@1`. |
-
-A reader refuses a missing `format`, a malformed one and a major version it does not know.
-
-### workflows
-
-The `workflows` section is the catalogue: the workflows the tenant offers, and where each one comes from. The table lists its keys.
-
-| Key | Type | Required | Meaning |
-|---|---|---|---|
-| `workflows` | map | no | The catalogue, from a workflow name to its entry. The name is what a project entry uses to assign the workflow. Non-empty. See [projects](#projects). |
-| `workflows.<name>.source.workspace` | string | yes | The workspace that holds the workflow file. Non-empty. The tenant chooses it. |
-| `workflows.<name>.source.path` | string | yes | The path of the workflow file in that workspace. Non-empty. |
-| `workflows.<name>.source.revision` | string | yes | The version of the workspace the file is read from, in the form the binding gives. Non-empty. |
-
-A workflow is pinned to one version, so a catalogue entry names exactly one file content. The file itself follows the [Workflow file](/reference/workflow-schema). A run uses only a workflow from the catalogue.
-
-The source can be a workspace of workflows, or the workspace the work is done on. In both cases the tenant names it here, and the workspace itself assigns nothing.
-
-### orchestration
-
-The `orchestration` section holds the rules the conductor follows when it gives work to runners. The table lists its keys.
-
-| Key | Type | Required | Meaning |
-|---|---|---|---|
-| `orchestration.concurrency_cap` | integer | no | 1 or more. The most attempts that run at one time for this tenant. |
-| `orchestration.lease_seconds` | integer | no | 1 or more. The length of a job lease. |
-| `orchestration.attempts.max` | integer | no | 1 or more. The most attempts one job can have. A job that needs one more fails the run. |
-| `orchestration.retry.backoff_seconds` | integer | no | 0 or more. The wait before a new attempt starts after a lapsed lease. |
-| `orchestration.parking.max_seconds` | integer | no | 1 or more. The longest a run stays `parked` before it fails. |
-
-A run is `parked` when a limit is reached and the work waits for it to reset. For the states, see [HTTP API](/reference/api#states-and-reasons).
-
-### agents
-
-The `agents` section says which engines and agents work for the tenant, and when a person must decide. The table lists its keys.
-
-| Key | Type | Required | Meaning |
-|---|---|---|---|
-| `agents.engines` | map | no | The registered engines, from an engine identifier to its entry. An `engine` value in a workflow must name one of them. |
-| `agents.engines.<name>.credential.ref` | string | yes | The name of the stored secret the engine uses. Non-empty. |
-| `agents.roster` | map | no | The named agents, from an agent's name to its entry. |
-| `agents.roster.<name>.engine` | string | yes | The name of a registered engine. |
-| `agents.roster.<name>.instructions` | string | no | The path of the agent's instruction file in the workflow's source workspace. |
-| `agents.approval.require` | array of strings | no | The points where a run always waits for a person. Each is `plan` or `effect`. |
-
-Two rules hold for this section:
-
-- **A credential is a reference, never a value.** `credential.ref` names a secret that the control plane stores. The document has no key that takes a secret value.
-- **Approval rules bind every workflow.** With `plan` in `agents.approval.require`, a workflow whose agent step delivers a `plan` must have a `human` step with `waiting_for: approval` before any later step. With `effect`, a `human` step must come before every `effect` step. A catalogue workflow that does not fit is refused.
-
-### runners
-
-The `runners` section holds the images that run steps, and the isolation class of each kind of runner. The table lists its keys.
-
-| Key | Type | Required | Meaning |
-|---|---|---|---|
-| `runners.images` | map | no | The images the tenant offers, from an image name to its entry. A project entry uses the name in `projects.<workspace>.image`. |
-| `runners.images.<name>.image` | string | yes | The image reference, by digest. |
-| `runners.images.<name>.tools` | array of labels | no | The tools the image holds, by the labels a project config uses in `needs.tools`. |
-| `runners.images.<name>.default` | boolean | no | `true` on at most one image: the one a workspace gets when its project entry names none. |
-| `runners.classes` | map | no | The isolation classes, from a class name to its entry. A validator you define asks for a class by this name in `needs.runner`. |
-| `runners.classes.<name>.module` | string | yes | `deterministic-runner` or `agent-runner`: the kind of step execution the class applies to. |
-| `runners.classes.<name>.network` | string | yes | `none` or `open`: whether a pod of the class reaches the network. |
-| `runners.classes.<name>.model_credential` | boolean | yes | Whether a pod of the class holds an engine's credential. `false` is required for `deterministic-runner`. |
-
-The deterministic runner runs what a person wrote into the workflow, the project or the tenant, and never holds a model credential. The agent runner runs an agent engine and whatever that engine generates. No class gives a pod the signing key.
-
-### validators
-
-The `validators` section holds validators that projects share, each pinned to a repository revision. They count as evidence because the tenant config is held outside every run. See [Validators](/reference/validators). The table lists the keys.
-
-| Key | Type | Required | Meaning |
-|---|---|---|---|
-| `validators.scripts` | map | no | The tenant's validators you define, from a validator name to a declaration. A workflow refers to one by its bare name. A project validator of the same name wins. See [Referring to a validator](/reference/validators#referring-to-a-validator). |
-| `validators.scripts.<name>.source.workspace` | string | yes | The workspace that holds the script. Non-empty. |
-| `validators.scripts.<name>.source.revision` | string | yes | The version of that workspace the script is read from. Non-empty. |
-| `validators.scripts.<name>.run` | command | yes | What runs, with paths relative to the root of the source. See [Commands](/reference/project-config#commands). |
-| `validators.scripts.<name>.role` | label | no | What the validator looks at. Default `custom`. |
-| `validators.scripts.<name>.output`, `output_file`, `timeout`, `env`, `needs` | | no | The same keys as a project's validator you define. See [validators](/reference/project-config#validators). |
-
-These rules apply to the section.
-
-- **A tenant's validator you define runs on the project's workspace.** It runs in the deterministic runner, on a clean copy of the sealed version, with the files of its source beside it and read-only.
-- **A name cannot be `project`, `daggry`, `coverage`, `no_regression` and `baseline_proof`.** They are reserved.
-
-### judges
-
-The `judges` section holds custom judges that projects share, each pinned to a repository revision. They count as evidence because the tenant config is held outside every run. See [Judges](/reference/judges). The table lists the keys.
-
-| Key | Type | Required | Meaning |
-|---|---|---|---|
-| `judges.scripts` | map | no | The tenant's custom judges, from a judge name to a declaration. A `verify` step refers to one by its bare name. A project judge of the same name wins. |
-| `judges.scripts.<name>.source.workspace` | string | yes | The workspace that holds the script. Non-empty. |
-| `judges.scripts.<name>.source.revision` | string | yes | The version of that workspace the script is read from. Non-empty. |
-| `judges.scripts.<name>.run` | command | yes | What runs, with paths relative to the root of the source. See [Commands](/reference/project-config#commands). |
-| `judges.scripts.<name>.timeout` | integer | no | 1 or more. The longest the judge can run, in seconds. |
-
-The names in [Referring to a validator](/reference/validators#referring-to-a-validator) are reserved. A tenant has no rubric judge: rubric judges are declared in the project config.
-
-### projects
-
-The `projects` section lists the workspaces the factory works on and what the tenant decided for each. A workflow is assigned to a workspace here. The table lists the keys of a project entry.
-
-| Key | Type | Required | Meaning |
-|---|---|---|---|
-| `projects` | map | no | The workspaces, from a workspace, named in the form its binding gives, to its entry. |
-| `projects.<workspace>.binding` | label | no | The name of a binding from `extensions.bindings`. It says what the workspace is and how its versions, work items and changes are named. Absent is valid when the tenant registers exactly one binding. |
-| `projects.<workspace>.workflows.allowed` | array of strings | no | Names from the catalogue that can run on this workspace. Absent means the whole catalogue. |
-| `projects.<workspace>.workflows.default` | string | no | The workflow a run uses when it names none. One of the allowed names. |
-| `projects.<workspace>.agents.engines` | array of strings | no | Names from `agents.engines` that can work on this workspace. Absent means every registered engine. |
-| `projects.<workspace>.agents.roster` | array of strings | no | Names from `agents.roster` that can work on this workspace. Absent means the whole roster. |
-| `projects.<workspace>.agents.approval.require` | array of strings | no | Points where a run on this workspace always waits for a person, added to `agents.approval.require`. Each is `plan` or `effect`. |
-| `projects.<workspace>.trust_project` | boolean | no | Default `true`: the validators and judges of the project config count as evidence. `false`: only validators and judges that the tenant config declares count. |
-| `projects.<workspace>.areas` | array of area names | no | Names of areas that the workspace's project config defines in [`areas`](/reference/project-config#areas). At least one name, none twice. Together they are the scope of every run on this workspace: a run changes paths inside those areas only. Absent means the tenant sets no scope for runs on the workspace. |
-| `projects.<workspace>.image` | string | no | The name of a runner image from `runners.images`. Absent means the default image. |
-
-These rules apply to a project entry.
-
-- **A run starts only for a listed workspace.**
-- **The tenant assigns, the project does not.** A run on a workspace uses a workflow from `workflows.allowed`. The workspace's own [Project config](/reference/project-config) has no key that names a workflow, an engine or an approval rule.
-- **A project's validators and judges count by default.** Set `trust_project: false` for a locked-down workspace. A run on it that names a project's validator, a project's judge, or `project`, is refused when it starts, and the validator still runs as a preview when the project exposes it. See [When a validator counts as evidence](/reference/validators#when-a-validator-counts-as-evidence).
-- **A project entry narrows the tenant's own lists.** A name that the catalogue, the engines, the roster, the images or the bindings lack is refused.
-- **Approval rules only add.** A project entry can require one more approval point than the tenant-wide rule. It cannot remove one.
-- **A workflow must fit the workspace.** A workflow whose `verify` step names `project` runs only on a workspace whose project config names a canonical validator. A run that does not fit is refused when it starts.
-- **An area must exist.** The names in `areas` are looked up in the project config of the baseline when a run starts. A run on a workspace whose project config lacks one of the names is refused. A run request can name areas from the list to narrow the scope of that run, and a name outside the list refuses the run. See [The scope of a run](/reference/protected-paths#the-scope-of-a-run).
-- **An image must hold what the validators need.** When a validator that a run uses names a tool in `needs.tools` that the workspace's image does not list, or a runner class in `needs.runner` that `runners.classes` lacks, the run is refused when it starts.
-
-What is true of the workspace itself, such as its areas, its validators and the paths it protects, is in its project config. The project config defines the areas, and this section chooses among them.
-
-### extensions
-
-The `extensions` section holds what the tenant registers beyond the standard. A binding brings most of these entries. See [Bindings](/reference/bindings). The table lists the keys.
-
-| Key | Type | Required | Meaning |
-|---|---|---|---|
-| `extensions.bindings` | map | no | The bindings the tenant uses, from a name (a label) to its entry, which holds a `version`. |
-| `extensions.adapters` | map | no | The readers for tool output formats. They read a tool's own output into a result document, from the plain format name, such as `junit`, to its entry, which holds a `version`. A validator's `output` names one. |
-| `extensions.effects` | map | no | The effects an `effect` step can name in `do`, from a name, bare or `<namespace>/<name>`, to its entry, which holds a `version`. |
-| `extensions.step_kinds` | map | no | Step kinds besides the five of the standard, from a name, `<namespace>/<name>`, to its entry. See [Extensibility](/reference/workflow-schema#extensibility). |
-| `extensions.step_kinds.<name>.module` | string | yes | What runs the step: `deterministic-runner`, `agent-runner` or `control-plane`. |
-| `extensions.step_kinds.<name>.schema` | string | yes | The URL of the JSON Schema for the step's keys. |
-| `extensions.artifact_kinds` | map | no | Artifact kinds besides the eight in [Artifact kinds](/reference/kinds), from a name, `<namespace>/<name>@<major>`, in a namespace other than `evidence` and `daggry`, to its entry. |
-| `extensions.artifact_kinds.<name>.schema` | string | yes | The URL of the JSON Schema for the kind's `body`. |
-
-This section is the registry. A binding, an output format, an effect, a step kind or an artifact kind that is neither part of the standard nor listed here is refused. Validators have a section of their own: see [validators](#validators).
-
-### Where it lives
-
-The table says where the document is held and who changes it.
-
-| Rule | Detail |
-|---|---|
-| Held by | The control plane, outside every pod and every workspace. |
-| Changed by | A person. No run, no step and no agent writes it. |
-
-### Precedence
-
-Three documents set rules for a run. The order is tenant, then project, then workflow: the tenant's rule wins over the project's, and the project's wins over the workflow's. The table lists what each document sets.
-
-| Document | Sets | Cannot |
-|---|---|---|
-| Tenant config | Every limit: the catalogue, the engines, the images, the approval points and the orchestration limits. Which workflows, agents, approval points and areas apply to each workspace, and whether a project's own validators count. | - |
-| [Project config](/reference/project-config) | What is true of one workspace: its areas, its validators, its canonical validator and the paths it protects. | Choose a workflow, an engine, an approval rule or the scope of a run. Widen a tenant rule. |
-| [Workflow](/reference/workflow-schema) | Narrower rules for one step: its scope inside the scope of the run, and the validators a `verify` step names. | Widen a project or tenant rule. |
-
-A project or a workflow can add limits. A project can protect more paths, and a workflow can give a step a smaller scope inside the scope of the run. The scope of a run is the tenant's choice among the areas the project defines.
-
-Only a person widens a rule. An agent, a workflow and an extension key narrow or add, and never widen. The table says who can widen each rule.
-
-| To widen | Who decides | How |
-|---|---|---|
-| A limit in the tenant config | The tenant admin | By changing the tenant config. |
-| A limit in the project config | The project owner, inside what the tenant allows | By an accepted change to the project config. It applies from the next run. |
-| A rule inside one run | A person, by a grant | By an approval that is sealed as evidence and opens one thing once, such as [unfreeze](/reference/protected-paths#unfreeze-grant). |
-
-An agent is never in that table. The control plane holds the tenant config outside every runner, and a run reads the project config from the baseline, so an edit by a step changes nothing for the run. Every run records the configuration it started under, and a later change applies to new runs only.
-
-### Worked example
-
-This tenant offers two workflows, runs at most four attempts at once, registers one engine and two agents, requires a person before work builds on a plan, and serves two workspaces under two bindings. It defines one validator of its own for every project. For the first workspace only tenant validators count as evidence. The second workspace uses its project's validators, requires a person before any effect and sets the scope of every run to one area.
+The smallest tenant config that works has three things: who can approve, a credential for the engine and one trigger. Daggry ships the rest.
 
 ```yaml
 format: daggry/tenant@1
 
-workflows:
-  delivery:
-    source:
-      workspace: factory-workflows
-      path: workflows/delivery.yaml
-      revision: v-0017
-  translate:
-    source:
-      workspace: factory-workflows
-      path: workflows/translate.yaml
-      revision: v-0017
-
-orchestration:
-  concurrency_cap: 4
-  lease_seconds: 60
-  attempts:
-    max: 3
-  retry:
-    backoff_seconds: 30
-  parking:
-    max_seconds: 21600
+approvers: [4411, 5207]
 
 agents:
   engines:
     <engine>:
       credential:
         ref: model-credential
-  roster:
-    lead:
-      engine: <engine>
-      instructions: agents/lead.md
-    reviewer:
-      engine: <engine>
-      instructions: agents/reviewer.md
-  approval:
-    require: [plan]
 
-runners:
-  images:
-    documents:
-      image: registry.example/jobs/documents@sha256:<digest>
-      tools: [pandoc-3]
-      default: true
-    programs:
-      image: registry.example/jobs/programs@sha256:<digest>
-      tools: [node-22]
-  classes:
-    checks:
-      module: deterministic-runner
-      network: none
-      model_credential: false
-    networked:
-      module: deterministic-runner
-      network: open
-      model_credential: false
-    agents:
-      module: agent-runner
-      network: open
-      model_credential: true
+projects:
+  example/shop-web:
+    triggers:
+      factory_label:
+        on: issue-labeled
+        label: factory
+        workflow: idea-to-pr
+```
 
+With this document, an approver who labels an issue `factory` gets the default team on it. See [The default team](#the-default-team).
+
+The table lists the sections. Only `format`, always `daggry/tenant@1`, is required.
+
+| Section | What it holds |
+|---|---|
+| `approvers` | The numeric GitHub ids of the people who can start, steer and approve runs. See [Who Daggry listens to](/reference/conversation#who-daggry-listens-to). |
+| [`personas`](#personas) | The named agents every project can use, besides the default team. |
+| [`workflows`](#workflows) | The workflows the tenant offers, besides the one Daggry ships. |
+| [`agents`](#agents) | The engines, and where a person must approve. |
+| [`validators`](#validators), [`judges`](#judges) | Validators and judges that projects share. |
+| [`projects`](#projects) | The workspaces the factory serves, and what each one gets. |
+| [`orchestration`](#orchestration), [`runners`](#runners) | Scheduling limits, runner images and runner classes. |
+| [`extensions`](#extensions) | What the tenant registers beyond what Daggry ships. |
+
+Every object is closed: a key this page does not define is refused, unless it is an [extension key](/reference/open-formats#extension-keys). The document uses the strict [YAML subset](/reference/workflow-rules#yaml-subset).
+
+## personas
+
+A persona is a named agent that your team defines once: an engine, and the instructions it works under. An `agent` step in a workflow names a persona and holds no instructions of its own. So the same workflow can run with your team's planner, and a change to how the planner works is a change to one persona, not to every workflow. `personas` is a map from a persona name to its entry. The table lists the keys.
+
+| Key | Required | Meaning |
+|---|---|---|
+| `engine` | yes | The name of an engine in `agents.engines`. |
+| `instructions.text` | one of the two | The instructions, inline. |
+| `instructions.path` | one of the two | The instruction file, relative to the root of `source`. |
+| `source.workspace`, `source.revision` | with `instructions.path` | The workspace that holds the instruction file, and the revision it is read from. |
+| `description` | no | One or two sentences that say what the persona is for. |
+
+A name starts with a lowercase letter and holds lowercase letters, digits, `-` and `_`.
+
+These rules apply to a persona.
+
+- **Instructions say how, the objective says what.** The persona's instructions describe how this member of the team always works. The run supplies what to do now: its objective, sealed when the run starts. A step adds no instructions of its own. Besides its instructions, a persona gets the objective, the sealed outputs of the steps before it, the outputs it must hand in and its scope. Nothing else reaches it.
+- **Instructions are pinned.** A file is read from one revision, and inline text is part of this document. Both are held outside every run, so an agent cannot change what instructs it.
+- **A project can define its own.** A persona in the `personas` of a [Project config](/reference/project-config#personas) wins over a tenant persona of the same name, for runs on that workspace.
+- **The trail names the persona.** The run lock pins each persona a run uses, with its engine and the digest of its instructions. Every record an `agent` step seals carries the persona's name and that digest. See [Stamped keys](/reference/envelope#stamped-keys).
+
+### The default team
+
+Daggry ships a team and a workflow, so a new tenant defines nothing before its first run. The table lists them.
+
+| Shipped | What it is |
+|---|---|
+| `planner` | A persona that turns an objective into a plan with checkable criteria, and asks when the objective is unclear. |
+| `developer` | A persona that writes the proof for each criterion, then the work that makes it pass. |
+| `reviewer` | A persona that reads a whole change and posts its findings as review comments. |
+| `idea-to-pr` | A workflow: plan, your approval, build until every criterion is covered, pull request, review, your approval, merge. See [The workflow behind this page](/guide/how-to/issue-to-pr#finish-review-fix-merge). |
+
+The default team runs on the tenant's engine. Each shipped persona and the workflow are pinned by digest in the run lock, like your own. To change one, define a persona or a workflow of the same name: yours wins.
+
+<Lookup />
+
+The diagram shows how Daggry resolves a name in a workflow, for a persona, a validator or a judge: it looks in the project config of the baseline first, then in the tenant config, and refuses the run when it starts if neither has the name.
+
+::: details A persona for the replay engine
+The `replay` engine plays back a recorded session instead of starting a model. A persona on it takes `transcript`, the path of the recording in `source`, in place of `instructions`.
+:::
+
+## workflows
+
+The `workflows` section lists the workflows the tenant offers, and pins each to one file content. The table lists the keys.
+
+| Key | Meaning |
+|---|---|
+| `workflows.<name>.source.workspace` | The workspace that holds the workflow file. |
+| `workflows.<name>.source.path` | The path of the file in that workspace. |
+| `workflows.<name>.source.revision` | The revision the file is read from. |
+
+A project entry assigns a workflow by its name here. The workspace a run works on never assigns a workflow to itself. For the file, see [Workflow file](/reference/workflow-schema).
+
+## agents
+
+The `agents` section names the engines personas run on, and the points where a run always waits for a person. The table lists the keys.
+
+| Key | Meaning |
+|---|---|
+| `agents.engines.<name>.credential.ref` | The name of the stored secret the engine uses. The document never holds a secret value. |
+| `agents.approval.require` | The points where a run always waits for a person: `plan`, `effect` or both. |
+
+Approval rules bind every workflow, and they win over a workflow's own `auto_when`. With `plan`, a workflow whose `agent` step hands in a `plan` must have a `human` step whose `of` names that step, before any later step. With `effect`, a `human` step must come before every `effect` step. Daggry refuses a workflow that does not fit. Each approval is sealed, bound to the digest of what the person approved.
+
+## validators
+
+The `validators` section holds validators that projects share. Each is pinned to a revision and held outside every run, so it counts as evidence. For what a validator is, see [Validators](/reference/validators).
+
+```yaml
 validators:
   scripts:
     licence-terms:
@@ -289,98 +131,1091 @@ validators:
         revision: v-0009
       run: [sh, licence/check.sh]
       output: document
-      timeout: 120
+```
 
+The table lists the keys of an entry of `validators.scripts`.
+
+| Key | Required | Meaning |
+|---|---|---|
+| `source.workspace`, `source.revision` | yes | The workspace that holds the script, and the revision it is read from. |
+| `run` | yes | The command, with paths relative to the root of the source. See [Commands](/reference/project-config#commands). |
+| `output`, `output_file`, `role`, `timeout`, `env`, `needs` | no | The same keys as a project's validator. See [validators](/reference/project-config#validators). |
+
+A tenant validator runs on the project's workspace, on a clean copy of the last sealed version, with the files of its source beside it and read-only. A workflow names it by its bare name, and a project validator of the same name wins. The reserved names are in [Referring to a validator](/reference/validators#referring-to-a-validator).
+
+## judges
+
+The `judges` section holds custom judges that projects share, pinned like validators. For what a judge is, see [Judges](/reference/judges). The table lists the keys of an entry of `judges.scripts`.
+
+| Key | Required | Meaning |
+|---|---|---|
+| `source.workspace`, `source.revision` | yes | The workspace that holds the script, and the revision it is read from. |
+| `run` | yes | The command, with paths relative to the root of the source. |
+| `timeout` | no | The longest the judge can run, in seconds. |
+
+A project judge of the same name wins. A tenant declares no rubric judge: those are declared in the project config.
+
+## projects
+
+The `projects` section lists the workspaces the factory serves and what the tenant decided for each. A run starts only for a listed workspace. The table lists the keys of `projects.<workspace>`.
+
+| Key | Meaning |
+|---|---|
+| `workflows.allowed` | The workflows that can run on this workspace. Absent: every workflow the tenant offers. |
+| `workflows.default` | The workflow a run uses when it names none. |
+| `triggers` | What starts a run on this workspace. See [Triggers](#triggers). |
+| `personas.allowed` | The tenant personas that can work on this workspace. Absent: all of them. |
+| `agents.engines` | The engines that can work on this workspace. Absent: all of them. |
+| `agents.approval.require` | Approval points added to the tenant-wide rule. A project entry adds and never removes one. |
+| `areas` | Area names from the workspace's [Project config](/reference/project-config#areas). Together they are the scope of every run on this workspace. Absent: the tenant sets no scope. |
+| `trust_project` | Default `true`. With `false`, only the validators and judges this document declares count as evidence. See [When a validator counts as evidence](/reference/validators#when-a-validator-counts-as-evidence). |
+| `image` | The runner image, by its name in `runners.images`. Absent: the default image. |
+
+```yaml
 projects:
-  handbook:
-    binding: review
-    workflows:
-      allowed: [delivery, translate]
-      default: delivery
-    trust_project: false
-    image: documents
   example/shop-web:
-    binding: software
     workflows:
       allowed: [delivery]
       default: delivery
+    personas:
+      allowed: [planner, test-writer, implementer]
     agents:
-      roster: [lead]
       approval:
         require: [effect]
     areas: [app]
-    image: programs
-
-extensions:
-  bindings:
-    review:
-      version: "1.0.0"
-    software:
-      version: "1.0.0"
-  adapters:
-    citations:
-      version: "1.0.0"
-    junit:
-      version: "1.0.0"
-  effects:
-    publish:
-      version: "1.0.0"
-    open-pr:
-      version: "1.0.0"
-  step_kinds:
-    acme/scan:
-      module: deterministic-runner
-      schema: https://acme.example/schemas/scan-step-v1.json
-  artifact_kinds:
-    acme/scan-report@1:
-      schema: https://acme.example/schemas/scan-report-v1.json
-
-acme/billing:
-  cost_centre: platform
 ```
 
-The table explains the values.
+A project entry narrows the tenant's own lists: a name the tenant lacks is refused, and so is a trigger whose workflow is not allowed on the workspace. Daggry checks the rest when a run starts and refuses the run when a workflow does not fit the workspace: an area the project config lacks, a `verify` step that names `project` where the project has no canonical validator, or a tool the image does not hold.
 
-| Value | Meaning |
+### Triggers
+
+A trigger starts a run when something happens on GitHub, so nobody has to run a command. Triggers live here, in the tenant config, and never in the repository: a repository cannot assign itself a workflow. `triggers` is a map from a trigger name to its entry.
+
+<TriggerRouting />
+
+The diagram shows four triggers of one project and the workflow each starts: two labels, an issue type and a schedule.
+
+```yaml
+projects:
+  example/shop-web:
+    triggers:
+      factory_label:
+        on: issue-labeled
+        label: factory
+        workflow: idea-to-pr
+      bug_label:
+        on: issue-labeled
+        label: bug
+        workflow: fix-bug
+      bug_type:
+        on: issue-typed
+        issue_type: Bug
+        workflow: fix-bug
+      nightly_hunt:
+        on: schedule
+        cron: "0 2 * * *"
+        objective: Find and fix one defect in the app area. Prove it with a failing test first.
+        workflow: bug-hunter
+```
+
+The table lists the keys of a trigger.
+
+| Key | Required | Meaning |
+|---|---|---|
+| `on` | yes | What starts the run: `issue-labeled`, `issue-typed`, `pull-request-opened` or `schedule`. |
+| `label` | with `issue-labeled` | The label. |
+| `issue_type` | with `issue-typed` | The issue type. |
+| `cron` | with `schedule` | When to run, as a five-field cron expression in UTC. |
+| `objective` | with `schedule` | The standing objective of every run the trigger starts. With an issue or a pull request it is optional, and it comes before their text. |
+| `workflow` | yes | The name of a workflow in [`workflows`](#workflows). |
+
+These rules apply to triggers.
+
+- **Many triggers, one workflow.** Several triggers can start the same workflow, and a project can have any number of triggers.
+- **Every run has an objective.** For `issue-labeled` and `issue-typed`, the objective is the title and the body of the issue, and the run talks to you there. For `pull-request-opened`, it is the title and the body of the pull request. For `schedule`, it is the trigger's `objective`. Daggry seals the objective as the work item when the run starts, with the trigger's name and the fields of the event beside it. The text takes no placeholders: a persona reads the event fields from the same record.
+- **A schedule opens its own issue.** A scheduled run has no issue to start from, so Daggry opens one for each run with the objective as its text, and the run reports and asks there.
+- **Only an approver starts a run, and an issue has one run at a time.** See [Starting, waiting and stopping](/reference/conversation#starting-waiting-and-stopping).
+- **The trail names the trigger.** The work item of the run holds the objective and the trigger that started it, and `daggry status` shows the trigger.
+
+Daggry's GitHub App watches the repository for these events. See [Install Daggry](/guide/how-to/deploy).
+
+## Precedence
+
+Three files set rules for a run, and each has one owner. The tenant's rule wins over the project's, and the project's wins over the workflow's.
+
+<ConfigFiles />
+
+The diagram shows who writes each file and the order in which they win. The table lists what each file sets.
+
+| File | Sets | Cannot |
+|---|---|---|
+| Tenant config | The shared personas, validators and judges. The workflows, engines and approval points for each workspace. Every limit. | - |
+| [Project config](/reference/project-config) | What is true of one workspace: its areas, validators, judges, own personas and protected paths. | Choose a workflow, an approval rule or the scope of a run. |
+| [Workflow](/reference/workflow-schema) | The steps of one piece of work: which persona, which validators and judges, and the scope of each step. | Widen a project or tenant rule. |
+
+Precedence is about limits. Name lookup runs the other way: for a persona, a validator or a judge of the same name, the project's wins over the tenant's, because the project knows its own work best. With `trust_project: false`, the tenant takes that back for validators and judges.
+
+Only a person widens a rule. A project or a workflow can add limits, and an agent can change none of the three files. Inside one run, the one widening is a person's grant, sealed as an approval, such as [unfreeze](/reference/protected-paths#unfreeze-grant).
+
+## Other sections
+
+You rarely change these sections after the first setup.
+
+### orchestration
+
+The `orchestration` section holds the limits Daggry follows when it gives work to runners. The table lists the keys.
+
+| Key | Meaning |
 |---|---|
-| `<engine>` | The identifier of an agent engine your installation provides. |
-| `v-0017`, `v-0009` | Version ids in the form the workspace's binding gives. |
-| `licence-terms` | How a workflow refers to the tenant's validator you define. |
-| `trust_project: false` | On `handbook`, only validators and judges the tenant config declares count as evidence. Its workflows name tenant validators such as `licence-terms`. |
-| `networked` | A class of deterministic runner that reaches the network. A validator you define asks for it in `needs.runner`. |
-| `<digest>` | The 64-digit digest of the image. |
-| `model-credential` | The name of a stored secret. The document never holds the secret. |
-| `app` | The name of an area that the project config of `example/shop-web` defines. A run on that workspace changes paths inside `app` only. |
+| `orchestration.concurrency_cap` | The most attempts that run at one time for this tenant. |
+| `orchestration.lease_seconds` | The length of a job lease. |
+| `orchestration.attempts.max` | The most attempts one job can have. A job that needs one more fails the run. |
+| `orchestration.retry.backoff_seconds` | The wait before a new attempt starts after a lapsed lease. |
+| `orchestration.parking.max_seconds` | The longest a run stays `parked` before it fails. See [States and reasons](/reference/api#states-and-reasons). |
 
-### Examples a reader refuses
+### runners
 
-A reader refuses each input in the table.
+The `runners` section holds the images that run steps, and the isolation class of each kind of runner. The table lists the keys.
+
+| Key | Meaning |
+|---|---|
+| `runners.images.<name>.image` | The image reference, by digest. |
+| `runners.images.<name>.tools` | The tools the image holds, by the labels a project config uses in `needs.tools`. |
+| `runners.images.<name>.default` | `true` on at most one image: the one a workspace gets when its project entry names none. |
+| `runners.classes.<name>.module` | `deterministic-runner` or `agent-runner`. |
+| `runners.classes.<name>.network` | `none` or `open`. |
+| `runners.classes.<name>.model_credential` | Whether a runner of the class holds an engine's credential. Always `false` for `deterministic-runner`. |
+
+A validator asks for a class by name in `needs.runner`. No class gives a runner the signing key.
+
+### extensions
+
+Daggry ships the five step kinds, the nine artifact kinds, the `open-pr` and `merge-pr` effects and the output formats `junit`, `tap`, `libtest` and `sarif`. The `extensions` section registers anything a tenant adds to those. Most tenants leave it out. The table lists the keys.
+
+| Key | Registers |
+|---|---|
+| `extensions.adapters.<format>.version` | A reader for one more tool output format. A validator's `output` names the format. |
+| `extensions.effects.<name>.version` | One more effect that an `effect` step can name in `do`. |
+| `extensions.step_kinds.<namespace>/<name>` | One more step kind, with `module` (what runs it) and `schema` (the URL of the JSON Schema for its keys). See [Extension step kinds](/reference/workflow-rules#extension-step-kinds). |
+| `extensions.artifact_kinds.<namespace>/<name>@<major>` | One more artifact kind, with `schema`. The `evidence` and `daggry` namespaces take no added kinds. |
+
+A name that Daggry does not ship and this section does not register is refused.
+
+## Where it lives
+
+The control plane holds the document, outside every runner and every workspace. A person changes it. No run, no step and no agent writes it.
+
+::: details Documents that Daggry refuses
+The table is a short, representative set.
 
 | Input | Refusal |
 |---|---|
-| No `format` key | Missing `format`. |
-| `format: daggry/tenant@2` | Unknown major. |
-| `orchestration:` with `concurrency_cap: 0` | Below the minimum of 1. |
-| An `agents.engines` entry with `credential: {value: ...}` | Unknown key. A credential is given by `ref` only. |
-| A roster entry whose `engine` is not in `agents.engines` | Unknown engine. |
-| A class with `module: deterministic-runner` and `model_credential: true` | A deterministic runner never holds a model credential. |
-| An `extensions.artifact_kinds` entry named `evidence/scan@1` | The `evidence` namespace takes no added kinds. |
-| `validators.scripts` with an entry that has no `source` | Missing `source`. |
-| A project entry with `trust_project: no` | Not a boolean. |
-| `validators.scripts` with an entry named `project` | Reserved name. |
-| A project entry whose `binding` is not in `extensions.bindings` | Unknown binding. |
-| A project entry whose `workflows.allowed` names a workflow the catalogue lacks | Unknown workflow. |
-| A project entry whose `workflows.default` is not an allowed name | The default is not allowed on the workspace. |
-| A project entry whose `image` is not in `runners.images` | Unknown image. |
-| A project entry with `areas: []` | An entry names at least one area. |
-| A project entry with `areas: ["src/**"]` | Not an area name. A path group is defined in the project config and named here. |
-| `retries: 3` at the top level | Unknown key without a namespace. |
+| No `format` key, or `format: daggry/tenant@2` | Missing `format`, or an unknown major version. |
+| A persona whose `engine` is not in `agents.engines` | An unknown engine. |
+| A persona with `instructions.path` and no `source` | A file needs a pinned source. |
+| An `agents.engines` entry with `credential: {value: ...}` | An unknown key. A credential is given by `ref` only. |
+| `validators.scripts` with an entry that has no `source`, or one named `project` | Missing `source`, or a reserved name. |
+| A project entry whose `workflows.allowed` or `personas.allowed` names something the tenant lacks | An unknown name. |
+| A project entry with `areas: ["src/**"]` | Not an area name. The project config defines the paths. |
+| A runner class with `module: deterministic-runner` and `model_credential: true` | A deterministic runner never holds a model credential. |
+| `retries: 3` at the top level | An unknown key without a namespace. |
+:::
+
+## Schema
+
+The tenant config has a published JSON Schema (draft 2020-12): [daggry-tenant-v1.json](/schemas/daggry-tenant-v1.json).
+
+::: details Schema: tenant config
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "daggry/tenant@1",
+  "title": "daggry/tenant@1: the tenant config",
+  "type": "object",
+  "required": [
+    "format"
+  ],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+  },
+  "properties": {
+    "format": {
+      "const": "daggry/tenant@1"
+    },
+    "approvers": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "description": "The numeric GitHub ids of the people who can start, steer and approve runs."
+    },
+    "workflows": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/name"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "source"
+        ],
+        "additionalProperties": false,
+        "patternProperties": {
+          "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+        },
+        "properties": {
+          "source": {
+            "type": "object",
+            "required": [
+              "workspace",
+              "path",
+              "revision"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "workspace": {
+                "$ref": "#/$defs/workspace"
+              },
+              "path": {
+                "$ref": "#/$defs/name"
+              },
+              "revision": {
+                "$ref": "#/$defs/name"
+              }
+            }
+          }
+        }
+      }
+    },
+    "orchestration": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "concurrency_cap": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "lease_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "attempts": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          },
+          "properties": {
+            "max": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "retry": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          },
+          "properties": {
+            "backoff_seconds": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "parking": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          },
+          "properties": {
+            "max_seconds": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    },
+    "personas": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[a-z][a-z0-9_-]*$": {
+          "$ref": "#/$defs/persona"
+        },
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      }
+    },
+    "agents": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "engines": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/name"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "credential"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "credential": {
+                "type": "object",
+                "required": [
+                  "ref"
+                ],
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+                },
+                "properties": {
+                  "ref": {
+                    "$ref": "#/$defs/name"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "approval": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          },
+          "properties": {
+            "require": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "plan",
+                  "effect"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "runners": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "images": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/name"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "image"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "image": {
+                "$ref": "#/$defs/name"
+              },
+              "tools": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/label"
+                }
+              },
+              "default": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "classes": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/name"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "module",
+              "network",
+              "model_credential"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "module": {
+                "enum": [
+                  "deterministic-runner",
+                  "agent-runner"
+                ]
+              },
+              "network": {
+                "enum": [
+                  "none",
+                  "open"
+                ]
+              },
+              "model_credential": {
+                "type": "boolean"
+              }
+            },
+            "if": {
+              "properties": {
+                "module": {
+                  "const": "deterministic-runner"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "model_credential": {
+                  "const": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "validators": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "scripts": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^(?!(project|daggry|coverage|no_regression|baseline_proof)$)[a-z][a-z0-9_-]*$": {
+              "$ref": "#/$defs/scriptValidator"
+            }
+          }
+        }
+      }
+    },
+    "judges": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "scripts": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^(?!(project|daggry|coverage|no_regression|baseline_proof)$)[a-z][a-z0-9_-]*$": {
+              "$ref": "#/$defs/scriptJudge"
+            }
+          }
+        }
+      }
+    },
+    "projects": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/workspace"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "patternProperties": {
+          "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+        },
+        "properties": {
+          "workflows": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "allowed": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/name"
+                }
+              },
+              "default": {
+                "$ref": "#/$defs/name"
+              }
+            }
+          },
+          "triggers": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[a-z][a-z0-9_]*$": {
+                "type": "object",
+                "required": [
+                  "on",
+                  "workflow"
+                ],
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+                },
+                "properties": {
+                  "on": {
+                    "enum": [
+                      "issue-labeled",
+                      "issue-typed",
+                      "pull-request-opened",
+                      "schedule"
+                    ]
+                  },
+                  "label": {
+                    "$ref": "#/$defs/name",
+                    "description": "With issue-labeled: the label that starts a run."
+                  },
+                  "issue_type": {
+                    "$ref": "#/$defs/name",
+                    "description": "With issue-typed: the issue type that starts a run."
+                  },
+                  "cron": {
+                    "$ref": "#/$defs/name",
+                    "description": "With schedule: a five-field cron expression, in UTC."
+                  },
+                  "workflow": {
+                    "$ref": "#/$defs/name",
+                    "description": "The name of a workflow in the workflows section."
+                  },
+                  "objective": {
+                    "$ref": "#/$defs/name",
+                    "description": "The standing objective of every run this trigger starts. Required with schedule. With an issue or a pull request, it comes before their text."
+                  }
+                },
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "on": {
+                          "const": "issue-labeled"
+                        }
+                      },
+                      "required": [
+                        "on"
+                      ]
+                    },
+                    "then": {
+                      "required": [
+                        "label"
+                      ]
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "on": {
+                          "const": "issue-typed"
+                        }
+                      },
+                      "required": [
+                        "on"
+                      ]
+                    },
+                    "then": {
+                      "required": [
+                        "issue_type"
+                      ]
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "on": {
+                          "const": "schedule"
+                        }
+                      },
+                      "required": [
+                        "on"
+                      ]
+                    },
+                    "then": {
+                      "required": [
+                        "cron",
+                        "objective"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "description": "What starts a run on this workspace, keyed by trigger name."
+          },
+          "personas": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "allowed": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/personaName"
+                },
+                "uniqueItems": true
+              }
+            }
+          },
+          "agents": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "engines": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/name"
+                }
+              },
+              "approval": {
+                "type": "object",
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+                },
+                "properties": {
+                  "require": {
+                    "type": "array",
+                    "items": {
+                      "enum": [
+                        "plan",
+                        "effect"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "areas": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]*$"
+            }
+          },
+          "image": {
+            "$ref": "#/$defs/name"
+          },
+          "trust_project": {
+            "type": "boolean",
+            "default": true,
+            "description": "False: only validators and judges the tenant config declares count as evidence. A project's own are previews."
+          }
+        }
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "adapters": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/formatName"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "version"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "version": {
+                "$ref": "#/$defs/name"
+              }
+            }
+          }
+        },
+        "effects": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/effectName"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "version"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "version": {
+                "$ref": "#/$defs/name"
+              }
+            }
+          }
+        },
+        "step_kinds": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[^/@]+/[^/@]+$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "module",
+              "schema"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "module": {
+                "enum": [
+                  "deterministic-runner",
+                  "agent-runner",
+                  "control-plane"
+                ]
+              },
+              "schema": {
+                "$ref": "#/$defs/name"
+              }
+            }
+          }
+        },
+        "artifact_kinds": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^(?!evidence/|daggry/)[^/@]+/[^/@]+@[0-9]+$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "schema"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "schema": {
+                "$ref": "#/$defs/name"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "label": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "workspace": {
+      "type": "string",
+      "minLength": 1
+    },
+    "path": {
+      "type": "string",
+      "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))\\S+$"
+    },
+    "command": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "A program and its arguments. The first string is the program. No shell reads the list."
+    },
+    "validatorName": {
+      "type": "string",
+      "pattern": "^(?!(project|daggry|coverage|no_regression|baseline_proof)$)[a-z][a-z0-9_-]*$"
+    },
+    "scriptValidator": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "source": {
+          "type": "object",
+          "required": [
+            "workspace",
+            "revision"
+          ],
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          },
+          "properties": {
+            "workspace": {
+              "$ref": "#/$defs/workspace"
+            },
+            "revision": {
+              "$ref": "#/$defs/name"
+            }
+          }
+        },
+        "run": {
+          "$ref": "#/$defs/command"
+        },
+        "role": {
+          "$ref": "#/$defs/label",
+          "default": "custom"
+        },
+        "output": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$",
+          "default": "exit-code",
+          "description": "How Daggry reads the output: exit-code (default), document, or the name of a tool format such as junit or sarif."
+        },
+        "output_file": {
+          "$ref": "#/$defs/path",
+          "description": "The file the validator writes its output to. Absent: standard output."
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "env": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          }
+        },
+        "needs": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          },
+          "properties": {
+            "tools": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/label"
+              }
+            },
+            "runner": {
+              "$ref": "#/$defs/name"
+            }
+          }
+        }
+      },
+      "required": [
+        "source",
+        "run"
+      ]
+    },
+    "scriptJudge": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "source": {
+          "type": "object",
+          "required": [
+            "workspace",
+            "revision"
+          ],
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          },
+          "properties": {
+            "workspace": {
+              "$ref": "#/$defs/workspace"
+            },
+            "revision": {
+              "$ref": "#/$defs/name"
+            }
+          }
+        },
+        "run": {
+          "$ref": "#/$defs/command"
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "source",
+        "run"
+      ]
+    },
+    "personaName": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$"
+    },
+    "persona": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "description": {
+          "$ref": "#/$defs/name",
+          "description": "One or two sentences that say what the persona is for."
+        },
+        "engine": {
+          "$ref": "#/$defs/name",
+          "description": "The name of an engine in agents.engines of the tenant config."
+        },
+        "source": {
+          "type": "object",
+          "required": [
+            "workspace",
+            "revision"
+          ],
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          },
+          "properties": {
+            "workspace": {
+              "$ref": "#/$defs/workspace"
+            },
+            "revision": {
+              "$ref": "#/$defs/name"
+            }
+          },
+          "description": "The pinned workspace and revision that hold the instruction file. Required with instructions.path."
+        },
+        "instructions": {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "maxProperties": 1,
+          "properties": {
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The instructions, inline."
+            },
+            "path": {
+              "$ref": "#/$defs/path",
+              "description": "The instruction file, relative to the root of the persona's source."
+            }
+          },
+          "description": "The persona's instructions: exactly one of text and path."
+        },
+        "transcript": {
+          "$ref": "#/$defs/path",
+          "description": "For a persona on the replay engine: the recorded transcript it plays back, in place of instructions."
+        }
+      },
+      "required": [
+        "engine"
+      ],
+      "oneOf": [
+        {
+          "required": [
+            "instructions"
+          ]
+        },
+        {
+          "required": [
+            "transcript"
+          ]
+        }
+      ],
+      "if": {
+        "anyOf": [
+          {
+            "required": [
+              "transcript"
+            ]
+          },
+          {
+            "required": [
+              "instructions"
+            ],
+            "properties": {
+              "instructions": {
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "then": {
+        "required": [
+          "source"
+        ]
+      }
+    },
+    "effectName": {
+      "type": "string",
+      "pattern": "^([A-Za-z0-9_-]+/)?[a-z][a-z0-9_-]*$"
+    },
+    "formatName": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$"
+    }
+  }
+}
+```
+:::
 
 ## Next steps
 
 The list names the pages to read next.
 
 - For what a workspace says about itself, see [Project config](/reference/project-config).
-- For the two kinds of validator, see [Validators](/reference/validators).
-- For the workflow file a catalogue entry points to, see [Workflow file](/reference/workflow-schema).
-- For what another factory implements to use the same documents, see [Conformance](/reference/conformance).
+- For the workflow file a persona works in, see [Workflow file](/reference/workflow-schema).
+- For validators and judges, see [Validators](/reference/validators) and [Judges](/reference/judges).

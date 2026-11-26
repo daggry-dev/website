@@ -2,7 +2,13 @@
 
 *Reference*
 
-This page lists every path and scope rule that Daggry enforces on a step: which paths are protected, how a scope is judged and how the boundary check enforces both. Read it if you write workflows or own a project and need the exact list. For the reasons, read [What an agent cannot change](/guide/concepts/protection).
+An agent never changes what instructs it, constrains it or judges it. This page lists the rules behind that: which paths are protected, how a scope is judged, what a frozen path is and how Daggry enforces all three. Read it if you write workflows or own a project and need the exact list. For the reasons, read [What an agent cannot change](/guide/concepts/protection).
+
+Every refusal leaves a record. A change that Daggry puts back is sealed as an `observation`, and a person's grant is sealed as an `approval`, so the evidence trail shows each attempt to cross a boundary and each time a person opened one.
+
+<PathMap />
+
+The diagram takes six paths of one workspace and shows whether a step can write each, and why.
 
 ## Protected paths
 
@@ -14,11 +20,12 @@ The table lists the paths that are protected in every run. No workflow and no st
 | `**/AGENTS.md`, `.agents/**`, `**/SKILL.md` | Instruction files and skills for agents. |
 | Engine-specific instruction files and config directories | The same, for each supported engine. |
 | `**/.mcp.json` | Tool-server configuration. |
-| Frozen paths | What a proof step sealed in a previous loop iteration. See [Frozen paths](#frozen-paths). |
+| Frozen paths | What a proof step sealed earlier in a loop. See [Frozen paths](#frozen-paths). |
 | The files of a validator or judge you define | The files that the `run` of a validator or a custom judge in the baseline's [Project config](/reference/project-config) names. See [What a project adds](#what-a-project-adds). |
-| Paths a binding adds | The files that change how the binding's tools read the workspace. See [Bindings](/reference/bindings). |
+| A persona's instruction file | The file that `instructions.path` of a persona in the project config names. |
+| `**/.gitmodules`, `**/.gitattributes`, `**/.mailmap` | They change how git reads the repository. |
 
-A change that adds a symbolic link, changes the type of a path or adds a case collision is a violation too. A case collision is judged on every directory component, so `Docs/x.md` is refused where `docs/` exists.
+A change that adds a symbolic link or a git submodule, changes the type of a path or adds a case collision is a violation too. A case collision is judged on every directory component, so `Docs/x.md` is refused where `docs/` exists.
 
 Everything under `.daggry/` changes only when a person accepts a change into the workspace, outside every run. A run's own change to `.daggry/` takes effect in the next run whose baseline holds it.
 
@@ -40,14 +47,13 @@ Daggry judges the scope of a step on the step's own change, measured against the
 ```yaml
 - id: draft
   kind: agent
-  engine: <engine>
-  prompt: Do the work of the approved plan.
+  persona: writer
   outputs: [change]
   freeze: ["checks/**"]
   scope: ["handbook/**", "checks/**"]
 ```
 
-Illustrative. `<engine>` is the identifier of a registered agent engine.
+Illustrative. `writer` is a persona that the tenant config or the project config defines.
 
 ### The scope of a run
 
@@ -72,7 +78,7 @@ Frozen paths keep the proof of a criterion fixed while an agent does the work th
 
 ## Unfreeze grant
 
-A person frees one frozen path with this command.
+Only an approver can open a frozen path, and only one path at a time. A persona that believes a frozen proof is wrong asks on the issue and names the path. An approver's yes opens it. From the command line, the same grant is:
 
 ```sh
 daggry approve <run-id> --unfreeze <path>
@@ -80,9 +86,8 @@ daggry approve <run-id> --unfreeze <path>
 
 These rules apply to the grant.
 
-- The command works only at the `human` step that an exhausted loop routes to.
 - It seals an `approval` that names the run, the path and the file's digest.
-- The path is unfrozen for the next loop iteration only. That iteration's sealed change sets the new frozen digest.
+- The path is unfrozen for the next iteration only. That iteration's sealed change sets the new frozen digest.
 - Any other frozen path stays refused.
 
 ## Enforcement
@@ -102,9 +107,9 @@ An engine hook can give early feedback. It is never the gate.
 
 These rules hold for every pod.
 
-- Daggry's own instructions, such as the step prompt, sit in a volume that is read-only in the main container.
+- The instructions of the step's persona sit in a volume that is read-only for the agent.
 - The project's own agent configuration (instruction files, agent folders, skills, commands, hooks and project settings) is read from the working copy. The boundary check under Enforcement guards it: a changed path is put back in the pod and rechecked in the control plane, and the step fails.
-- The seal key and the workspace store's own key never enter the pod.
+- The signing key and the workspace store's own key never enter the pod.
 - A `verify` step runs each validator you define on a clean copy of the workspace as a different unprivileged user after the agent has ended, with commands read from the baseline.
 - If the `verify` step cannot switch user, it measures nothing and the step fails with ``the verify step could not switch to a different unix user: <cause>; nothing was measured``.
 
@@ -113,4 +118,4 @@ These rules hold for every pod.
 The list names the pages to read next.
 
 - For the `approval` fields, see [Artifact kinds](/reference/kinds#evidence-approval-1).
-- For the paths one kind of work adds, see [Bindings](/reference/bindings).
+- For what a workflow step writes as `scope`, see [Scope](/reference/workflow-schema#scope).

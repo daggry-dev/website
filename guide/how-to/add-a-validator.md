@@ -1,6 +1,10 @@
 # Add a validator
 
-An agent can say the work is done. A validator is a command that Daggry runs to measure it, and a judge decides the verdict, so a run passes only when your rule holds. Read this page if you write workflows or own a project.
+An agent can say the work is done.
+A validator is a command that Daggry runs to measure it, and a judge decides the verdict, so a run passes only when your rule holds.
+Read this page if you write workflows or own a project.
+
+Daggry seals what your validator reports as a measurement, then the verdict, and both land in the evidence trail. The agent's own report is never sealed.
 
 The examples on this page are illustrative.
 
@@ -55,7 +59,6 @@ You need this to trust a result. Your script reports, and a judge decides the ve
 - Daggry runs the script on a clean copy of the workspace, after the agent has finished.
 - A run takes your validators from the version it started from. The files a validator's `run` names are protected paths, so an agent cannot pass by weakening its validator.
 - Your validators count as evidence with no setup.
-- Daggry seals the measurement, then the verdict, in the evidence trail.
 
 See [Why you can trust a run](/guide/concepts/trust).
 

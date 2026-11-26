@@ -14,6 +14,15 @@
     "format": {
       "const": "daggry/tenant@1"
     },
+    "approvers": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "description": "The numeric GitHub ids of the people who can start, steer and approve runs."
+    },
     "workflows": {
       "type": "object",
       "propertyNames": {
@@ -111,6 +120,16 @@
         }
       }
     },
+    "personas": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[a-z][a-z0-9_-]*$": {
+          "$ref": "#/$defs/persona"
+        },
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      }
+    },
     "agents": {
       "type": "object",
       "additionalProperties": false,
@@ -147,30 +166,6 @@
                     "$ref": "#/$defs/name"
                   }
                 }
-              }
-            }
-          }
-        },
-        "roster": {
-          "type": "object",
-          "propertyNames": {
-            "$ref": "#/$defs/name"
-          },
-          "additionalProperties": {
-            "type": "object",
-            "required": [
-              "engine"
-            ],
-            "additionalProperties": false,
-            "patternProperties": {
-              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-            },
-            "properties": {
-              "engine": {
-                "$ref": "#/$defs/name"
-              },
-              "instructions": {
-                "$ref": "#/$defs/name"
               }
             }
           }
@@ -331,9 +326,6 @@
           "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
         },
         "properties": {
-          "binding": {
-            "$ref": "#/$defs/label"
-          },
           "workflows": {
             "type": "object",
             "additionalProperties": false,
@@ -352,6 +344,124 @@
               }
             }
           },
+          "triggers": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[a-z][a-z0-9_]*$": {
+                "type": "object",
+                "required": [
+                  "on",
+                  "workflow"
+                ],
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+                },
+                "properties": {
+                  "on": {
+                    "enum": [
+                      "issue-labeled",
+                      "issue-typed",
+                      "pull-request-opened",
+                      "schedule"
+                    ]
+                  },
+                  "label": {
+                    "$ref": "#/$defs/name",
+                    "description": "With issue-labeled: the label that starts a run."
+                  },
+                  "issue_type": {
+                    "$ref": "#/$defs/name",
+                    "description": "With issue-typed: the issue type that starts a run."
+                  },
+                  "cron": {
+                    "$ref": "#/$defs/name",
+                    "description": "With schedule: a five-field cron expression, in UTC."
+                  },
+                  "workflow": {
+                    "$ref": "#/$defs/name",
+                    "description": "The name of a workflow in the workflows section."
+                  },
+                  "objective": {
+                    "$ref": "#/$defs/name",
+                    "description": "The standing objective of every run this trigger starts. Required with schedule. With an issue or a pull request, it comes before their text."
+                  }
+                },
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "on": {
+                          "const": "issue-labeled"
+                        }
+                      },
+                      "required": [
+                        "on"
+                      ]
+                    },
+                    "then": {
+                      "required": [
+                        "label"
+                      ]
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "on": {
+                          "const": "issue-typed"
+                        }
+                      },
+                      "required": [
+                        "on"
+                      ]
+                    },
+                    "then": {
+                      "required": [
+                        "issue_type"
+                      ]
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "on": {
+                          "const": "schedule"
+                        }
+                      },
+                      "required": [
+                        "on"
+                      ]
+                    },
+                    "then": {
+                      "required": [
+                        "cron",
+                        "objective"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "description": "What starts a run on this workspace, keyed by trigger name."
+          },
+          "personas": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+            },
+            "properties": {
+              "allowed": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/personaName"
+                },
+                "uniqueItems": true
+              }
+            }
+          },
           "agents": {
             "type": "object",
             "additionalProperties": false,
@@ -360,12 +470,6 @@
             },
             "properties": {
               "engines": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/$defs/name"
-                }
-              },
-              "roster": {
                 "type": "array",
                 "items": {
                   "$ref": "#/$defs/name"
@@ -418,27 +522,6 @@
         "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
       },
       "properties": {
-        "bindings": {
-          "type": "object",
-          "propertyNames": {
-            "$ref": "#/$defs/label"
-          },
-          "additionalProperties": {
-            "type": "object",
-            "required": [
-              "version"
-            ],
-            "additionalProperties": false,
-            "patternProperties": {
-              "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
-            },
-            "properties": {
-              "version": {
-                "$ref": "#/$defs/name"
-              }
-            }
-          }
-        },
         "adapters": {
           "type": "object",
           "propertyNames": {
@@ -549,10 +632,6 @@
       "type": "string",
       "minLength": 1
     },
-    "effectName": {
-      "type": "string",
-      "pattern": "^([A-Za-z0-9_-]+/)?[a-z][a-z0-9_-]*$"
-    },
     "path": {
       "type": "string",
       "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))\\S+$"
@@ -648,10 +727,6 @@
         "run"
       ]
     },
-    "formatName": {
-      "type": "string",
-      "pattern": "^[a-z][a-z0-9_-]*$"
-    },
     "scriptJudge": {
       "type": "object",
       "additionalProperties": false,
@@ -690,6 +765,118 @@
         "source",
         "run"
       ]
+    },
+    "personaName": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$"
+    },
+    "persona": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "description": {
+          "$ref": "#/$defs/name",
+          "description": "One or two sentences that say what the persona is for."
+        },
+        "engine": {
+          "$ref": "#/$defs/name",
+          "description": "The name of an engine in agents.engines of the tenant config."
+        },
+        "source": {
+          "type": "object",
+          "required": [
+            "workspace",
+            "revision"
+          ],
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+          },
+          "properties": {
+            "workspace": {
+              "$ref": "#/$defs/workspace"
+            },
+            "revision": {
+              "$ref": "#/$defs/name"
+            }
+          },
+          "description": "The pinned workspace and revision that hold the instruction file. Required with instructions.path."
+        },
+        "instructions": {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "maxProperties": 1,
+          "properties": {
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The instructions, inline."
+            },
+            "path": {
+              "$ref": "#/$defs/path",
+              "description": "The instruction file, relative to the root of the persona's source."
+            }
+          },
+          "description": "The persona's instructions: exactly one of text and path."
+        },
+        "transcript": {
+          "$ref": "#/$defs/path",
+          "description": "For a persona on the replay engine: the recorded transcript it plays back, in place of instructions."
+        }
+      },
+      "required": [
+        "engine"
+      ],
+      "oneOf": [
+        {
+          "required": [
+            "instructions"
+          ]
+        },
+        {
+          "required": [
+            "transcript"
+          ]
+        }
+      ],
+      "if": {
+        "anyOf": [
+          {
+            "required": [
+              "transcript"
+            ]
+          },
+          {
+            "required": [
+              "instructions"
+            ],
+            "properties": {
+              "instructions": {
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "then": {
+        "required": [
+          "source"
+        ]
+      }
+    },
+    "effectName": {
+      "type": "string",
+      "pattern": "^([A-Za-z0-9_-]+/)?[a-z][a-z0-9_-]*$"
+    },
+    "formatName": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$"
     }
   }
 }

@@ -1,7 +1,7 @@
 # Run your first workflow
 
 Reading about a signed trail is not the same as checking one yourself.
-On this page you run a small workflow, approve it and verify its evidence trail, in about ten minutes.
+On this page you run a small workflow, approve it and verify its evidence trail, in about ten minutes. After each command, the page names the records Daggry sealed.
 Read it if you have a running Daggry. If you do not, start with [Install Daggry](/guide/how-to/deploy).
 
 The workflow has no agent step, so you need no model credential. You write one file and run four commands. The example is software: the workspace is a Git repository and the work item is an issue. The commands and outputs on this page are illustrative. Placeholders in angle brackets, such as `<owner>`, stand for values you choose.
@@ -20,7 +20,7 @@ daggry --help
 
 ## Start a run
 
-A run needs three things: a workflow, a workspace and a work item.
+A run needs three things: a workflow, a workspace and an objective, which says what the run is asked to do. Here the objective is an issue.
 
 1. Save this workflow as `first.yaml`. It runs a command, waits for your approval, and runs a second command.
 
@@ -33,7 +33,7 @@ A run needs three things: a workflow, a workspace and a work item.
        run: [sh, -c, "echo hello > hello.txt"]
      - id: review
        kind: human
-       waiting_for: input-needed
+       of: build
      - id: finish
        kind: command
        scope: anywhere
@@ -52,7 +52,7 @@ A run needs three things: a workflow, a workspace and a work item.
    daggry run --workflow first.yaml --workspace <owner>/<name> --item https://github.com/<owner>/<name>/issues/<n>
    ```
 
-   The command prints the run ID.
+   The command prints the run ID. Daggry has already sealed the first two records of the run: a run lock, which pins what the run started under, and the work item, which holds the objective: the title and the body of your issue.
 
    ```text
    run-0123456789abcdef
@@ -65,7 +65,7 @@ A run needs three things: a workflow, a workspace and a work item.
    ```
 
    ```json
-   {"state":"waiting","attempts":[{"job":"main","n":1,"state":"waiting"}],"waiting_for":"input-needed"}
+   {"state":"waiting","attempts":[{"job":"main","n":1,"state":"waiting"}],"waiting_for":"approval"}
    ```
 
 If `daggry run` fails with `refused: ...`, the text after the colon names the cause. See the [CLI reference](/reference/cli).
@@ -86,7 +86,7 @@ The run has stopped because the workflow asks for your approval at the `review` 
    daggry/change@1 change-1 control 2019b48c668e
    ```
 
-   Each line is one record, and the last column starts its digest. The first two records open every run. The `build` step sealed `change-1`: the commit it made and the paths it changed.
+   Each line is one record, and the last column starts its digest. The first two records open every run. When the `build` step ended, Daggry sealed `change-1`: the commit the step made and the paths it changed.
 
 5. Approve the run.
 
@@ -94,11 +94,11 @@ The run has stopped because the workflow asks for your approval at the `review` 
    daggry approve run-0123456789abcdef
    ```
 
-   The command prints nothing and exits with 0. Daggry seals your approval, and the job continues in a new runner. Run `daggry status` again, and `state` becomes `succeeded`. The run also pushed its commits to the branch `daggry/run-0123456789abcdef`.
+   The command prints nothing and exits with 0. Daggry seals your approval, bound to the digest of `change-1`, and the job continues in a new runner. The `finish` step then seals a second change. Run `daggry status` again, and `state` becomes `succeeded`. The run also pushed its commits to the branch `daggry/run-0123456789abcdef`.
 
 ## Verify the trail
 
-You do not have to trust the run: check it.
+You do not have to trust the run: check its trail.
 
 6. Verify everything Daggry sealed for your tenant.
 
@@ -112,6 +112,6 @@ You do not have to trust the run: check it.
 
    An entry is a record. The command computes every digest and signature again on your machine. If anything does not match, it exits with 1 and prints a reason. To read a failure, see [Verify a run](/guide/how-to/verify-a-run).
 
-You have started a run, approved it and verified its trail. To put an agent to work, add an `agent` step: see [Write a workflow](/guide/how-to/write-a-workflow).
+You have started a run, approved it and verified its trail. To put an agent to work, add an `agent` step that names a persona: see [Write a workflow](/guide/how-to/write-a-workflow).
 
 Next: [Configure Daggry](/guide/configure)

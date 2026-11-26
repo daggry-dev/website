@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "evidence/input@1",
+  "title": "evidence/input@1: something said in the thread of a run, bound to one digest",
+  "type": "object",
+  "required": [
+    "subject",
+    "digest",
+    "source_ref",
+    "author",
+    "tier",
+    "text"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "subject": {
+      "type": "string",
+      "minLength": 1,
+      "x-fact-class": "derived"
+    },
+    "digest": {
+      "type": "string",
+      "minLength": 1,
+      "x-fact-class": "derived"
+    },
+    "source_ref": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "x-fact-class": "derived"
+    },
+    "author": {
+      "type": "string",
+      "minLength": 1,
+      "x-fact-class": "derived"
+    },
+    "text": {
+      "type": "string",
+      "x-fact-class": "claimed"
+    },
+    "tier": {
+      "enum": [
+        "approver",
+        "writer",
+        "persona",
+        "code"
+      ],
+      "x-fact-class": "derived"
+    },
+    "locator": {
+      "type": "string",
+      "minLength": 1,
+      "x-fact-class": "derived"
+    },
+    "review_state": {
+      "enum": [
+        "approve",
+        "request-changes",
+        "comment"
+      ],
+      "x-fact-class": "derived"
+    }
+  }
+}

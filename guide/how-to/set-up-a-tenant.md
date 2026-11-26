@@ -1,108 +1,80 @@
 # Set up a tenant
 
-Two teams rarely work the same way. One lets agents deliver all night, and another wants a person to approve every plan. The tenant config is one file where you choose which workflows run on which project, which agents work and where a person must approve. Read this page if you own a tenant. Project developers do not need it.
+A team should not have to design a factory before it can try one.
+To put Daggry's default team on your issues you write one small file: who can approve, a credential for the engine and one trigger. Everything else has a default that you can replace later.
+Read this page if you run Daggry for a team. Project developers do not need it.
 
-The file on this page is illustrative. `<engine>` stands for the name of a coding-agent engine you register.
+The files on this page are illustrative. `<engine>` stands for the name of a coding-agent engine your installation provides.
 
-## A small tenant config
+## Start with three things
 
-This tenant offers one workflow, runs at most four jobs at a time, has one agent, asks for approval of every plan and serves one project.
+This is a complete tenant config. An approver who labels an issue `factory` on this repository gets a planner, a developer and a reviewer on it.
 
 ```yaml
 format: daggry/tenant@1
 
-workflows:
-  review:
-    source:
-      workspace: factory-workflows
-      path: workflows/review.yaml
-      revision: v-0017
-
-orchestration:
-  concurrency_cap: 4
-  attempts:
-    max: 3
+approvers: [4411, 5207]
 
 agents:
   engines:
     <engine>:
       credential:
         ref: model-credential
-  roster:
-    reviewer:
-      engine: <engine>
-      instructions: agents/reviewer.md
-  approval:
-    require: [plan]
 
-runners:
-  images:
-    documents:
-      image: registry.example/jobs/documents@sha256:<digest>
-      default: true
-
-projects:
-  handbook:
-    workflows:
-      allowed: [review]
-      default: review
-
-extensions:
-  bindings:
-    review:
-      version: "1.0.0"
-```
-
-<FileTree kind="tenant" />
-
-## Write your tenant config
-
-Each step answers one question about how your team works. Every section is optional, so add them one at a time.
-
-1. **List the workflows you offer.** Under `workflows`, give each one a name and say where its file is: the workspace, the path and the version. A run uses only a workflow from this list, at exactly that version.
-
-2. **Set the scheduling limits.** Under `orchestration`, `concurrency_cap` is the most jobs that run at one time. `attempts.max` is the most attempts one job gets before the run fails.
-
-3. **Name the agents.** Under `agents.engines`, register each engine with the name of the stored secret it uses. The file never holds the secret. Under `agents.roster`, give each agent a name, an engine and an instruction file.
-
-4. **Choose where a person must approve.** `agents.approval.require` takes `plan`, `effect` or both. With `plan`, every workflow must stop for approval before work builds on a plan. With `effect`, every workflow must stop before it delivers a result. Daggry refuses a workflow that does not fit.
-
-5. **List your projects.** Under `projects`, add each project by the name of its workspace. A run starts only for a listed project. For each one, say which workflows can run there and which runs by default. A project's own validators and judges count as evidence. To count only the ones the tenant declares for one project, set `trust_project: false`.
-
-6. **Name the kind of work.** Under `extensions.bindings`, register the binding your projects use. A binding is a ready-made setup for one kind of work.
-
-7. **Give the file to Daggry.** Daggry holds it outside every runner. See [Install Daggry](/guide/how-to/deploy).
-
-A run records the tenant config it started under. A later change applies to new runs only.
-
-::: details Can I add a validator for every project?
-Yes. Declare a script under `validators.scripts`, and a workflow names it by its bare name. It then checks every project you serve. See [Add a validator](/guide/how-to/add-a-validator).
-:::
-
-::: details Can one project have stricter rules?
-Yes. A project entry can limit the agents, add an approval point and limit runs to named areas of the project.
-
-```yaml
 projects:
   example/shop-web:
-    agents:
-      roster: [lead]
-      approval:
-        require: [effect]
-    areas: [app]
+    triggers:
+      factory_label:
+        on: issue-labeled
+        label: factory
+        workflow: idea-to-pr
 ```
 
-A project entry can add an approval point. It cannot remove one.
-:::
+1. **Say who can approve.** `approvers` lists people by numeric GitHub id. Only they can start a run, steer it and approve. See [Comments and approvals](/reference/conversation).
+2. **Give the engine a credential.** `credential.ref` names a stored secret. The file never holds the secret.
+3. **Add one trigger.** It connects a label on a repository to a workflow. `idea-to-pr` is the workflow Daggry ships.
+4. **Install Daggry's GitHub App on the repository,** and give the file to Daggry. See [Install Daggry](/guide/how-to/deploy).
 
-## Who can loosen a rule
+To see what happens next, read [From a labelled issue to a merged pull request](/guide/how-to/issue-to-pr). The control plane holds this file outside every runner, so no agent can change it, and each run pins what it used from it in its first record.
 
-The tenant config wins over the project config, which wins over the workflow. An agent can change none of them.
+## Make the team yours
 
-A project or a workflow can add limits. Only a person can remove one. For the full rules, see the [Tenant config reference](/reference/tenant-config).
+The default team is a starting point. A persona is a named agent: an engine and the instructions it works under. Define one with the name of a shipped persona, and yours is used instead.
+
+```yaml
+personas:
+  developer:
+    description: Writes the proof for each criterion, then the work, in our house style.
+    engine: <engine>
+    source:
+      workspace: factory-personas
+      revision: v-0021
+    instructions:
+      path: personas/developer.md
+```
+
+Instructions say who the persona is and how it always works. What to do now comes from the objective of each run, so one team serves many kinds of work. A project can define its own version in `.daggry/project.yaml`, and the project's persona wins on that project.
+
+<Lookup />
+
+The diagram shows how Daggry resolves a name in a workflow, for a persona, a validator or a judge: the project config first, then the tenant config, then what Daggry ships. What it finds is pinned in the run lock.
+
+## Add rules when you need them
+
+Every other section is optional. Add one when you have a reason. The table lists the common ones.
+
+| You want to | Add | See |
+|---|---|---|
+| Start work from a bug label, an issue type or a schedule | More `triggers` | [Triggers](/reference/tenant-config#triggers) |
+| Offer workflows of your own | `workflows` | [workflows](/reference/tenant-config#workflows) |
+| Require a person before every plan is built on, or before every effect | `agents.approval.require` | [agents](/reference/tenant-config#agents) |
+| Check every project with the same validator | `validators.scripts` | [validators](/reference/tenant-config#validators) |
+| Limit a project to some workflows, personas or areas | Keys of the project entry | [projects](/reference/tenant-config#projects) |
+
+A project or a workflow can add limits. Only a person can remove one, and an agent can change none of these files.
 
 Related:
 
-- [Set up a project](/guide/how-to/set-up-a-project)
-- [Add a validator](/guide/how-to/add-a-validator)
+- [From a labelled issue to a merged pull request](/guide/how-to/issue-to-pr)
+- [Send the team on a mission](/guide/how-to/autonomy)
 - [Tenant config reference](/reference/tenant-config)

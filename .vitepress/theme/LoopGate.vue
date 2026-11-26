@@ -3,9 +3,9 @@ import DgArrow from './DgArrow.vue'
 import DgIcon from './DgIcon.vue'
 
 const steps = [
-  { who: 'agent', t: 'Write the proof', d: 'a test for the next criterion', c: 'cool' },
-  { who: 'code', t: 'Shown to fail', d: 'before the work', c: '' },
-  { who: 'agent', t: 'Do the work', d: 'change the paths in scope', c: 'cool' },
+  { who: 'agent, first iteration', t: 'Write the proofs', d: 'a check for every criterion', c: 'cool' },
+  { who: 'code', t: 'Shown to fail, then frozen', d: 'before the work', c: '' },
+  { who: 'agent', t: 'Do the work', d: 'against everything that still fails', c: 'cool' },
   { who: 'code', t: 'Run again on a clean copy', d: 'every validator', c: 'warm' },
 ]
 </script>
@@ -14,7 +14,7 @@ const steps = [
   <figure class="dgm lg">
     <div class="dg-body grid">
       <div class="loop">
-        <p class="lt">One iteration for each criterion, up to the loop limit</p>
+        <p class="lt">Repeat until the gate holds, up to the loop limit</p>
         <ol class="dg-flow">
           <li v-for="(s, i) in steps" :key="s.t">
             <div :class="['dg-node', s.c]">
@@ -25,7 +25,7 @@ const steps = [
             <DgArrow v-if="i < steps.length - 1" />
           </li>
         </ol>
-        <p class="back"><DgIcon name="back" />Criteria left, or this one failed: another iteration</p>
+        <p class="back"><DgIcon name="back" />Something still fails: another iteration, on what is left</p>
       </div>
 
       <DgArrow hot class="to-gate" />
@@ -48,9 +48,10 @@ const steps = [
       </div>
     </div>
     <figcaption class="cap">
-      Each iteration takes one criterion through four steps, two by the agent and two by code: the agent writes a proof,
-      code shows that the proof fails before the work, the agent does the work, and code runs every validator on a clean
-      copy. The gate lets the run go on only when every criterion is covered. At the loop limit, the run fails, or it
+      A loop repeats until its gate holds. In the first iteration the agent writes a proof for every criterion, and code
+      shows that the proofs fail before the work and freezes them. The agent then does the work, and code runs every
+      validator on a clean copy. While something still fails, the loop repeats on what is left. The gate lets the run go
+      on only when every criterion is covered. At the loop limit, the run fails, or it
       waits for you at the <code>human</code> step the workflow names. In software, the proof is a test.
     </figcaption>
   </figure>

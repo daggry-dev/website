@@ -4,10 +4,16 @@
 
 This page lists every `daggry` command, flag, output format, exit code and environment variable. Read it when you need the exact form of a command. For a guided first use, follow [Run your first workflow](/guide/getting-started).
 
+Three commands touch the evidence trail. `run` starts a run, and Daggry seals a run lock and the work item as its first two records. `approve` seals your approval, bound to the digest of what you approved. `verify` recomputes the whole trail on your machine. `status` and `logs` only read.
+
+<CliFlow />
+
+The diagram lists the five commands and what each does to the evidence trail.
+
 ## Synopsis
 
 ```text
-daggry run --workflow <file> --workspace <workspace> --item <item>
+daggry run --workflow <file> --workspace <workspace> [--item <item>] [--objective <text>]
 daggry status <run-id> --json
 daggry logs <run-id>
 daggry approve <run-id> [--unfreeze <path>]
@@ -50,10 +56,10 @@ The HTTP client uses a 10-second connect timeout and a 60-second timeout for eac
 
 ## daggry run
 
-Starts a run of a workflow for a work item.
+Starts a run of a workflow. Every run has an objective: what it is asked to do. You give it as a work item, as text, or as both.
 
 ```text
-daggry run --workflow <file> --workspace <workspace> --item <item>
+daggry run --workflow <file> --workspace <workspace> [--item <item>] [--objective <text>]
 ```
 
 The table lists the flags.
@@ -62,7 +68,8 @@ The table lists the flags.
 |---|---|---|
 | `--workflow <file>` | yes | Path to the workflow file. |
 | `--workspace <workspace>` | yes | The workspace the run works on, named as the tenant config names it. |
-| `--item <item>` | yes | The work item: what names the request where it comes from. The workspace's binding gives the form. See [Bindings](/reference/bindings). |
+| `--item <item>` | one of the two | The work item: what names the request where it comes from. For a software project it is the URL of an issue, and the objective is the issue's title and body. See [Workspaces and work items](/reference/project-config#workspaces-and-work-items). |
+| `--objective <text>` | one of the two | The objective, as text. With `--item` too, this text comes before the issue's. |
 
 On success the command prints the run ID and a newline, and nothing else. A run ID has the form `run-` followed by 16 hexadecimal digits.
 
@@ -74,14 +81,21 @@ daggry run --workflow flow.yaml --workspace handbook --item review-118
 run-0123456789abcdef
 ```
 
-The CLI reads the workflow file as UTF-8. If the file cannot be read, the command exits with 1 and no run starts.
+A run with no issue takes its objective from the command line.
+
+```sh
+daggry run --workflow release-check.yaml --workspace example/shop-web --objective "Check that release 2.4 is ready to ship."
+```
+
+Daggry seals the objective as the work item, the second record of the run, before any step starts. The CLI reads the workflow file as UTF-8. If the file cannot be read, the command exits with 1 and no run starts.
 
 The control plane refuses the run with a 400 and a reason when:
 
 - the workspace is not one the tenant config lists;
-- the item is not in the form the workspace's binding gives, or is not a work item of that workspace;
-- the workflow does not load (the reason starts with `workflow:`);
-- the workspace or the work item is not found where the binding keeps it.
+- the request has neither an item nor an objective;
+- the item is not in the form of a work item, or is not a work item of that workspace;
+- the workflow does not load (the reason starts with `workflow:`), or it names a persona, a validator, a judge or an area that matches nothing;
+- the workspace or the work item is not found where it is kept, such as the git host.
 
 ## daggry status
 
@@ -112,13 +126,14 @@ The table lists the fields of the output.
 |---|---|---|
 | `state` | string | The run state. See [states](/reference/api#states-and-reasons). |
 | `attempts` | array | Every attempt of every job, oldest first, as `{job, n, state}`. |
-| `waiting_for` | string or null | The reason a person is needed. Always present, and `null` unless `state` is `waiting`. |
+| `waiting_for` | string or null | The reason a person is needed: `approval` at a checkpoint, `answer` when a persona asked. Always present, and `null` unless `state` is `waiting`. |
+| `trigger` | string | The name of the trigger that started the run. Absent for a run that `daggry run` started. |
 
 A run that belongs to another tenant reads as `unknown run`.
 
 ## daggry logs
 
-Lists the sealed artifacts of a run, in order.
+Lists the sealed records of a run, in the order of the evidence trail.
 
 ```text
 daggry logs <run-id>
@@ -167,11 +182,11 @@ The table lists the argument and the flag.
 | Argument or flag | Required | Meaning |
 |---|---|---|
 | `<run-id>` | yes | The run that waits. |
-| `--unfreeze <path>` | no | Opens one frozen path for change. Valid only at the `human` step of an exhausted loop. |
+| `--unfreeze <path>` | no | Opens one frozen path for change. Valid when the run waits at a checkpoint. |
 
-Both forms print nothing and exit with 0 on success. The control plane seals your approval, with your tenant token's identity as its author, and the job continues in a new attempt.
+Both forms print nothing and exit with 0 on success. The control plane seals an [approval](/reference/kinds#evidence-approval-1) with your tenant token's identity as its author, and the job continues in a new attempt. The approval is bound to the digest of what the checkpoint asked about: the plan, or the latest change.
 
-Without `--unfreeze`, the command approves the wait. At an exhausted loop it gives up the unfinished item. With `--unfreeze <path>`, the loop re-enters the same item with a fresh `max`, and the path can change for that one iteration.
+Without `--unfreeze`, the command says yes at the checkpoint. With `--unfreeze <path>`, the path can change for one iteration. You can do both from the issue instead. See [Comments and approvals](/reference/conversation).
 
 The control plane refuses the request, and seals nothing, in the cases the table lists.
 
@@ -181,18 +196,18 @@ The control plane refuses the request, and seals nothing, in the cases the table
 | `not this run` | The run is not yours. |
 | `` `<path>` is not a frozen path `` | The path is not in the latest sealed set of frozen paths. |
 | `nothing to approve: no sealed plan` | An `approval` wait with no sealed plan. |
-| `nothing to approve: no sealed change` | An `input-needed` wait with no sealed change. |
+| `nothing to approve: no sealed change` | A checkpoint with nothing sealed to approve. |
 | `--unfreeze applies only at an exhausted loop's human step` | `--unfreeze` at any other wait. |
 
 ## daggry verify
 
-Verifies your tenant's whole chain on your machine.
+Verifies your tenant's whole evidence trail on your machine.
 
 ```text
 daggry verify
 ```
 
-The command takes no argument. It fetches the chain, the seal public keys and every referenced blob, and recomputes digests, links and signatures. On success it prints this line and exits with 0:
+The command takes no argument. It fetches the trail, the public half of each signing key and every referenced blob, and recomputes digests, links and signatures. On success it prints this line and exits with 0:
 
 ```text
 verified <n> entries, <m> blobs

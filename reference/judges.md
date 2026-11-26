@@ -42,7 +42,9 @@ What differs between kinds is who wrote the judge and how it decides, not what i
 
 ## The four kinds of judge
 
-The table lists the kinds, in the order you meet them. Only the default judge needs no name.
+<JudgeKinds />
+
+The diagram shows the four kinds side by side: what each decides and who vouches for it. The table lists the kinds, in the order you meet them. Only the default judge needs no name.
 
 | Kind | Named in | Decides | Vouched for by |
 |---|---|---|---|
@@ -189,12 +191,10 @@ judges:
     as: criterion
     until: verdict.all_covered
     max: 5
-    on_exhausted: ask
     steps:
       - id: write
         kind: agent
-        engine: <engine>
-        prompt: Write the section for the criterion.
+        persona: writer
         outputs: [change]
         scope: ["handbook/**"]
       - id: check

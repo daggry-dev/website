@@ -6,6 +6,7 @@
   "required": [
     "validators",
     "judges",
+    "personas",
     "boundary_rules",
     "image_digest",
     "workflow_digest"
@@ -50,6 +51,33 @@
             "minLength": 1
           },
           "version": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "personas": {
+      "x-fact-class": "derived",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "persona",
+          "engine",
+          "digest"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "persona": {
+            "type": "string",
+            "minLength": 1
+          },
+          "engine": {
+            "type": "string",
+            "minLength": 1
+          },
+          "digest": {
             "type": "string",
             "minLength": 1
           }

@@ -8,7 +8,7 @@ const editable = [
 ]
 const protectedItems = [
   { t: 'Its proofs', d: 'frozen paths: a proof sealed earlier in the run stays exactly as it was' },
-  { t: 'Its own instructions', d: 'the workflow and the files that tell agents what to do' },
+  { t: 'Its own instructions', d: "the workflow, its persona's instructions and the files that tell agents what to do" },
   { t: 'Its validators and limits', d: 'which validators check the work, and what it can write' },
 ]
 </script>

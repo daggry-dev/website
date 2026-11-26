@@ -12,7 +12,7 @@ Daggry fits you if your work lives in files and a script can check it. Three thi
 - **A script can say pass or fail.** A test suite, a link checker, a row count, a list of required sections. The script is your validator.
 - **You know where you want to decide.** Most work needs you twice: to approve the plan, and to review the result.
 
-Software is the first kind of work Daggry is set up for. There, the work item is an issue and the result is a pull request. The first two examples work the same way for documents and data.
+Software is the first kind of work Daggry is set up for. For software, the workspace is a git repository, the work item an issue and the result a pull request. The first two examples work the same way for documents and data.
 
 ## Nine examples
 
@@ -28,6 +28,6 @@ Daggry checks what a script can check. It does not fit these cases:
 
 - **Only a person can say whether the result is good.** A script cannot decide whether a logo looks right or a strategy is sound. Daggry can still stop for your approval, but it cannot check the work for you.
 - **The work does not live in files.** A run works on a project's files and delivers its result from them.
-- **The validator is weak.** A run that passes proves that your script passed. If the script checks little, the pass means little.
+- **The validator is weak.** The evidence trail of a run that passes proves that your script passed. If the script checks little, the pass means little.
 
 Next: [Why use it](/guide/why)

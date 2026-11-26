@@ -4,7 +4,7 @@
 
 The Daggry chart installs with defaults that suit a first cluster. This page lists every value the chart takes and the option to run the launcher in its own pod. Read it if you are the cluster admin and you install or upgrade Daggry. For the steps, follow [Install Daggry](/guide/how-to/deploy).
 
-The chart holds what is true of the installation. How a tenant's factory works is in the [Tenant config](/reference/tenant-config): the lease length, the concurrency cap, the job images and each engine's credential.
+The chart holds what is true of the installation. How a tenant's factory works is in the [Tenant config](/reference/tenant-config): the lease length, the concurrency cap, the job images and each engine's credential. The chart also decides where the signing key and the evidence trail are kept: both stay with the control plane, on its data volume, and never enter a runner.
 
 ## Chart values
 
@@ -26,7 +26,7 @@ Set only the values you need to change. The table lists every value.
 | `github.api` | `""` | GitHub API root. Empty means the public GitHub API |
 | `resources` | `{}` | Resource requests and limits for the control plane |
 
-The `github.*` values belong to the software binding, where the forge is GitHub. See [Bindings](/reference/bindings).
+The `github.*` values are for software projects, where the workspace is a git repository on GitHub. See [Workspaces and work items](/reference/project-config#workspaces-and-work-items).
 
 ## Tokens
 

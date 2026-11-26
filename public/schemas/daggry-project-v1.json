@@ -54,6 +54,16 @@
         "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
       }
     },
+    "personas": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[a-z][a-z0-9_-]*$": {
+          "$ref": "#/$defs/persona"
+        },
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      }
+    },
     "validators": {
       "type": "object",
       "additionalProperties": false,
@@ -324,6 +334,60 @@
           "required": [
             "rubric",
             "engine"
+          ]
+        }
+      ]
+    },
+    "persona": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$": true
+      },
+      "properties": {
+        "description": {
+          "$ref": "#/$defs/name",
+          "description": "One or two sentences that say what the persona is for."
+        },
+        "engine": {
+          "$ref": "#/$defs/name",
+          "description": "The name of an engine in agents.engines of the tenant config."
+        },
+        "instructions": {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "maxProperties": 1,
+          "properties": {
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The instructions, inline."
+            },
+            "path": {
+              "$ref": "#/$defs/path",
+              "description": "The instruction file, relative to the workspace root and read from the baseline."
+            }
+          },
+          "description": "The persona's instructions: exactly one of text and path."
+        },
+        "transcript": {
+          "$ref": "#/$defs/path",
+          "description": "For a persona on the replay engine: the recorded transcript it plays back, in place of instructions."
+        }
+      },
+      "required": [
+        "engine"
+      ],
+      "oneOf": [
+        {
+          "required": [
+            "instructions"
+          ]
+        },
+        {
+          "required": [
+            "transcript"
           ]
         }
       ]

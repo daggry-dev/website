@@ -2,7 +2,13 @@
 
 *Reference*
 
-A gate is the expression in a loop's `until` that reads facts from sealed evidence. This page lists its grammar, the contexts, every read form, the fact classes and the functions. Read it when you write a loop and need to know what `until` can read. For where `until` sits, see [Workflow file](/reference/workflow-schema#loop). For the facts that judges emit, see [Judges](/reference/judges#facts-a-judge-emits). For the steps, follow [Add a loop](/guide/how-to/add-a-loop).
+A gate is the expression in a loop's `until`. It decides when the loop ends, and it reads sealed records only, never what an agent says. This page lists what a gate can read, the grammar and the errors. Read it when you write a loop. For where `until` sits, see [Workflow file](/reference/workflow-schema#loop). For the steps, follow [Add a loop](/guide/how-to/add-a-loop).
+
+A gate seals nothing. It reads the verdicts that a `verify` step sealed, so every decision to end a loop can be traced to records in the evidence trail.
+
+<GateRead />
+
+The diagram shows the three classes of field and which of them a gate can read.
 
 The expressions on this page are illustrative. Where an example is refused, the page names the refusal.
 
@@ -30,7 +36,7 @@ steps.zzz.measurement.exit_code == 0
 
 ## Contexts
 
-A gate reads from four contexts.
+A gate reads from five contexts.
 
 | Context | Reads |
 |---|---|
@@ -38,8 +44,9 @@ A gate reads from four contexts.
 | `needs` | The artifacts of named previous work, by id. |
 | `steps` | The artifacts of a named step. |
 | `verdict` | The verdict facts sealed so far. |
+| `run` | Facts that code computes from every sealed record of the run. See [Run facts](#run-facts). |
 
-A gate expression can use a name only from these four contexts. `env.HOME` is refused at parse time.
+A gate expression can use a name only from these five contexts. `env.HOME` is refused at parse time.
 
 ## Read forms
 
@@ -71,25 +78,7 @@ Every field has one of three classes or none.
 
 A schema marks a field's class with the keyword `x-fact-class` on the property.
 
-### Fact classes by kind and field
-
-The table gives the class of every top-level body field of every kind.
-
-| Kind | Field | Class |
-|---|---|---|
-| `evidence/plan@1` | `criteria` | claimed |
-| `evidence/measurement@1` | `label`, `criterion`, `exit_code`, `validator`, `output`, `outcome`, `findings`, `metrics` | derived |
-| | `revision` | claimed |
-| `evidence/verdict@1` | `outcome`, and every fact name | derived, or judged for a rubric judge's fact |
-| | `judge`, `version`, `findings` | none |
-| `evidence/approval@1` | `subject`, `path`, `digest`, `source_ref`, `cited_phrase`, `intent_read`, `author` | derived |
-| `daggry/change@1` | `frozen` | derived |
-| | `revision`, `paths` | claimed |
-| `daggry/observation@1` | `event`, `path`, `reason`, `step`, `attempt` | derived |
-| `daggry/run-lock@1` | `validators`, `judges`, `boundary_rules`, `image_digest`, `workflow_digest` | derived |
-| `daggry/work-item@1` | `workspace`, `request`, `repository`, `issue` | claimed |
-
-Only a top-level property of a body is readable. A fact value is a boolean, an integer or a string.
+The class of every field of every kind is in [Fact classes by kind](/reference/kinds#fact-classes-by-kind). Only a top-level field of a record's body is readable. A fact value is a boolean, an integer or a string.
 
 ### Verdict facts
 
@@ -97,7 +86,23 @@ A `verdict.<name>` read takes the value from the verdicts sealed for the run, ne
 
 `until` does not depend on whether the iteration was green. When it holds at the end of a red iteration, the loop still ends.
 
+### Run facts
+
+An `auto_when` expression decides whether an effect runs with no person. It reads facts about the whole run. The table lists them.
+
+| Fact | Type | Meaning |
+|---|---|---|
+| `run.changed_files` | integer | The paths the sealed changes of the run changed. |
+| `run.changed_lines` | integer | The lines those changes added and removed. |
+| `run.within.<area>` | boolean | Every changed path is inside the area of that name in the project config. |
+| `run.verdicts_failed` | integer | The verdicts of the latest `verify` step that are not `pass`. |
+| `run.protected_touched` | integer | The times Daggry put back a protected or frozen path in this run. |
+
+All are `derived`. When an `auto_when` holds, Daggry seals the expression and the value of each fact it read. See [Autonomy](/reference/workflow-schema#autonomy).
+
 ## Grammar
+
+The grammar is small: comparisons, `!`, `&&`, `||`, parentheses and three functions.
 
 ```text
 expr    = or
@@ -107,10 +112,11 @@ cmp     = unary [ ("==" | "!=" | "<" | "<=" | ">" | ">=") unary ]
 unary   = "!" unary | primary
 primary = "true" | "false" | integer | 'string' | "(" expr ")" | call | field
 call    = ("success" | "failure" | "always") "(" ")"
-field   = ("inputs" | "needs" | "steps" | "verdict") { "." name }+
+field   = ("inputs" | "needs" | "steps" | "verdict" | "run") { "." name }+
 ```
 
-### Lexical rules
+::: details Lexical rules, functions and evaluation
+**Lexical rules**
 
 The table lists the rule for each element of an expression.
 
@@ -126,7 +132,7 @@ The table lists the rule for each element of an expression.
 | Field | Needs at least one name after the context. `inputs` alone is a syntax error. |
 | Nesting | Parentheses and `!` nest at most 32 deep. |
 
-### Functions
+**Functions**
 
 The grammar has three functions.
 
@@ -138,7 +144,7 @@ The grammar has three functions.
 
 Functions take no arguments. `success(1)` is a syntax error. Any other call is an unknown function. A bare `success` without parentheses is an unknown context.
 
-### Evaluation rules
+**Evaluation rules**
 
 The table lists how an expression is evaluated.
 
@@ -151,6 +157,7 @@ The table lists how an expression is evaluated.
 | `!`, `&&`, `||` | Booleans only. |
 | Short-circuit | None. Both sides of `&&` and `||` are evaluated, and every field the expression names is checked. A refusal never depends on a value: `false && steps.write.summary == 'x'` still reports the claimed field. |
 | Result | The whole expression must be a boolean. A bare boolean field such as `verdict.all_covered` is valid. A bare integer or string is not. |
+:::
 
 ## Errors
 
@@ -160,7 +167,7 @@ The parser reports one of four messages.
 
 | Message | Cause |
 |---|---|
-| ``unknown context `<name>` `` | The expression names a context other than the four. |
+| ``unknown context `<name>` `` | The expression names a context other than the five. |
 | ``unknown function `<name>` `` | The expression calls a function other than the three. |
 | `syntax error at offset <at>` | The text does not parse. The offset counts characters. At the end of the input it equals the input's length. |
 | `expression nested too deeply` | Parentheses or `!` nest more than 32 deep. |
@@ -178,11 +185,10 @@ The evaluator reports one of four messages.
 
 ### Loader errors
 
-The loader refuses an `until` that does not parse, and one that reads a field that is not `derived`. See [Workflow file](/reference/workflow-schema).
+The loader refuses an `until` that does not parse, and one that reads a field a gate cannot read. See [Load errors](/reference/workflow-rules#load-errors).
 
-## Examples
-
-### Expressions that parse
+::: details More examples
+**Expressions that parse**
 
 ```text
 success()
@@ -202,7 +208,7 @@ needs.plan.status == 'ok' || inputs.count > 9
 
 These show the grammar. Whether each is readable in a workflow depends on the kinds and fields it names.
 
-### Expressions the parser refuses
+**Expressions the parser refuses**
 
 The table is a representative set. Offsets count characters from the start of the expression.
 
@@ -213,7 +219,7 @@ The table is a representative set. Offsets count characters from the start of th
 | `success(1)` | `syntax error at offset 8` |
 | `inputs.a ==` | `syntax error at offset 11` |
 
-### Expressions that parse and fail to evaluate
+**Expressions that parse and fail to evaluate**
 
 Each expression in the table parses, and the evaluator refuses it.
 
@@ -224,7 +230,7 @@ Each expression in the table parses, and the evaluator refuses it.
 | `steps.write.summary == 'done'` where the field is claimed | ``field `<field>` is claimed, not derived`` |
 | `verdict.quality == 'good'` where the field is judged | ``field `<field>` is judged, not derived`` |
 
-### Reads the loader accepts
+**Reads the loader accepts**
 
 The loader accepts each `until` in the table.
 
@@ -237,7 +243,7 @@ The loader accepts each `until` in the table.
 | `steps.v.measurement.exit_code == 0` | Step `v` exists. |
 | `needs.anything.measurement.exit_code == 0` | `needs` ids are not checked against the workflow. |
 
-### Reads the loader refuses
+**Reads the loader refuses**
 
 The loader refuses each `until` in the table and names the class.
 
@@ -246,3 +252,4 @@ The loader refuses each `until` in the table and names the class.
 | `inputs.plan.criteria == 'x'` | claimed | `criteria` is claimed. |
 | `inputs.nope.x == 1` | none | No kind `nope`. |
 | `steps.zzz.measurement.exit_code == 0` | none | No step `zzz` in the workflow. |
+:::

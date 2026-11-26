@@ -1,7 +1,7 @@
 <template>
   <figure class="dgm overnight">
     <ScrollFrame label="Overnight timeline">
-      <svg viewBox="0 0 960 300" role="img" aria-label="Overnight timeline: you approve a plan at 22:00, agents work unattended while code checks each step, and at 06:30 the result and its trail are ready">
+      <svg viewBox="0 0 960 300" role="img" aria-label="Overnight timeline: you agree a plan on the issue at 22:00, agents work unattended while code checks each step, and at 06:30 the result and its trail are ready">
         <defs>
           <linearGradient id="sky" x1="0" x2="1">
             <stop offset="0" class="s-lilac"/><stop offset=".45" class="s-sky"/>
@@ -26,16 +26,16 @@
         <!-- the night's work -->
         <rect x="250" y="120" width="440" height="52" rx="14" class="night"/>
         <text x="470" y="142" text-anchor="middle" class="lbl">Unattended</text>
-        <text x="470" y="160" text-anchor="middle" class="md">test fails first, do the work, validate, seal</text>
+        <text x="470" y="160" text-anchor="middle" class="md">tests fail first, work until they pass, validate, seal</text>
       </svg>
     </ScrollFrame>
-    <figcaption class="cap">A timeline of one night. You approve the plan at 22:00. Agents work unattended while code checks each step. At 06:30 the result is ready, with its evidence trail beside it. A run that needed you stopped and says why.</figcaption>
+    <figcaption class="cap">A timeline of one night. You agree the plan in a reply on the issue at 22:00. Agents work unattended while code checks each step. At 06:30 the result is ready, with its evidence trail beside it. A run that needed you stopped and says why.</figcaption>
   </figure>
 </template>
 <script setup lang="ts">
 import ScrollFrame from './ScrollFrame.vue'
 const stops = [
-  { x: 110, t: '22:00', h: 'Approve the plan', d: 'you, before bed' },
+  { x: 110, t: '22:00', h: 'Agree the plan', d: 'you, on the issue' },
   { x: 470, t: '03:00', h: 'Runners at work', d: 'agents work, code checks' },
   { x: 858, t: '06:30', h: 'Dawn', d: 'the result and its trail' },
 ]

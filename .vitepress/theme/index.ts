@@ -32,6 +32,28 @@ import FeatureGrid from './FeatureGrid.vue'
 import ConfigFiles from './ConfigFiles.vue'
 import FileTree from './FileTree.vue'
 import SealedRecord from './SealedRecord.vue'
+import ModelOverview from './ModelOverview.vue'
+import WhereThingsLive from './WhereThingsLive.vue'
+import WorkflowAnatomy from './WorkflowAnatomy.vue'
+import StepTrail from './StepTrail.vue'
+import Lookup from './Lookup.vue'
+import Missions from './Missions.vue'
+import PersonaReceives from './PersonaReceives.vue'
+import LoopRounds from './LoopRounds.vue'
+import BatchOrItems from './BatchOrItems.vue'
+import IssueThread from './IssueThread.vue'
+import TeamFlow from './TeamFlow.vue'
+import TriggerRouting from './TriggerRouting.vue'
+import AutonomyLevels from './AutonomyLevels.vue'
+import RunStates from './RunStates.vue'
+import CliFlow from './CliFlow.vue'
+import PathMap from './PathMap.vue'
+import GateRead from './GateRead.vue'
+import JudgeKinds from './JudgeKinds.vue'
+import KindMap from './KindMap.vue'
+import ProjectConfigMap from './ProjectConfigMap.vue'
+import TenantConfigMap from './TenantConfigMap.vue'
+import VerifyFlow from './VerifyFlow.vue'
 
 export default {
   extends: DefaultTheme,
@@ -59,5 +81,27 @@ export default {
     app.component('ConfigFiles', ConfigFiles)
     app.component('FileTree', FileTree)
     app.component('SealedRecord', SealedRecord)
+    app.component('ModelOverview', ModelOverview)
+    app.component('WhereThingsLive', WhereThingsLive)
+    app.component('WorkflowAnatomy', WorkflowAnatomy)
+    app.component('StepTrail', StepTrail)
+    app.component('Lookup', Lookup)
+    app.component('Missions', Missions)
+    app.component('PersonaReceives', PersonaReceives)
+    app.component('LoopRounds', LoopRounds)
+    app.component('BatchOrItems', BatchOrItems)
+    app.component('IssueThread', IssueThread)
+    app.component('TeamFlow', TeamFlow)
+    app.component('TriggerRouting', TriggerRouting)
+    app.component('AutonomyLevels', AutonomyLevels)
+    app.component('RunStates', RunStates)
+    app.component('CliFlow', CliFlow)
+    app.component('PathMap', PathMap)
+    app.component('GateRead', GateRead)
+    app.component('JudgeKinds', JudgeKinds)
+    app.component('KindMap', KindMap)
+    app.component('ProjectConfigMap', ProjectConfigMap)
+    app.component('TenantConfigMap', TenantConfigMap)
+    app.component('VerifyFlow', VerifyFlow)
   },
 } satisfies Theme

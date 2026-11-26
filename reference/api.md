@@ -4,6 +4,8 @@
 
 The `daggry` CLI calls an HTTP API, and a tool of your own can call the same routes. This page lists the routes, their request and response fields, the status codes and the run states. Read it if you write a client or a script that starts or watches runs. If you use the CLI, the [CLI reference](/reference/cli) is enough.
 
+Two routes add to the evidence trail: `/v1/run` seals a run lock and the work item, and `/v1/approve` seals an approval bound to a digest. Three routes serve the trail so that a client can verify it: `/v1/chain`, `/v1/blob` and `/v1/seal-key`.
+
 ## Conventions
 
 Every call follows these conventions.
@@ -61,14 +63,14 @@ Each body has these fields.
 
 | Body | Fields |
 |---|---|
-| run request | `workflow` (string, the workflow text), `workspace` (string), `item` (string, what names the work item) |
+| run request | `workflow` (string, the workflow text), `workspace` (string), `item` (string, what names the work item), `objective` (string, the objective as text). At least one of `item` and `objective`. |
 | run response | `run` (the run id) |
 | status request | `run` |
-| status report | `state` (a state), `attempts` (array of `{job, n, state}`, where `n` is a number), `waiting_for` (a reason or `null`) |
+| status report | `state` (a state), `attempts` (array of `{job, n, state}`, where `n` is a number), `waiting_for` (a reason or `null`), `trigger` (the name of the trigger that started the run, absent for a run a client started) |
 | approve request | `run`, `unfreeze` (string path or `null`) |
 | accepted | no fields |
 | logs request | `run` |
-| log entries | `entries` (array of log entries). The `/v1/chain` call answers with your whole chain. |
+| log entries | `entries` (array of [log entries](/reference/envelope#log-entry)). The `/v1/chain` call answers with your tenant's whole evidence trail. |
 | blob request | `digest` |
 | blob response | `bytes` (hex) |
 | seal-key request | `key_id` |
@@ -80,6 +82,10 @@ A client accepts a status report with `waiting_for` missing as `null`.
 
 A run and an attempt share one set of seven states, written in lowercase.
 
+<RunStates />
+
+The diagram groups the seven states: two while the run works, two while it waits and three once it has ended.
+
 | State | Meaning |
 |---|---|
 | `queued` | The run is accepted and no job has started. |
@@ -88,14 +94,14 @@ A run and an attempt share one set of seven states, written in lowercase.
 | `parked` | A limit is reached, and the work waits for it to reset. |
 | `succeeded` | Terminal. The run finished. |
 | `failed` | Terminal. The run failed. |
-| `stopped` | Terminal. A person stopped the run. |
+| `stopped` | Terminal. A person stopped the run, for example by removing the label that started it or by closing the issue, or nobody answered for 14 days. |
 
 The table lists the values of `waiting_for`.
 
 | `waiting_for` | Meaning |
 |---|---|
-| `approval` | A person must approve the sealed plan. |
-| `input-needed` | A person must review the latest sealed change. |
+| `approval` | The run is at a checkpoint. An approver's yes continues it. |
+| `answer` | A persona asked a question on the issue. The next reply from a person continues the step. |
 
 ## Next steps
 

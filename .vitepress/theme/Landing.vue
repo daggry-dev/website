@@ -9,9 +9,9 @@ const proof = [
 ]
 // The four open formats: three files you write, and the evidence trail Daggry writes.
 const formats = [
-  { t: 'Workflow', d: 'The steps of a piece of work, in order.', l: '/guide/concepts/workflows' },
+  { t: 'Workflow', d: 'The steps of a piece of work, in order.', l: '/guide/how-to/write-a-workflow' },
   { t: 'Project config', d: 'How to check one project and what to protect in it.', l: '/guide/how-to/set-up-a-project' },
-  { t: 'Tenant config', d: 'Which workflows run, which agents work and where a person must approve.', l: '/guide/how-to/set-up-a-tenant' },
+  { t: 'Tenant config', d: 'Which workflows run, which personas work and where a person must approve.', l: '/guide/how-to/set-up-a-tenant' },
   { t: 'Evidence trail', d: 'Every result, signed and linked. Daggry writes it.', l: '/guide/concepts/trust' },
 ]
 // Each chip links to its example's heading on the examples page (VitePress heading slugs).
@@ -37,7 +37,7 @@ const snippet: { k?: string; v?: string; p?: string }[][] = [
   [{ p: '    ' }, { k: 'run' }, { p: ': ' }, { p: '[' }, { v: 'sh' }, { p: ', ' }, { v: 'scripts/migrate-config.sh' }, { p: ']' }],
   [{ p: '    ' }, { k: 'scope' }, { p: ': [' }, { v: '"config/**"' }, { p: ']' }],
   [{ p: '  - { ' }, { k: 'id' }, { p: ': ' }, { v: 'validate' }, { p: ', ' }, { k: 'kind' }, { p: ': ' }, { v: 'verify' }, { p: ', ' }, { k: 'validators' }, { p: ': [' }, { v: 'project' }, { p: '] }' }],
-  [{ p: '  - { ' }, { k: 'id' }, { p: ': ' }, { v: 'review' }, { p: ', ' }, { k: 'kind' }, { p: ': ' }, { v: 'human' }, { p: ', ' }, { k: 'waiting_for' }, { p: ': ' }, { v: 'input-needed' }, { p: ' }' }],
+  [{ p: '  - { ' }, { k: 'id' }, { p: ': ' }, { v: 'review' }, { p: ', ' }, { k: 'kind' }, { p: ': ' }, { v: 'human' }, { p: ', ' }, { k: 'of' }, { p: ': ' }, { v: 'migrate' }, { p: ' }' }],
   [{ p: '  - { ' }, { k: 'id' }, { p: ': ' }, { v: 'pr' }, { p: ', ' }, { k: 'kind' }, { p: ': ' }, { v: 'effect' }, { p: ', ' }, { k: 'do' }, { p: ': ' }, { v: 'open-pr' }, { p: ' }' }],
 ]
 
@@ -56,8 +56,8 @@ const doors = [
       <p class="eyebrow">Daggry · Danish for dawn</p>
       <h1>Agents do the work.<br /><em>Code checks it.</em></h1>
       <p class="lede">
-        Agents can work all night. Daggry makes that safe to sleep through: code checks every step an agent
-        finishes and signs the result into a trail you can verify yourself.
+        Agents can work all night, and talk with you on the issue while they do. Daggry makes that safe: code checks
+        every step an agent finishes and signs the result into a trail you can verify yourself.
       </p>
       <p class="lede">
         Daggry is a factory kit. You set up its modules as your own factory, for any work a script can check.
@@ -84,9 +84,10 @@ const doors = [
       <p class="eyebrow">Overnight</p>
       <h2>Go to bed. Wake at <em>daggry</em>.</h2>
       <p class="sub">
-        A software example: an issue becomes a pull request. For each criterion in your plan, the agent writes a test,
-        Daggry shows that the test fails, the agent makes it pass, and Daggry runs it again on a clean copy. If a
-        machine dies at 3 a.m., a new runner starts from the last sealed change.
+        A software example: you label an issue, and it becomes a pull request. You agree the plan with the team in
+        plain replies on the issue. The agent writes a test for every criterion, and Daggry shows that each test fails.
+        The agent works until they pass, and Daggry runs them again on a clean copy. If a machine dies at 3 a.m., a new
+        runner starts from the last sealed change. You review the pull request, and your reply is part of the trail.
       </p>
       <Overnight />
     </section>

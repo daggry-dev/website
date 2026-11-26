@@ -36,18 +36,18 @@ export default defineConfig({
           { text: '7. How it works', link: '/guide/how-it-works' },
         ] },
         { text: 'How-to', items: [
+          { text: 'From issue to merged pull request', link: '/guide/how-to/issue-to-pr' },
+          { text: 'Send the team on a mission', link: '/guide/how-to/autonomy' },
           { text: 'Install Daggry', link: '/guide/how-to/deploy' },
           { text: 'Set up a project', link: '/guide/how-to/set-up-a-project' },
           { text: 'Set up a tenant', link: '/guide/how-to/set-up-a-tenant' },
           { text: 'Write a workflow', link: '/guide/how-to/write-a-workflow' },
           { text: 'Add a loop', link: '/guide/how-to/add-a-loop' },
           { text: 'Add a validator', link: '/guide/how-to/add-a-validator' },
-          { text: 'Design a workflow', link: '/guide/how-to/design-a-workflow' },
           { text: 'Verify a run', link: '/guide/how-to/verify-a-run' },
           { text: 'Workflow examples', link: '/guide/how-to/workflow-patterns' },
         ] },
         { text: 'Go deeper', items: [
-          { text: 'Workflows', link: '/guide/concepts/workflows' },
           { text: 'Why you can trust a run', link: '/guide/concepts/trust' },
           { text: 'What an agent cannot change', link: '/guide/concepts/protection' },
           { text: 'The modules and where they run', link: '/guide/concepts/modules' },
@@ -57,29 +57,29 @@ export default defineConfig({
         { text: 'Overview', items: [
           { text: 'Reference', link: '/reference/' },
         ] },
-        { text: 'Commands and API', items: [
-          { text: 'CLI', link: '/reference/cli' },
-          { text: 'HTTP API', link: '/reference/api' },
-        ] },
-        { text: 'Files you write', items: [
+        { text: 'What you write', items: [
           { text: 'Workflow file', link: '/reference/workflow-schema' },
-          { text: 'Gate expressions', link: '/reference/gates' },
+          { text: 'Workflow rules', link: '/reference/workflow-rules' },
           { text: 'Project config', link: '/reference/project-config' },
           { text: 'Tenant config', link: '/reference/tenant-config' },
         ] },
         { text: 'Rules', items: [
           { text: 'Validators', link: '/reference/validators' },
           { text: 'Judges', link: '/reference/judges' },
+          { text: 'Gate expressions', link: '/reference/gates' },
           { text: 'Protected paths', link: '/reference/protected-paths' },
-          { text: 'Bindings', link: '/reference/bindings' },
+          { text: 'Comments and approvals', link: '/reference/conversation' },
+        ] },
+        { text: 'Commands', items: [
+          { text: 'CLI', link: '/reference/cli' },
+          { text: 'HTTP API', link: '/reference/api' },
           { text: 'Helm chart values', link: '/reference/helm-chart' },
         ] },
         { text: 'Specification', items: [
-          { text: 'Open formats', link: '/reference/open-formats' },
+          { text: 'Formats and versioning', link: '/reference/open-formats' },
           { text: 'Evidence envelope', link: '/reference/envelope' },
           { text: 'Artifact kinds', link: '/reference/kinds' },
-          { text: 'Module contracts', link: '/reference/contracts' },
-          { text: 'Conformance', link: '/reference/conformance' },
+          { text: 'Conformance and contracts', link: '/reference/conformance' },
         ] },
         { text: 'Terms', items: [
           { text: 'Glossary', link: '/reference/glossary' },

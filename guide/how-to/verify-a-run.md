@@ -1,6 +1,8 @@
 # Verify a run
 
-An agent's report is only a claim, and a record someone can edit later proves nothing. One command recomputes the evidence trail on your own machine and tells you whether anybody changed it. Read this page after any run you want to rely on.
+An agent's report is only a claim, and a record someone can edit later proves nothing.
+One command recomputes the evidence trail on your own machine and tells you whether anybody changed it.
+Read this page after any run you want to rely on.
 
 ## Verify the trail
 
@@ -23,6 +25,10 @@ You do not have to trust the run. Check it.
    An entry is one record in the trail. A blob is a stored file a record points at, such as the workflow file of a run. The line means that all 12 records and both files matched.
 
 The command verifies the whole trail of your tenant, not one run. A run is verified as part of it.
+
+<VerifyFlow />
+
+The diagram shows the four checks the command makes on your machine and the line it prints.
 
 ::: details What does the command check?
 The CLI fetches raw data and recomputes the result on your machine.
@@ -48,9 +54,30 @@ daggry: entry 2: prev does not match the link of the entry before it
 
 In a script, treat any exit code other than 0 as "not verified". For each message and code, see the [CLI reference](/reference/cli).
 
+## Read who did what
+
+A verified trail is worth reading. `daggry logs <run-id>` lists the records of one run in order, one line for each, with its kind, its ID and the start of its digest. See the [CLI reference](/reference/cli).
+
+The table says what each kind of record tells you.
+
+| Record | Tells you |
+|---|---|
+| Run lock | What the run started under: the workflow, the validators, the judges and each persona with the digest of its instructions. |
+| Change | The version of the workspace a step produced and the paths it changed. |
+| Measurement | What a validator reported on that version. |
+| Verdict | What a judge decided from the trail. |
+| Plan | What a persona proposed, version by version. |
+| Input | What someone said on the issue or the pull request: who, whether they are an approver, and for a review comment the file and line. |
+| Approval | Who approved, the digest of the plan or the change they approved and, for a comment, the phrase that was read as the yes. |
+| Observation | What was delivered and, when an effect ran with no person, the facts that allowed it. |
+
+The conversation is in the trail too. A comment someone later edits or deletes on GitHub changes nothing: the sealed input and approval records are what count. See [Comments and approvals](/reference/conversation).
+
+Every record that an `agent` step sealed also carries the name of the persona that did the work and the digest of its instructions. Compare that digest with the one in the run lock to confirm which instructions the agent worked under. For where a record carries these, see [Stamped keys](/reference/envelope#stamped-keys).
+
 ## What this does not prove
 
-A verified trail does not say the work was good. It proves that nobody without the signing key changed, reordered or removed a record in the middle of the trail. To see whether the work was good, read what the validators reported with `daggry logs <run-id>`.
+A verified trail does not say the work was good. It proves that nobody without the signing key changed, reordered or removed a record in the middle of the trail. A result is only as good as the validator that produced it.
 
 The command takes the public key from the same Daggry that serves the trail. Removing the newest records, or a rewrite by someone who holds the signing key, shows only against a signed copy of the trail's head kept outside the cluster.
 
@@ -92,7 +119,7 @@ Yes. Every record format has a published JSON Schema, and any tool that supports
    ok -- validation done
    ```
 
-A schema checks shape only, not the digest or the signature, so finish with `daggry verify`. For the formats, see [Open formats](/reference/open-formats).
+A schema checks shape only, not the digest or the signature, so finish with `daggry verify`. For the formats, see [Artifact kinds](/reference/kinds).
 :::
 
 Related:

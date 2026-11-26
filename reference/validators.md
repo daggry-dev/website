@@ -46,9 +46,9 @@ Daggry seals what a validator reported as a [measurement](/reference/kinds#evide
 |---|---|---|
 | `exit-code` | The exit code: 0 is `pass`, non-zero is `fail`, and a command that could not run is `error`. | Yes |
 | `document` | A [result document](/reference/project-config#result-document) the command writes, with findings and metrics. | No |
-| A tool format, such as `junit` or `sarif` | The output of a tool that writes that format. | No |
+| A tool format: `junit`, `tap`, `libtest` or `sarif` | The output of a tool that writes that format. | No |
 
-A binding ships tool formats, and a tenant can register more in `extensions.adapters`. See [Bindings](/reference/bindings#output-formats). The file the command writes is `output_file`. Absent, Daggry reads standard output. For the values in full, see [Output formats](/reference/project-config#output-formats).
+Daggry ships four tool formats: `junit`, `tap`, `libtest` and `sarif`. The file the command writes is `output_file`. Absent, Daggry reads standard output. For the values in full, see [Output formats](/reference/project-config#output-formats).
 
 ## What the agent sees on a fail
 
@@ -132,7 +132,7 @@ A validator inspects the clean copy it starts in. It passes with exit code 0 and
    exit $fail
    ```
 
-Daggry runs only what a declaration names. To share a validator across projects, declare it in `validators.scripts` of the tenant config. A tool that has an output format of its own needs no wrapper script: set `output` to the format name, such as `junit`. See [Bindings](/reference/bindings).
+Daggry runs only what a declaration names. To share a validator across projects, declare it in `validators.scripts` of the tenant config. A tool that has an output format of its own needs no wrapper script: set `output` to the format name, such as `junit`. See [Output formats](/reference/project-config#output-formats).
 
 ## Next steps
 
@@ -141,4 +141,4 @@ The list names the pages to read next.
 - For who decides from a measurement, and the facts a judge emits, see [Judges](/reference/judges).
 - For the keys of a `verify` step, see [Workflow file](/reference/workflow-schema#verify).
 - For declaring a validator, see [Project config](/reference/project-config#validators) and [Tenant config](/reference/tenant-config#validators).
-- For the output formats a binding adds, see [Bindings](/reference/bindings).
+- For the tool formats Daggry reads, see [Output formats](/reference/project-config#output-formats).

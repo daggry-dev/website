@@ -1,6 +1,10 @@
 # Install Daggry
 
-No run can start until Daggry is on a cluster. This page takes you from an empty namespace to a working `daggry` command on your own Kubernetes cluster. It is for the cluster admin. If someone else installs Daggry for you, go to [Run your first workflow](/guide/getting-started).
+No run can start until Daggry is on a cluster.
+This page takes you from an empty namespace to a working `daggry` command on your own Kubernetes cluster.
+It is for the cluster admin. If someone else installs Daggry for you, go to [Run your first workflow](/guide/getting-started).
+
+The install puts the signing key and the evidence trail in the control plane, on your cluster. No runner ever holds the key, so only the control plane can seal a record.
 
 The page installs Daggry for software work, where the forge is GitHub. The commands and outputs are illustrative. Placeholders in angle brackets, such as `<namespace>`, stand for values you choose.
 
@@ -52,7 +56,7 @@ Nine steps take you from an empty namespace to a working CLI. The steps are the 
 
    A runner never renews a credential. Replace the Secret before the credential expires.
 
-5. **Write the tenant config.** It says which workflows run, which agents work and where a person must approve. See [Set up a tenant](/guide/how-to/set-up-a-tenant).
+5. **Write the tenant config.** It says which workflows run, which personas do the work and where a person must approve. See [Set up a tenant](/guide/how-to/set-up-a-tenant).
 
 6. **Install the Daggry chart with your values.** Set only the values you need to change. For every value, see [Helm chart values](/reference/helm-chart).
 
@@ -103,7 +107,7 @@ The chart creates one control-plane Deployment with a single replica, a Service,
 - **Conductor.** Decides which step runs next. It holds no key and seals nothing. By default it runs inside the control plane process.
 - **Launcher.** Turns each job into a pod, watches it and deletes it when it ends. It runs in the control plane process by default.
 - **Runner.** Runs the steps of one job inside the pod, with a token for that one job, a GitHub token for one repository and the engine's credential.
-- **Engine.** The coding-agent program an agent step runs on.
+- **Engine.** The coding-agent program a persona runs on.
 
 Every connection goes out from the pod. Nothing dials into a pod. If a runner stops responding, Daggry deletes its pod and starts a new one from the last sealed change. See [The modules and where they run](/guide/concepts/modules).
 :::

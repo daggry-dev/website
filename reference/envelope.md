@@ -2,19 +2,15 @@
 
 *Reference*
 
-The envelope is the one JSON shape every sealed record has. This page gives its fields, the canonical JSON rules and how the digest, the chain link and the signature are computed. Read it if you write a reader, a verifier or a tool that checks a trail. To verify a run with the CLI, follow [Verify a run](/guide/how-to/verify-a-run).
+The envelope is the one JSON shape every sealed record has. Whatever a step produces, the control plane checks it, wraps it in this envelope, signs it and appends it to the evidence trail. This page gives the fields, the canonical JSON rules and how the digest, the chain link and the signature are computed. Read it if you write a reader, a verifier or a tool that checks a trail. To verify a run with the CLI, follow [Verify a run](/guide/how-to/verify-a-run).
 
-On this page an artifact is one sealed record, and the log or the chain is what the guide calls the evidence trail. Any factory that follows the field, canonical JSON, digest, chain link and signature rules on this page produces evidence that any verifier can check, whoever built either one. For what an implementation must do, see [Conformance](/reference/conformance).
+On this page an artifact is one sealed record, and the log or the chain is the evidence trail. A verifier that follows the rules on this page can check any trail, whoever produced it. For what an implementation must do, see [Conformance and module contracts](/reference/conformance).
 
 The hand-written values on this page are illustrative. The test vector in [Worked example](#worked-example-recompute-a-digest-and-a-link) is copied from the published test vector.
 
 ## Download
 
-The envelope has a published JSON Schema (draft 2020-12). The table links the file. It is the same schema as in [Envelope JSON Schema](#envelope-json-schema).
-
-| Schema | File |
-|---|---|
-| `evidence/envelope@1` | [evidence-envelope-v1.json](/schemas/evidence-envelope-v1.json) |
+The envelope has a published JSON Schema (draft 2020-12): [evidence-envelope-v1.json](/schemas/evidence-envelope-v1.json). The same schema is in [Envelope JSON Schema](#envelope-json-schema).
 
 ## Fields
 
@@ -38,19 +34,9 @@ The envelope refuses unknown top-level fields. A draft with any field besides `k
 
 All hex in the format is lowercase and of exact length. Uppercase hex and wrong lengths are refused.
 
-### Format
+### Format and kind
 
-`format` names the envelope version. A reader refuses a missing `format`, a malformed one and a major version it does not know. A newer major (for example `evidence/envelope@2`) is refused as unknown. A reader decodes an older major for audit only.
-
-### Kind
-
-A kind has three parts.
-
-| Part | Rule |
-|---|---|
-| namespace | Non-empty. No `@` and no `/`. `evidence` holds the language's kinds. `daggry` holds Daggry's own. |
-| name | Non-empty. No `/` and no `@`. |
-| major | One or more ASCII digits. A breaking change to a kind is a new major. |
+`format` names the envelope version, and `kind` names the schema of `body`. Both follow the rules in [Versioning](/reference/open-formats#versioning): a reader refuses a missing or malformed value and a major it does not know. The kinds and their bodies are in [Artifact kinds](/reference/kinds).
 
 ### Parents and prev
 
@@ -81,6 +67,8 @@ The control plane stamps the `daggry/*` keys from its own state. It never takes 
 | `daggry/job` | string, the job id | an artifact sealed for a job |
 | `daggry/attempt` | integer, 1 or more | an artifact sealed for an attempt |
 | `daggry/step` | string, the step id | an artifact sealed in a step |
+| `daggry/persona` | string, the name of the step's persona | an artifact sealed in an `agent` step |
+| `daggry/persona_digest` | string, the digest of that persona's instructions | an artifact sealed in an `agent` step |
 
 The table lists which kinds carry which keys.
 
@@ -88,9 +76,10 @@ The table lists which kinds carry which keys.
 |---|---|
 | `run-lock`, `work-item` | tenant, run |
 | `plan`, `measurement`, `change`, `observation`, `verdict` | tenant, run, job, attempt, step |
+| Any of those five, when an `agent` step seals it | Also persona and persona_digest. |
 | `approval` | tenant, run, job, step. No `daggry/attempt`, because a human step holds no attempt. |
 
-Trace ids and a retention class are not stamped.
+The two persona keys say who did the work: which persona, and which version of its instructions. The same name and digest are pinned in the [run lock](/reference/kinds#daggry-run-lock-1). Trace ids and a retention class are not stamped.
 
 ## Canonical JSON
 
@@ -205,13 +194,13 @@ The table explains the placeholders.
 | Placeholder | Meaning |
 |---|---|
 | `<link of the entry before, or the genesis digest>` | 64 lowercase hex digits. |
-| `<version id>` | The version of the workspace the measurement is of, in the form the binding gives. |
+| `<version id>` | The version of the workspace the measurement is of. In a git workspace it is a commit. |
 | `<unix milliseconds, a number>` | An integer, not a string. |
 | `<tenant id>`, `<run id>`, `<job id>`, `<step id>` | Ids the control plane stamps. |
 
 ## Verification errors
 
-`daggry verify` recomputes, for each entry and in this order, the link, the digest and the signature. It stops at the first failure. It then fetches every referenced blob and re-hashes it. For the command, see [CLI](/reference/cli). For the task, see [Verify a run](/guide/how-to/verify-a-run).
+`daggry verify` recomputes, for each entry and in this order, the link, the digest and the signature. It stops at the first failure. It then fetches every referenced blob and hashes it again. For the command, see [CLI](/reference/cli). For the task, see [Verify a run](/guide/how-to/verify-a-run).
 
 | Error | Meaning |
 |---|---|

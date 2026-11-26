@@ -37,6 +37,11 @@
       "pattern": "^(?!(project|daggry|baseline_proof)$)[a-z][a-z0-9_-]*$",
       "description": "coverage, no_regression, or the name of a judge you declare."
     },
+    "personaRef": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$",
+      "description": "The name of a persona that the project config or the tenant config defines."
+    },
     "scopeEntry": {
       "type": "string",
       "minLength": 1,
@@ -188,11 +193,8 @@
         "loop": {
           "type": "object",
           "required": [
-            "over",
-            "as",
             "until",
             "max",
-            "on_exhausted",
             "steps"
           ],
           "additionalProperties": false,
@@ -214,15 +216,20 @@
               "type": "integer",
               "minimum": 1
             },
-            "on_exhausted": {
-              "$ref": "#/$defs/id"
-            },
             "steps": {
               "type": "array",
               "items": {
                 "$ref": "#/$defs/step"
               }
             }
+          },
+          "dependentRequired": {
+            "over": [
+              "as"
+            ],
+            "as": [
+              "over"
+            ]
           }
         }
       }
@@ -255,7 +262,7 @@
       "required": [
         "id",
         "kind",
-        "engine",
+        "persona",
         "outputs",
         "scope"
       ],
@@ -268,17 +275,8 @@
           "$ref": "#/$defs/id"
         },
         "kind": true,
-        "engine": {
-          "type": "string",
-          "minLength": 1,
-          "description": "The identifier of an agent engine that the tenant registers."
-        },
-        "prompt": {
-          "type": "string"
-        },
-        "transcript": {
-          "type": "string",
-          "minLength": 1
+        "persona": {
+          "$ref": "#/$defs/personaRef"
         },
         "outputs": {
           "type": "array",
@@ -336,7 +334,7 @@
       "required": [
         "id",
         "kind",
-        "waiting_for"
+        "of"
       ],
       "additionalProperties": false,
       "patternProperties": {
@@ -347,11 +345,9 @@
           "$ref": "#/$defs/id"
         },
         "kind": true,
-        "waiting_for": {
-          "enum": [
-            "approval",
-            "input-needed"
-          ]
+        "of": {
+          "$ref": "#/$defs/id",
+          "description": "The step or loop this checkpoint is about. A yes continues the run. Any other reply sends the run back to it with that reply."
         }
       }
     },
@@ -373,7 +369,12 @@
         "do": {
           "type": "string",
           "pattern": "^([A-Za-z0-9_-]+/)?[a-z][a-z0-9_-]*$",
-          "description": "The name of an effect that the tenant registers."
+          "description": "The name of an effect. Daggry ships open-pr and merge-pr. A tenant can register more."
+        },
+        "auto_when": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A gate expression. When it holds, the effect runs with no person. When it does not, the run waits for a person's approval first."
         }
       }
     },

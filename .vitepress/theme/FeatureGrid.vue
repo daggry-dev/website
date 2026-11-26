@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import DgIcon from './DgIcon.vue'
 
-// The six features, in the fixed order, each with the problem it removes.
+// The seven features, in the fixed order, each with the problem it removes.
 const features = [
   { i: 'flow', t: 'Workflows', p: 'An agent that chooses its own process can skip the part you care about.' },
+  { i: 'person', t: 'Personas', p: 'Instructions scattered over workflow files drift, and nobody knows which version did the work.' },
   { i: 'tick', t: 'Validators', p: 'An agent that reports on its own work can report a pass that did not happen.' },
-  { i: 'person', t: 'Approvals', p: 'Some decisions are yours, and a wrong guess can waste a night.' },
+  { i: 'stop', t: 'Approvals', p: 'Some decisions are yours, and a wrong guess can waste a night.' },
   { i: 'lock', t: 'Protected paths', p: 'The easiest way to pass a test is to change the test.' },
   { i: 'link', t: 'Evidence trail', p: 'A record that someone can edit later proves nothing.' },
   { i: 'box', t: 'Isolated runners', p: 'Whatever an agent can reach, it can misuse.' },
 ] as const
 
-const label = 'The six features and the problem each one removes. ' + features.map((f, n) => `${n + 1}. ${f.t}: ${f.p}`).join(' ')
+const label = 'The seven features and the problem each one removes. ' + features.map((f, n) => `${n + 1}. ${f.t}: ${f.p}`).join(' ')
 </script>
 
 <template>
@@ -27,7 +28,7 @@ const label = 'The six features and the problem each one removes. ' + features.m
       </div>
     </div>
     <figcaption class="cap">
-      The six features, each with the problem it removes: workflows, validators, approvals, protected paths, the
+      The seven features, each with the problem it removes: workflows, personas, validators, approvals, protected paths, the
       evidence trail and isolated runners. The sections on this page say how each one removes its problem.
     </figcaption>
   </figure>

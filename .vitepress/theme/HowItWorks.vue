@@ -2,7 +2,7 @@
 import DgArrow from './DgArrow.vue'
 import DgIcon from './DgIcon.vue'
 
-const file = ['steps:', '  write a plan', '  wait for your approval', '  for each criterion:', '    do the work, validate it', '  deliver the result']
+const file = ['steps:', '  write a plan', '  agree it with you on the issue', '  repeat until the checks pass:', '    do the work, validate it', '  deliver the result']
 </script>
 
 <template>
